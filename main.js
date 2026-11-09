@@ -26,6 +26,7 @@ setInterval(() => {
 }, 3 * 60 * 60 * 1000);
 
 const settings = require('./settings');
+const lightweightStore = require('./lib/lightweight_store');
 require('./config.js');
 const { isBanned } = require('./lib/isBanned');
 const yts = require('yt-search');
@@ -167,6 +168,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         if (message.message) {
             storeMessage(sock, message);
+            // Ensure the lightweight WhatsApp store is flushed after message handling.
+            lightweightStore.scheduleSave();
         }
 
         if (message.message?.protocolMessage?.type === 0) {
@@ -524,7 +527,11 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
                 try {
                     data.isPublic = action === 'public';
-                    fs.writeFileSync('./data/messageCount.json', JSON.stringify(data, null, 2));
+                    const modeFile = './data/messageCount.json';
+                    const modeTempFile = modeFile + '.tmp-' + process.pid;
+                    fs.mkdirSync('./data', { recursive: true });
+                    fs.writeFileSync(modeTempFile, JSON.stringify(data, null, 2), 'utf8');
+                    fs.renameSync(modeTempFile, modeFile);
                     await sock.sendMessage(chatId, {
                         text: `Bot is now in *${action}* mode`,
                         ...channelInfo
