@@ -1,0 +1,60 @@
+{
+  "users": [],
+  "groups": [],
+  "antilink": {
+    "120363427823315577@g.us": {
+      "enabled": true,
+      "action": "warn"
+    },
+    "120363430781541404@g.us": {
+      "enabled": true,
+      "action": "warn"
+    },
+    "120363411353982566@g.us": {
+      "enabled": true,
+      "action": "warn"
+    }
+  },
+  "antibadword": {},
+  "warnings": {
+    "120363427823315577@g.us": {
+      "269973104676866@lid": 1,
+      "214323649585357@lid": 1
+    }
+  },
+  "sudo": [
+    "189657870516258@lid",
+    "8801330655004@s.whatsapp.net",
+    "8801407698678@s.whatsapp.net",
+    "216123442245856@lid",
+    "8801621515072@s.whatsapp.net",
+    "244019070246989@lid"
+  ],
+  "welcome": {
+    "120363412923962262@g.us": {
+      "enabled": true
+    },
+    "120363427823315577@g.us": {
+      "enabled": true
+    }
+  },
+  "goodbye": {},
+  "chatbot": {
+    "120363412923962262@g.us": true,
+    "120363429073731262@g.us": false
+  },
+  "autoReaction": false,
+  "inboxChatbot": {
+    "216123442245856@lid": true
+  },
+  "antitag": {},
+  "groupActivation": {
+    "active": [
+      "120363411353982566@g.us",
+      "120363427823315577@g.us",
+      "120363425948064340@g.us",
+      "120363430781541404@g.us",
+      "120363429073731262@g.us"
+    ]
+  }
+}
