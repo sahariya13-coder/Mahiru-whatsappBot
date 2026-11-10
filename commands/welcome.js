@@ -1,7 +1,5 @@
-
 const { handleWelcome } = require('../lib/welcome');
 const { isWelcomeOn, getWelcome } = require('../lib/index');
-const fetch = require('node-fetch');
 
 async function welcomeCommand(sock, chatId, message, match) {
     if (!chatId.endsWith('@g.us')) {
@@ -44,59 +42,16 @@ async function handleJoinEvent(sock, id, participants) {
             const user = jid.split('@')[0];
             const displayName = `@${user}`;
 
-            // Supports {group}, {Group}, {GROUP}
             const finalMessage = customMessage
                 .replace(/{user}/gi, displayName)
                 .replace(/{group}/gi, groupName)
                 .replace(/{description}/gi, groupDesc);
 
-            try {
-                let profilePicUrl =
-                    'https://img.pyrocdn.com/dbKUgahg.png';
-
-                try {
-                    const profilePic = await sock.profilePictureUrl(
-                        jid,
-                        'image'
-                    );
-
-                    if (profilePic) {
-                        profilePicUrl = profilePic;
-                    }
-                } catch (error) {
-                    console.log('Using default profile picture');
-                }
-
-                const apiUrl =
-                    `https://api.some-random-api.com/welcome/img/2/gaming3?type=join&textcolor=green&username=${encodeURIComponent(user)}&guildName=${encodeURIComponent(groupName)}&memberCount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(profilePicUrl)}`;
-
-                const response = await fetch(apiUrl);
-
-                if (!response.ok) {
-                    throw new Error(`Image API error: ${response.status}`);
-                }
-
-                const imageBuffer = await response.buffer();
-
-                await sock.sendMessage(id, {
-                    image: imageBuffer,
-                    caption: finalMessage,
-                    mentions: [jid]
-                });
-
-            } catch (imageError) {
-                console.log(
-                    'Welcome image failed:',
-                    imageError.message
-                );
-
-                await sock.sendMessage(id, {
-                    text: finalMessage,
-                    mentions: [jid]
-                });
-            }
+            await sock.sendMessage(id, {
+                text: finalMessage,
+                mentions: [jid]
+            });
         }
-
     } catch (error) {
         console.error('Welcome Join Event Error:', error);
     }
