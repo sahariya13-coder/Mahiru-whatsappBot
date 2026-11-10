@@ -167,7 +167,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         await handleAutoread(sock, message);
 
         if (message.message) {
-            storeMessage(sock, message);
+            await storeMessage(sock, message);
             // Ensure the lightweight WhatsApp store is flushed after message handling.
             lightweightStore.scheduleSave();
         }
