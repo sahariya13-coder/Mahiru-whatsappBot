@@ -14,6 +14,21 @@ fs.mkdirSync(MEDIA_DIR, { recursive: true });
 
 const messageStore = new Map();
 
+// Prevent duplicate WhatsApp revoke events from sending the same report twice.
+const processedRevocations = new Set();
+const MAX_PROCESSED_REVOCATIONS = 2000;
+
+function markRevocationProcessed(key) {
+    if (processedRevocations.has(key)) return false;
+    processedRevocations.add(key);
+
+    if (processedRevocations.size > MAX_PROCESSED_REVOCATIONS) {
+        const oldest = processedRevocations.values().next().value;
+        processedRevocations.delete(oldest);
+    }
+    return true;
+}
+
 function loadJSON(file, fallback) {
     try {
         if (!fs.existsSync(file)) return fallback;
@@ -204,8 +219,21 @@ async function handleMessageRevocation(sock, revocationMessage) {
         if (revocationMessage.key?.fromMe || deletedBy === botJid) return;
 
         const storeKey = messageKey(originalKey.remoteJid, originalKey.id);
+
+        // Claim this revoke synchronously before any await. WhatsApp/Baileys can
+        // emit the same revoke more than once or in overlapping event handlers.
+        if (!markRevocationProcessed(storeKey)) {
+            console.log('[ANTIDELETE] Duplicate revoke ignored:', storeKey);
+            return;
+        }
+
         const original = messageStore.get(storeKey);
         if (!original) return;
+
+        // Consume and persist the saved message immediately so a second event
+        // cannot report it again while metadata or message sending is pending.
+        messageStore.delete(storeKey);
+        persistMessageStore();
 
         const sender = original.sender || original.remoteJid;
         const senderNumber = sender.split('@')[0].split(':')[0];
@@ -258,8 +286,6 @@ async function handleMessageRevocation(sock, revocationMessage) {
             }
         }
 
-        messageStore.delete(storeKey);
-        persistMessageStore();
     } catch (error) {
         console.error('Antidelete revocation error:', error);
     }
