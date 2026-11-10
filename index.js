@@ -17,6 +17,7 @@ const FileType = require('file-type')
 const path = require('path')
 const axios = require('axios')
 const { handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main');
+const { storeMessage, handleMessageRevocation } = require('./commands/antidelete');
 const PhoneNumber = require('awesome-phonenumber')
 const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif')
 const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await, sleep, reSize } = require('./lib/myfunc')
@@ -128,6 +129,22 @@ async function startXeonBotInc() {
     // Message handling
     XeonBotInc.ev.on('messages.upsert', async chatUpdate => {
         try {
+            // Antidelete: save incoming messages and process WhatsApp revoke events.
+            // Run this before private-mode filters so the feature can capture all chats.
+            for (const incoming of (chatUpdate.messages || [])) {
+                if (!incoming?.message) continue;
+
+                try {
+                    if (incoming.message.protocolMessage) {
+                        await handleMessageRevocation(XeonBotInc, incoming);
+                    } else {
+                        await storeMessage(XeonBotInc, incoming);
+                    }
+                } catch (antideleteError) {
+                    console.error('[ANTIDELETE] Event error:', antideleteError);
+                }
+            }
+
             const mek = chatUpdate.messages[0]
             if (!mek.message) return
             mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
