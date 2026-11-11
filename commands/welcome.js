@@ -19,50 +19,9 @@ async function welcomeCommand(sock, chatId, message, match) {
     await handleWelcome(sock, chatId, message, matchText);
 }
 
-// Remove the device part from Baileys JIDs before comparing them.
+// Remove the device part from Baileys JIDs before using them as mentions.
 function normalizeJid(jid) {
     return String(jid || '').replace(/:\d+(?=@)/, '');
-}
-
-// A phone number is not a display name. Do not show it as the fallback.
-function isPhoneNumber(value) {
-    const digits = String(value || '').replace(/\D/g, '');
-    return digits.length >= 7 && digits.length <= 15 &&
-        digits.length === String(value || '').replace(/\D/g, '').length;
-}
-
-async function getMemberName(sock, jid, participant, metadata) {
-    const normalizedJid = normalizeJid(jid);
-
-    const metadataParticipant = metadata?.participants?.find(
-        item => normalizeJid(item.id || item.jid) === normalizedJid
-    );
-
-    const candidates = [
-        participant && typeof participant === 'object' ? participant.notify : '',
-        participant && typeof participant === 'object' ? participant.name : '',
-        metadataParticipant?.notify,
-        metadataParticipant?.name,
-        metadataParticipant?.verifiedName
-    ];
-
-    if (typeof sock.getName === 'function') {
-        try {
-            candidates.push(await sock.getName(jid));
-        } catch (error) {
-            console.error('Welcome contact name lookup error:', error.message);
-        }
-    }
-
-    for (const candidate of candidates) {
-        const name = String(candidate || '').trim();
-        if (!name || isPhoneNumber(name) || name.includes('@s.whatsapp.net')) {
-            continue;
-        }
-        return name;
-    }
-
-    return 'Member';
 }
 
 async function handleJoinEvent(sock, id, participants) {
@@ -85,13 +44,25 @@ async function handleJoinEvent(sock, id, participants) {
 
             if (!jid) continue;
 
-            // WhatsApp needs the JID's user part as the mention text.
-            // The mentions array makes that text a real clickable tag.
             const mentionJid = normalizeJid(jid);
             const mentionToken = `@${mentionJid.split('@')[0].split(':')[0]}`;
 
-            const finalMessage = String(customMessage || '')
-                .replace(/{user}/gi, mentionToken)
+            let finalMessage = String(customMessage || '');
+
+            // {user} is the recommended placeholder. Older custom messages
+            // may contain a fixed @Name instead, which is not a real mention.
+            if (/{user}/i.test(finalMessage)) {
+                finalMessage = finalMessage.replace(/{user}/gi, mentionToken);
+            } else if (/@[\w.-]+/.test(finalMessage)) {
+                // Turn the first existing @Name into a real mention of the joiner.
+                finalMessage = finalMessage.replace(/@[\w.-]+/, mentionToken);
+            } else if (/স্বাগতম/i.test(finalMessage)) {
+                finalMessage = finalMessage.replace(/(স্বাগতম\s*)/i, `$1${mentionToken}!`);
+            } else {
+                finalMessage += `\n\n🌸 স্বাগতম ${mentionToken}!`;
+            }
+
+            finalMessage = finalMessage
                 .replace(/{group}/gi, groupName)
                 .replace(/{description}/gi, groupDesc);
 
