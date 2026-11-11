@@ -14,21 +14,21 @@ async function welcomeCommand(sock, chatId, message, match) {
         message.message?.extendedTextMessage?.text ||
         '';
 
-    const matchText = text.trim().split(/\\s+/).slice(1).join(' ');
+    const matchText = text.trim().split(/\s+/).slice(1).join(' ');
 
     await handleWelcome(sock, chatId, message, matchText);
 }
 
 // Remove the device part from Baileys JIDs before comparing them.
 function normalizeJid(jid) {
-    return String(jid || '').replace(/:\\d+(?=@)/, '');
+    return String(jid || '').replace(/:\d+(?=@)/, '');
 }
 
 // A phone number is not a display name. Do not show it as the fallback.
 function isPhoneNumber(value) {
-    const digits = String(value || '').replace(/\\D/g, '');
+    const digits = String(value || '').replace(/\D/g, '');
     return digits.length >= 7 && digits.length <= 15 &&
-        digits.length === String(value || '').replace(/\\D/g, '').length;
+        digits.length === String(value || '').replace(/\D/g, '').length;
 }
 
 async function getMemberName(sock, jid, participant, metadata) {
@@ -38,7 +38,6 @@ async function getMemberName(sock, jid, participant, metadata) {
         item => normalizeJid(item.id || item.jid) === normalizedJid
     );
 
-    // Prefer names supplied by WhatsApp's group/contact information.
     const candidates = [
         participant && typeof participant === 'object' ? participant.notify : '',
         participant && typeof participant === 'object' ? participant.name : '',
@@ -47,7 +46,6 @@ async function getMemberName(sock, jid, participant, metadata) {
         metadataParticipant?.verifiedName
     ];
 
-    // sock.getName() reads the bot's contact store when available.
     if (typeof sock.getName === 'function') {
         try {
             candidates.push(await sock.getName(jid));
@@ -87,22 +85,19 @@ async function handleJoinEvent(sock, id, participants) {
 
             if (!jid) continue;
 
-            const memberName = await getMemberName(
-                sock,
-                jid,
-                participant,
-                groupMetadata
-            );
+            // WhatsApp needs the JID's user part as the mention text.
+            // The mentions array makes that text a real clickable tag.
+            const mentionJid = normalizeJid(jid);
+            const mentionToken = `@${mentionJid.split('@')[0].split(':')[0]}`;
 
-            // Keep the real WhatsApp JID in mentions so the member is tagged.
             const finalMessage = String(customMessage || '')
-                .replace(/{user}/gi, `@${memberName}`)
+                .replace(/{user}/gi, mentionToken)
                 .replace(/{group}/gi, groupName)
                 .replace(/{description}/gi, groupDesc);
 
             await sock.sendMessage(id, {
                 text: finalMessage,
-                mentions: [jid]
+                mentions: [mentionJid]
             });
         }
     } catch (error) {
