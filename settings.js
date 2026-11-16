@@ -22,7 +22,7 @@ const settings = {
   princeApiUrl: process.env.PRINCE_API_URL || 'https://api.princetechn.com',
   princeApiKey: process.env.PRINCE_API_KEY || 'prince',
   // Optional hosted song APIs (set keys in hosting environment variables)
-  vidFetchApiKey: process.env.VIDFETCH_API_KEY || '',
+  vidFetchApiKey: process.env.VIDFETCH_API_KEY || 'vf_live_sk_4cfc16047ffb3ccb87ee93daf5d36999f99da9c53d013246',
 };
 
 module.exports = settings;
