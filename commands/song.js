@@ -28,8 +28,42 @@ async function resolveVideoInfo(query) {
   return video;
 }
 
+async function samplecutSongDownload(videoUrl) {
+  const response = await fetch('https://api.samplecut.app/v1/downloads', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-Name': 'Mahiru-WhatsApp-Bot'
+    },
+    body: JSON.stringify({ url: videoUrl }),
+    signal: AbortSignal.timeout(120000)
+  });
+
+  const raw = await response.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('Samplecut invalid response (' + response.status + ')');
+  }
+
+  if (!response.ok) {
+    const code = data?.error?.code || response.status;
+    const message = data?.error?.message || 'Request failed';
+    throw new Error('Samplecut ' + code + ': ' + message);
+  }
+
+  const url = data?.download_url;
+  if (!url || !/^https?:\/\//i.test(url)) {
+    throw new Error('Samplecut returned no valid download URL');
+  }
+
+  return { url, title: data.title || null, filename: data.filename || null };
+}
+
 async function getAudioDownload(videoUrl) {
   const providers = [
+    ['Samplecut', () => samplecutSongDownload(videoUrl)],
     ['Knight', () => api.knightSongDownload(videoUrl, 1)],
     ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
     ['Prince', () => api.princeSongDownload(videoUrl, 1)],
@@ -44,7 +78,7 @@ async function getAudioDownload(videoUrl) {
   for (const [name, download] of providers) {
     try {
       const result = await download();
-      const url = result?.download || result?.dl_url || result?.url;
+      const url = result?.download_url || result?.download || result?.dl_url || result?.url;
       if (!url || !/^https?:\/\//i.test(url)) {
         throw new Error('API returned no valid audio URL');
       }
@@ -55,6 +89,7 @@ async function getAudioDownload(videoUrl) {
       return {
         url,
         title: result.title || null,
+        filename: result.filename || null,
         thumbnail: result.thumbnail || null
       };
     } catch (error) {
