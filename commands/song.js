@@ -141,7 +141,7 @@ async function songCommand(sock, chatId, message) {
         // Google Video (googlevideo.com/videoplayback) URLs are short-lived.
         // Try downloading them immediately instead of discarding them; the next
         // .play request obtains a fresh URL from the provider if this one expires.
-        const isGoogleVideo = /googlevideo\\.com|youtube\\.com\\/videoplayback/i.test(audioUrl);
+        const isGoogleVideo = /googlevideo\.com|youtube\.com\/videoplayback/i.test(audioUrl);
 
         const headers = {
           'User-Agent': UA,
