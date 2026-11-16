@@ -138,15 +138,16 @@ async function songCommand(sock, chatId, message) {
           console.log(`${apiMethod.name} returned no download URL, trying next...`);
           continue;
         }
-        if (isIpLockedCdn(audioUrl)) {
-          console.log(`${apiMethod.name} gave IP-locked CDN URL, trying next...`);
-          continue;
-        }
+        // Google Video (googlevideo.com/videoplayback) URLs are short-lived.
+        // Try downloading them immediately instead of discarding them; the next
+        // .play request obtains a fresh URL from the provider if this one expires.
+        const isGoogleVideo = /googlevideo\\.com|youtube\\.com\\/videoplayback/i.test(audioUrl);
 
         const headers = {
           'User-Agent': UA,
           Accept: '*/*',
           'Accept-Encoding': 'identity',
+          ...(isGoogleVideo ? { Referer: 'https://www.youtube.com/' } : {}),
         };
         if (audioData.referer) headers.Referer = audioData.referer;
 
