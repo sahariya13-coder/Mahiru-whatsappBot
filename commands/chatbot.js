@@ -565,6 +565,54 @@ function extractGeminiText(data) {
     return String(result || '').trim();
 }
 
+async function sendWormAIRequest(prompt) {
+    const endpoint = 'https://xrahat-worm-ai.vercel.app/api/chat';
+    const url = new URL(endpoint);
+    url.searchParams.set('uid', '1');
+    url.searchParams.set('text', prompt);
+
+    const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: { Accept: 'application/json, text/plain, */*' },
+        signal: AbortSignal.timeout(45000)
+    });
+
+    const body = await response.text();
+
+    if (!response.ok) {
+        throw new Error(`Worm AI HTTP ${response.status}: ${body.slice(0, 300)}`);
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(body);
+    } catch {
+        parsed = body;
+    }
+
+    if (typeof parsed === 'string') return parsed.trim();
+
+    const candidates = [
+        parsed?.response,
+        parsed?.reply,
+        parsed?.message,
+        parsed?.answer,
+        parsed?.output,
+        parsed?.output_text,
+        parsed?.text,
+        parsed?.result,
+        parsed?.data?.response,
+        parsed?.data?.reply,
+        parsed?.data?.message,
+        parsed?.data?.text
+    ];
+
+    const answer = candidates.find(value => typeof value === 'string' && value.trim());
+    if (answer) return answer.trim();
+
+    throw new Error('Worm AI returned an unrecognized or empty response');
+}
+
 async function getAIResponse(userContext = {}) {
     if (
         !GEMINI_API_KEY ||
@@ -610,6 +658,21 @@ ${JSON.stringify(userContext.userInfo || {})}
             return `${label}: ${item.replace(/^(User|Mahiru):\s*/, '')}`;
         })
         .join('\n');
+
+    // Primary AI: Worm API. If it fails, continue with the existing Gemini API.
+    try {
+        const wormPrompt = `${systemPrompt}\n\nConversation:\n${fullInput}\nMahiru:`;
+        const wormResponse = await sendWormAIRequest(wormPrompt);
+
+        if (wormResponse) {
+            console.log('✅ Worm AI success');
+            return wormResponse
+                .replace(/^\\s*(Knight Bot|You|Mahiru)\\s*:\\s*/i, '')
+                .trim();
+        }
+    } catch (error) {
+        console.error('⚠️ Worm AI failed; switching to Gemini fallback:', error.message);
+    }
 
     const requestBody = JSON.stringify({
         system_instruction: systemPrompt,
