@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const settings = {
   packname: 'Mahiru',
-  author: '‎',
+  author: '‎MSK',
   botName: "Mahiru Shiina",
   botOwner: 'MSK', // Your display name
   ownerUsername: 'MSKBro0', // WhatsApp username without @
