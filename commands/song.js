@@ -1,5 +1,6 @@
 const axios = require('axios');
 const yts = require('yt-search');
+const ytMusic = require('node-youtube-music');
 const fs = require('fs');
 const path = require('path');
 const { toAudio } = require('../lib/converter');
@@ -43,9 +44,33 @@ async function resolveVideoInfo(text) {
     return { url: text.trim(), title: 'YouTube Audio', thumbnail: null, timestamp: '—' };
   }
 
-  const search = await yts(text);
-  if (!search?.videos?.length) return null;
-  return search.videos[0];
+  // Try the regular YouTube search first.
+  try {
+    const search = await yts(text);
+    if (search?.videos?.length) return search.videos[0];
+  } catch (err) {
+    console.log('[song] yt-search failed:', err?.message || err);
+  }
+
+  // Fallback: YouTube Music search (already included in package.json).
+  try {
+    if (typeof ytMusic.searchMusics === 'function') {
+      const tracks = await ytMusic.searchMusics(text);
+      const track = Array.isArray(tracks) ? tracks.find((item) => item?.youtubeId) : null;
+      if (track) {
+        return {
+          url: `https://www.youtube.com/watch?v=${track.youtubeId}`,
+          title: track.title || 'YouTube Music',
+          thumbnail: track.thumbnail?.url || track.thumbnail || track.thumbnails?.[0]?.url || null,
+          timestamp: track.duration?.label || track.duration || '—',
+        };
+      }
+    }
+  } catch (err) {
+    console.log('[song] YouTube Music fallback failed:', err?.message || err);
+  }
+
+  return null;
 }
 
 async function fetchAudioBuffer(audioUrl, headers, attempts = 3) {
