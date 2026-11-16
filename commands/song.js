@@ -139,9 +139,9 @@ async function songCommand(sock, chatId, message) {
         : 'Unknown');
 
     const songCaption =
-      '🎵 Downloading: *' + (video.title || 'YouTube Audio') + '*\\n' +
-      '⏱ Duration: ' + duration + '\\n' +
-      '✨ BY MSK';
+      '🎵 Downloading: *' + (video.title || 'YouTube Audio') + '*\n' +
+      '⏱ Duration: ' + duration + '\n' +
+      '✨ *BY MSK*';
 
     if (thumbnail) {
       await sock.sendMessage(chatId, {
