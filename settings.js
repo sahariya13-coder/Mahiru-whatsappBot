@@ -22,7 +22,6 @@ const settings = {
   princeApiUrl: process.env.PRINCE_API_URL || 'https://api.princetechn.com',
   princeApiKey: process.env.PRINCE_API_KEY || 'prince',
   // Optional hosted song APIs (set keys in hosting environment variables)
-  tunelioApiKey: process.env.TUNELIO_API_KEY || '',
   vidFetchApiKey: process.env.VIDFETCH_API_KEY || '',
 };
 
