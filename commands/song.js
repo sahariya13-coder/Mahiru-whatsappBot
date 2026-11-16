@@ -64,7 +64,6 @@ async function samplecutSongDownload(videoUrl) {
 async function getAudioDownload(videoUrl) {
   const providers = [
     ['Samplecut', () => samplecutSongDownload(videoUrl)],
-    ['SaveDock', () => api.saveDockSongDownload(videoUrl)],
     ['VidFetch', () => api.vidFetchSongDownload(videoUrl)],
     ['Knight', () => api.knightSongDownload(videoUrl, 1)],
     ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
@@ -73,7 +72,8 @@ async function getAudioDownload(videoUrl) {
     ['EliteProTech', () => api.getEliteProTechDownloadByUrl(videoUrl)],
     ['Yupra', () => api.getYupraDownloadByUrl(videoUrl)],
     ['Okatsu', () => api.getOkatsuDownloadByUrl(videoUrl)],
-    ['Izumi', () => api.getIzumiDownloadByUrl(videoUrl)]
+    ['Izumi', () => api.getIzumiDownloadByUrl(videoUrl)],
+    ['SaveDock', () => api.saveDockSongDownload(videoUrl)]
   ];
 
   const errors = [];
