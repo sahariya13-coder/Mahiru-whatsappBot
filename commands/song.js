@@ -130,9 +130,17 @@ async function songCommand(sock, chatId, message) {
     const thumbnail =
       video.thumbnail ||
       (videoId ? 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg' : null);
+    const duration =
+      video.timestamp ||
+      video.duration?.timestamp ||
+      (Number.isFinite(video.duration?.seconds)
+        ? Math.floor(video.duration.seconds / 60) + ':' +
+          String(video.duration.seconds % 60).padStart(2, '0')
+        : 'Unknown');
+
     const songCaption =
-      '🎵 *' + (video.title || 'YouTube Audio') + '*\\n' +
-      '⏳ Audio প্রসেস হচ্ছে...\\n' +
+      '🎵 Downloading: *' + (video.title || 'YouTube Audio') + '*\\n' +
+      '⏱ Duration: ' + duration + '\\n' +
       '🤖 Mahiru Shiina';
 
     if (thumbnail) {
