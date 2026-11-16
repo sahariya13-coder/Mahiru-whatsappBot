@@ -126,10 +126,25 @@ async function songCommand(sock, chatId, message) {
 
     const video = await resolveVideoInfo(query);
 
-    await sock.sendMessage(chatId, {
-      text: '🔎 গান পাওয়া গেছে: *' + (video.title || 'YouTube Audio') +
-        '*\n⏳ Audio API দিয়ে প্রসেস হচ্ছে...'
-    }, { quoted: message });
+    const videoId = extractYouTubeId(video.url);
+    const thumbnail =
+      video.thumbnail ||
+      (videoId ? 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg' : null);
+    const songCaption =
+      '🎵 *' + (video.title || 'YouTube Audio') + '*\\n' +
+      '⏳ Audio প্রসেস হচ্ছে...\\n' +
+      '🤖 Mahiru Shiina';
+
+    if (thumbnail) {
+      await sock.sendMessage(chatId, {
+        image: { url: thumbnail },
+        caption: songCaption
+      }, { quoted: message });
+    } else {
+      await sock.sendMessage(chatId, {
+        text: songCaption
+      }, { quoted: message });
+    }
 
     const audio = await getAudioDownload(video.url);
 
