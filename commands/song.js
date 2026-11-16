@@ -141,7 +141,7 @@ async function songCommand(sock, chatId, message) {
     const songCaption =
       '🎵 Downloading: *' + (video.title || 'YouTube Audio') + '*\n' +
       '⏱ Duration: ' + duration + '\n' +
-      '✨ *BY MSK*';
+      '✨ *Mahiru Shiina*';
 
     if (thumbnail) {
       await sock.sendMessage(chatId, {
