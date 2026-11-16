@@ -87,6 +87,7 @@ function downloadWithYtDlp(videoUrl, title) {
       '--audio-format', 'mp3',
       '--audio-quality', '5',
       '--ffmpeg-location', '/usr/bin/ffmpeg',
+      ...(fs.existsSync(path.join(process.cwd(), 'cookies.txt')) ? ['--cookies', path.join(process.cwd(), 'cookies.txt')] : []),
       '--output', `${basePath}.%(ext)s`,
       videoUrl,
     ];
