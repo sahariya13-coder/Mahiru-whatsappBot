@@ -9,13 +9,13 @@ let songBusy = false;
 function extractYouTubeId(input) {
   const text = String(input || '').trim();
   const match =
-    text.match(/(?:youtube\\.com\\/(?:watch\\?.*?v=|embed\\/|shorts\\/|live\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})/i) ||
+    text.match(/(?:youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i) ||
     text.match(/^([a-zA-Z0-9_-]{11})$/);
   return match?.[1] || null;
 }
 
 async function resolveVideoInfo(query) {
-  if (/youtube\\.com|youtu\\.be/i.test(query)) {
+  if (/youtube\.com|youtu\.be/i.test(query)) {
     const id = extractYouTubeId(query);
     return id
       ? { url: `https://www.youtube.com/watch?v=${id}`, title: 'YouTube Audio', timestamp: '—' }
@@ -108,7 +108,7 @@ async function songCommand(sock, chatId, message) {
 
   try {
     const raw = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
-    const query = raw.replace(/^\\.(?:play|song|mp3|ytmp3)\\s*/i, '').trim();
+    const query = raw.replace(/^\.(?:play|song|mp3|ytmp3)\s*/i, '').trim();
     if (!query) {
       await sock.sendMessage(chatId, { text: 'ব্যবহার: .play গানের নাম অথবা YouTube link' }, { quoted: message });
       return;
@@ -121,7 +121,7 @@ async function songCommand(sock, chatId, message) {
     }
 
     await sock.sendMessage(chatId, {
-      text: `🎵 Downloading: *${video.title || 'YouTube Audio'}*\\n⏱ Duration: ${video.timestamp || '—'}`
+      text: `🎵 Downloading: *${video.title || 'YouTube Audio'}*\n⏱ Duration: ${video.timestamp || '—'}`
     }, { quoted: message });
 
     const tempDir = path.join(process.cwd(), 'temp');
@@ -146,7 +146,7 @@ async function songCommand(sock, chatId, message) {
 
     const ext = path.extname(outputFile).toLowerCase();
     const mime = ext === '.m4a' ? 'audio/mp4' : ext === '.webm' ? 'audio/webm' : ext === '.opus' || ext === '.ogg' ? 'audio/ogg; codecs=opus' : 'audio/mpeg';
-    const safeTitle = String(video.title || 'song').replace(/[^\\w\\s-]/g, '').trim().slice(0, 80) || 'song';
+    const safeTitle = String(video.title || 'song').replace(/[^\w\s-]/g, '').trim().slice(0, 80) || 'song';
 
     await sock.sendMessage(chatId, {
       audio: { url: outputFile },
