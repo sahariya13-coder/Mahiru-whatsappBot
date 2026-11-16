@@ -1,8 +1,5 @@
 const yts = require('yt-search');
-const ytMusic = require('node-youtube-music');
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
+const api = require('../lib/api');
 
 let songBusy = false;
 
@@ -17,156 +14,109 @@ function extractYouTubeId(input) {
 async function resolveVideoInfo(query) {
   if (/youtube\.com|youtu\.be/i.test(query)) {
     const id = extractYouTubeId(query);
-    return id
-      ? { url: `https://www.youtube.com/watch?v=${id}`, title: 'YouTube Audio', timestamp: '—' }
-      : { url: query, title: 'YouTube Audio', timestamp: '—' };
+    if (!id) throw new Error('Invalid YouTube URL');
+    return {
+      url: 'https://www.youtube.com/watch?v=' + id,
+      title: 'YouTube Audio',
+      timestamp: '—'
+    };
   }
 
-  try {
-    const result = await yts(query);
-    if (result?.videos?.length) return result.videos[0];
-  } catch (error) {
-    console.log('[song] Search error:', error.message);
-  }
-
-  try {
-    if (typeof ytMusic.searchMusics === 'function') {
-      const tracks = await ytMusic.searchMusics(query);
-      const track = Array.isArray(tracks) ? tracks.find(item => item?.youtubeId) : null;
-      if (track) {
-        return {
-          url: `https://www.youtube.com/watch?v=${track.youtubeId}`,
-          title: track.title || 'YouTube Audio',
-          thumbnail: track.thumbnail?.url || track.thumbnail || null,
-          timestamp: track.duration?.label || '—'
-        };
-      }
-    }
-  } catch (error) {
-    console.log('[song] Music search error:', error.message);
-  }
-  return null;
+  const result = await yts(query);
+  const video = result?.videos?.[0];
+  if (!video?.url) throw new Error('কোনো গান পাওয়া যায়নি।');
+  return video;
 }
 
-function downloadToFile(videoUrl, outputTemplate) {
-  return new Promise((resolve, reject) => {
-    const binary = path.join(process.cwd(), 'bin', 'yt-dlp');
-    if (!fs.existsSync(binary)) return reject(new Error('yt-dlp binary missing in /home/container/bin/'));
+async function getAudioDownload(videoUrl) {
+  const providers = [
+    ['Knight', () => api.knightSongDownload(videoUrl, 1)],
+    ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
+    ['Prince', () => api.princeSongDownload(videoUrl, 1)],
+    ['Prexzy', () => api.prexzySongDownload(videoUrl)],
+    ['EliteProTech', () => api.getEliteProTechDownloadByUrl(videoUrl)],
+    ['Yupra', () => api.getYupraDownloadByUrl(videoUrl)],
+    ['Okatsu', () => api.getOkatsuDownloadByUrl(videoUrl)],
+    ['Izumi', () => api.getIzumiDownloadByUrl(videoUrl)]
+  ];
 
-    const cookieFile = path.join(process.cwd(), 'cookies.txt');
-    const args = [
-      '--no-playlist',
-      '--no-warnings',
-      '--no-progress',
-      '--js-runtimes', 'node',
-      '--remote-components', 'ejs:github',
-      '-f', 'bestaudio[ext=m4a]/bestaudio',
-      '--max-filesize', '15M',
-      '--match-filter', 'duration <= 600',
-      '--concurrent-fragments', '1',
-      '--output', outputTemplate
-    ];
-    if (fs.existsSync(cookieFile)) args.push('--cookies', cookieFile);
-    args.push(videoUrl);
+  const errors = [];
+  for (const [name, download] of providers) {
+    try {
+      const result = await download();
+      const url = result?.download || result?.dl_url || result?.url;
+      if (!url || !/^https?:\/\//i.test(url)) {
+        throw new Error('API returned no valid audio URL');
+      }
+      if (api.isIpLockedCdn?.(url)) {
+        throw new Error('API returned an IP-locked YouTube URL');
+      }
+      console.log('[song] Provider selected:', name);
+      return {
+        url,
+        title: result.title || null,
+        thumbnail: result.thumbnail || null
+      };
+    } catch (error) {
+      console.log('[song] ' + name + ' failed:', error.message);
+      errors.push(name + ': ' + error.message);
+    }
+  }
 
-    const child = spawn(binary, args, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-      env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=96' }
-    });
-
-    let stderr = '';
-    let finished = false;
-    const timer = setTimeout(() => child.kill('SIGKILL'), 120000);
-
-    child.stderr.on('data', chunk => {
-      if (stderr.length < 4000) stderr += chunk.toString();
-    });
-    child.on('error', error => {
-      clearTimeout(timer);
-      if (finished) return;
-      finished = true;
-      reject(error);
-    });
-    child.on('close', code => {
-      clearTimeout(timer);
-      if (finished) return;
-      finished = true;
-      if (code !== 0) return reject(new Error(stderr.slice(-1800) || `yt-dlp exit ${code}`));
-      resolve();
-    });
-  });
+  throw new Error('সব Audio API ব্যর্থ হয়েছে।');
 }
 
 async function songCommand(sock, chatId, message) {
   if (songBusy) {
-    await sock.sendMessage(chatId, { text: '⏳ অন্য একটি গান ডাউনলোড হচ্ছে। একটু পরে আবার চেষ্টা করুন।' }, { quoted: message });
+    await sock.sendMessage(chatId, {
+      text: '⏳ অন্য একটি গান প্রসেস হচ্ছে। একটু পরে আবার চেষ্টা করুন।'
+    }, { quoted: message });
     return;
   }
 
   songBusy = true;
-  let outputFile = null;
-
   try {
-    const raw = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    const raw =
+      message.message?.conversation ||
+      message.message?.extendedTextMessage?.text ||
+      '';
     const query = raw.replace(/^\.(?:play|song|mp3|ytmp3)\s*/i, '').trim();
+
     if (!query) {
-      await sock.sendMessage(chatId, { text: 'ব্যবহার: .play গানের নাম অথবা YouTube link' }, { quoted: message });
+      await sock.sendMessage(chatId, {
+        text: 'ব্যবহার: .play গানের নাম অথবা YouTube link'
+      }, { quoted: message });
       return;
     }
 
     const video = await resolveVideoInfo(query);
-    if (!video?.url) {
-      await sock.sendMessage(chatId, { text: 'কোনো গান পাওয়া যায়নি।' }, { quoted: message });
-      return;
-    }
 
     await sock.sendMessage(chatId, {
-      text: `🎵 Downloading: *${video.title || 'YouTube Audio'}*\n⏱ Duration: ${video.timestamp || '—'}`
+      text: '🔎 গান পাওয়া গেছে: *' + (video.title || 'YouTube Audio') +
+        '*\n⏳ Audio API দিয়ে প্রসেস হচ্ছে...'
     }, { quoted: message });
 
-    const tempDir = path.join(process.cwd(), 'temp');
-    fs.mkdirSync(tempDir, { recursive: true });
-    const base = path.join(tempDir, `mah_song_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-    const outputTemplate = `${base}.%(ext)s`;
-
-    await downloadToFile(video.url, outputTemplate);
-
-    const candidates = fs.readdirSync(tempDir)
-      .filter(name => name.startsWith(path.basename(base) + '.'))
-      .map(name => path.join(tempDir, name))
-      .filter(file => fs.statSync(file).isFile());
-
-    if (!candidates.length) throw new Error('ডাউনলোড করা অডিও ফাইল পাওয়া যায়নি।');
-
-    outputFile = candidates[0];
-    const stat = fs.statSync(outputFile);
-    if (!stat.size || stat.size > 15 * 1024 * 1024) {
-      throw new Error('অডিও ফাইল খালি অথবা ১৫ MB-এর বেশি।');
-    }
-
-    const ext = path.extname(outputFile).toLowerCase();
-    const mime = ext === '.m4a' ? 'audio/mp4' : ext === '.webm' ? 'audio/webm' : ext === '.opus' || ext === '.ogg' ? 'audio/ogg; codecs=opus' : 'audio/mpeg';
-    const safeTitle = String(video.title || 'song').replace(/[^\w\s-]/g, '').trim().slice(0, 80) || 'song';
+    const audio = await getAudioDownload(video.url);
 
     await sock.sendMessage(chatId, {
-      audio: { url: outputFile },
-      mimetype: mime,
-      fileName: `${safeTitle}${ext}`,
+      audio: { url: audio.url },
+      mimetype: 'audio/mpeg',
+      fileName: (String(audio.title || video.title || 'Mahiru-Song')
+        .replace(/[^\w\s-]/g, '')
+        .trim()
+        .slice(0, 80) || 'Mahiru-Song') + '.mp3',
       ptt: false
     }, { quoted: message });
 
-    console.log(`[song] Sent file from disk (${stat.size} bytes)`);
+    console.log('[song] Audio sent through API URL');
   } catch (error) {
     console.error('[song] Command failed:', error.message);
     await sock.sendMessage(chatId, {
-      text: error.message?.includes('Sign in to confirm')
-        ? '❌ YouTube download block করেছে। cookies.txt সঠিকভাবে আপলোড করা আছে কি না দেখুন।'
-        : '❌ গান ডাউনলোড করা যায়নি। YouTube বা downloader error হয়েছে।'
+      text: error.message === 'সব Audio API ব্যর্থ হয়েছে।'
+        ? '❌ সব Audio API এই মুহূর্তে কাজ করছে না। পরে আবার চেষ্টা করুন।'
+        : '❌ গান প্রসেস করা যায়নি: ' + String(error.message || 'Unknown error').slice(0, 180)
     }, { quoted: message });
   } finally {
-    if (outputFile) {
-      try { fs.unlinkSync(outputFile); } catch {}
-    }
     songBusy = false;
   }
 }
