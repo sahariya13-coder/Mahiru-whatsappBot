@@ -64,6 +64,7 @@ async function samplecutSongDownload(videoUrl) {
 async function getAudioDownload(videoUrl) {
   const providers = [
     ['Samplecut', () => samplecutSongDownload(videoUrl)],
+    ['SaveDock', () => api.saveDockSongDownload(videoUrl)],
     ['VidFetch', () => api.vidFetchSongDownload(videoUrl)],
     ['Knight', () => api.knightSongDownload(videoUrl, 1)],
     ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
