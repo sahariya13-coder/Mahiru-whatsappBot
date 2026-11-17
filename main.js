@@ -224,7 +224,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         // Unactivated groups can only inspect their ID and request activation.
         if (isGroup && !groupAccess.isActive(chatId) &&
-            !/^\.(gid|gact|gdeact)(?:\s|$)/i.test(rawText || '')) {
+            !/^\.(gid|gact|gdeact|myid)(?:\s|$)/i.test(rawText || '')) {
             await sock.sendMessage(chatId, {
                 text: `এই গ্রুপে Mahiru এখনো Active করা হয়নি।\nBot Owner-এর কাছে Group ID পাঠিয়ে Active করিয়ে নিন।\n\nOwner: ${settings.ownerUsername ? 'https://wa.me//' + settings.ownerUsername.replace(/^@/, '') : (settings.botOwner || 'Bot Owner')}\nGroup ID: ${chatId}`,
                 linkPreview: null
@@ -1184,6 +1184,48 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.imagine') || userMessage.startsWith('.flux') || userMessage.startsWith('.dalle'):
                 await imagineCommand(sock, chatId, message);
                 break;
+
+            case userMessage === '.myid': {
+                if (isGroup) {
+                    await sock.sendMessage(chatId, {
+                        text: '🔐 নিজের WhatsApp ID দেখতে বটকে ব্যক্তিগত চ্যাটে গিয়ে .myid পাঠাও।'
+                    }, { quoted: message });
+                    break;
+                }
+
+                const key = message.key || {};
+                const ids = [
+                    ['Sender ID', senderId],
+                    ['Participant', key.participant],
+                    ['Participant Alt', key.participantAlt],
+                    ['Remote JID', key.remoteJid],
+                    ['Remote JID Alt', key.remoteJidAlt],
+                    ['Sender PN', key.senderPn],
+                    ['Participant PN', message.participant],
+                    ['Participant Alt PN', message.participantAlt],
+                    ['Message Sender PN', message.senderPn]
+                ].filter(([, value]) => typeof value === 'string' && value);
+
+                const uniqueIds = [...new Map(ids.map(([label, value]) => [label + ':' + value, [label, value]])).values()];
+                let mappedPhone = '';
+                const lid = uniqueIds.map(([, value]) => value).find(value => value.endsWith('@lid'));
+                try {
+                    const resolver = sock?.signalRepository?.lidMapping?.getPNForLID;
+                    if (lid && typeof resolver === 'function') {
+                        mappedPhone = await resolver.call(sock.signalRepository.lidMapping, lid) || '';
+                    }
+                } catch (error) {
+                    console.log('[MYID] LID mapping lookup failed:', error.message);
+                }
+
+                const idLines = uniqueIds.map(([label, value]) => label + ': ' + value);
+                if (mappedPhone) idLines.push('Mapped Phone: ' + mappedPhone);
+                idLines.push('', 'Owner সেট করতে settings.js-এর ownerLid-এ @lid-যুক্ত ID-টি বসাও।');
+                await sock.sendMessage(chatId, {
+                    text: '🆔 *MAHIRU • YOUR WHATSAPP ID*\\n\\n' + idLines.join('\\n')
+                }, { quoted: message });
+                break;
+            }
 
             case userMessage === '.jid':
                 await groupJidCommand(sock, chatId, message);
