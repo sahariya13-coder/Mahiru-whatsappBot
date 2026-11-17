@@ -79,6 +79,10 @@
     "node": ">=18.0.0"
   },
   "allowScripts": {
-    "sharp@0.32.6": true
+    "sharp@0.32.6": true,
+    "@whiskeysockets/baileys@7.0.0-rc14": true,
+    "es5-ext@0.10.64": true,
+    "protobufjs@6.8.8": true,
+    "protobufjs@7.6.6": true
   }
 }
