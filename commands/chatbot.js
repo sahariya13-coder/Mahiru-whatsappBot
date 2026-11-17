@@ -390,31 +390,11 @@ async function handleChatbotResponse(
             message.key?.remoteJid ||
             'unknown';
 
-        // Match the configured owner phone number against every sender JID
-        // WhatsApp may provide. On newer WhatsApp accounts, participant/remoteJid
-        // can be an @lid value while the corresponding phone JID is in an *Alt field.
-        const settings = require('../settings');
-        const ownerNumber = normalizeJid(settings.ownerNumber || '');
-        const senderCandidates = [
-            sender,
-            message.key?.participant,
-            message.key?.participantAlt,
-            message.key?.remoteJid,
-            message.key?.remoteJidAlt,
-            message.participant,
-            message.participantAlt
-        ].filter(Boolean);
-        const senderNumbers = [...new Set(senderCandidates.map(normalizeJid).filter(Boolean))];
-        const linkedAccountIds = [sock.user?.id, sock.user?.lid].filter(Boolean);
-        const isOwner = Boolean(
-            (ownerNumber && senderNumbers.includes(ownerNumber)) ||
-            linkedAccountIds.some(id =>
-                senderCandidates.some(candidate =>
-                    String(id) === String(candidate) ||
-                    (normalizeJid(id) && normalizeJid(id) === normalizeJid(candidate))
-                )
-            )
-        );
+        // Use the shared PN/LID-aware Owner identity resolver.
+        // It verifies the configured owner number, resolves Baileys LID mappings,
+        // and remembers only LIDs that were matched to the verified phone number.
+        const { isConfiguredOwner } = require('../lib/isOwner');
+        const isOwner = await isConfiguredOwner(sender, sock, chatId, message);
 
         memoryKey = `${chatId}:${sender}`;
 
