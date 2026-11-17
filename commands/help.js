@@ -34,6 +34,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .trt <text> <lang>
 ║ ➤ .ss <link>
 ║ ➤ .jid
+║ ➤ .uid (reply/mention someone to view their UID)
 ║ ➤ .url
 ╚═══════════════════╝
 
