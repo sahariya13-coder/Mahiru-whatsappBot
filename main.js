@@ -248,7 +248,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
             await handleTicTacToeMove(sock, chatId, senderId, userMessage);
             return;
         }
-
         if (!message.key.fromMe) incrementMessageCount(chatId, senderId);
 
         // Moderation checks
@@ -497,8 +496,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 let data;
                 try {
                     data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
-                } catch (error) {
-                    console.error('Error reading access mode:', error);
+                } catch (error) {                    console.error('Error reading access mode:', error);
                     await sock.sendMessage(chatId, {
                         text: 'Failed to read bot mode status',
                         ...channelInfo
@@ -747,8 +745,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const stupidQuotedMsg = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
                 const stupidMentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
                 const stupidArgs = userMessage.split(' ').slice(1);
-                await stupidCommand(sock, chatId, stupidQuotedMsg, stupidMentionedJid, senderId, stupidArgs);
-                break;
+                await stupidCommand(sock, chatId, stupidQuotedMsg, stupidMentionedJid, senderId, stupidArgs);                break;
             }
 
             case userMessage === '.dare':
@@ -997,8 +994,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await clearSessionCommand(sock, chatId, message);
                 break;
 
-            case userMessage.startsWith('.autostatus'): {
-                const autoStatusArgs = userMessage.split(' ').slice(1);
+            case userMessage.startsWith('.autostatus'): {                const autoStatusArgs = userMessage.split(' ').slice(1);
                 await autoStatusCommand(sock, chatId, message, autoStatusArgs);
                 break;
             }
@@ -1186,43 +1182,20 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
 
             case userMessage === '.uid': {
-                if (isGroup) {
-                    await sock.sendMessage(chatId, {
-                        text: '🔐 নিজের WhatsApp ID দেখতে বটকে ব্যক্তিগত চ্যাটে গিয়ে .uid পাঠাও।'
-                    }, { quoted: message });
-                    break;
-                }
+                const contextInfo = message.message?.extendedTextMessage?.contextInfo || {};
+                const quotedParticipant = contextInfo.participant || contextInfo.remoteJid || '';
+                const mentioned = contextInfo.mentionedJid || [];
+                const candidates = [
+                    quotedParticipant,
+                    contextInfo.participantAlt,
+                    contextInfo.remoteJidAlt,
+                    ...(mentioned || [])
+                ].filter(value => typeof value === 'string' && value);
+                const targetId = candidates.find(value => value.endsWith('@lid')) ||
+                    candidates[0] || senderId;
 
-                const key = message.key || {};
-                const ids = [
-                    ['Sender ID', senderId],
-                    ['Participant', key.participant],
-                    ['Participant Alt', key.participantAlt],
-                    ['Remote JID', key.remoteJid],
-                    ['Remote JID Alt', key.remoteJidAlt],
-                    ['Sender PN', key.senderPn],
-                    ['Participant PN', message.participant],
-                    ['Participant Alt PN', message.participantAlt],
-                    ['Message Sender PN', message.senderPn]
-                ].filter(([, value]) => typeof value === 'string' && value);
-
-                const uniqueIds = [...new Map(ids.map(([label, value]) => [label + ':' + value, [label, value]])).values()];
-                let mappedPhone = '';
-                const lid = uniqueIds.map(([, value]) => value).find(value => value.endsWith('@lid'));
-                try {
-                    const resolver = sock?.signalRepository?.lidMapping?.getPNForLID;
-                    if (lid && typeof resolver === 'function') {
-                        mappedPhone = await resolver.call(sock.signalRepository.lidMapping, lid) || '';
-                    }
-                } catch (error) {
-                    console.log('[MYID] LID mapping lookup failed:', error.message);
-                }
-
-                const idLines = uniqueIds.map(([label, value]) => label + ': ' + value);
-                if (mappedPhone) idLines.push('Mapped Phone: ' + mappedPhone);
-                idLines.push('', 'Owner সেট করতে settings.js-এর ownerLid-এ @lid-যুক্ত ID-টি বসাও।');
                 await sock.sendMessage(chatId, {
-                    text: '🆔 *MAHIRU • YOUR WHATSAPP ID*\\n\\n' + idLines.join('\\n')
+                    text: '🆔 *MAHIRU • WHATSAPP UID*\\n\\n' + targetId
                 }, { quoted: message });
                 break;
             }
@@ -1247,8 +1220,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             case userMessage.startsWith('.horny'): {
                 const parts = userMessage.trim().split(/\s+/);
-                const args = ['horny', ...parts.slice(1)];
-                await miscCommand(sock, chatId, message, args);
+                const args = ['horny', ...parts.slice(1)];                await miscCommand(sock, chatId, message, args);
                 break;
             }
 
@@ -1497,8 +1469,7 @@ async function handleGroupParticipantUpdate(sock, update) {
         if (action === 'promote') {
             if (!isPublic) return;
             await handlePromotionEvent(sock, id, participants, author);
-            return;
-        }
+            return;        }
 
         if (action === 'demote') {
             if (!isPublic) return;
