@@ -120,6 +120,32 @@ async function startXeonBotInc() {
             keepAliveIntervalMs: 10000,
         })
 
+        // Wait for the WhatsApp socket to begin connecting before requesting a pairing code.
+        // This listener is attached immediately after socket creation so the event is not missed.
+        let resolvePairingReady;
+        let rejectPairingReady;
+        let pairingReadyTimer;
+        const pairingReady = pairingCode ? new Promise((resolve, reject) => {
+            resolvePairingReady = resolve;
+            rejectPairingReady = reject;
+            pairingReadyTimer = setTimeout(() => {
+                XeonBotInc.ev.off('connection.update', pairingReadyHandler);
+                reject(new Error('Timed out waiting for WhatsApp connection to start.'));
+            }, 15000);
+        }) : Promise.resolve();
+        const pairingReadyHandler = (update) => {
+            if (update.connection === 'connecting') {
+                clearTimeout(pairingReadyTimer);
+                XeonBotInc.ev.off('connection.update', pairingReadyHandler);
+                resolvePairingReady?.();
+            } else if (update.connection === 'close') {
+                clearTimeout(pairingReadyTimer);
+                XeonBotInc.ev.off('connection.update', pairingReadyHandler);
+                rejectPairingReady?.(update.lastDisconnect?.error || new Error('WhatsApp connection closed before pairing.'));
+            }
+        };
+        if (pairingCode) XeonBotInc.ev.on('connection.update', pairingReadyHandler);
+
         // Save credentials when they update
         XeonBotInc.ev.on('creds.update', saveCreds)
 
@@ -228,17 +254,18 @@ async function startXeonBotInc() {
             process.exit(1);
         }
 
-        setTimeout(async () => {
-            try {
-                let code = await XeonBotInc.requestPairingCode(phoneNumber)
-                code = code?.match(/.{1,4}/g)?.join("-") || code
-                console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
-                console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`))
-            } catch (error) {
-                console.error('Error requesting pairing code:', error)
-                console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
-            }
-        }, 3000)
+        try {
+            await pairingReady;
+            // Give the WebSocket a moment after its connecting event before requesting the code.
+            await delay(1500);
+            let code = await XeonBotInc.requestPairingCode(phoneNumber);
+            code = code?.match(/.{1,4}/g)?.join("-") || code;
+            console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)));
+            console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`));
+        } catch (error) {
+            console.error('Error requesting pairing code:', error);
+            console.log(chalk.red('Failed to get pairing code. Check the connection log above; do not delete the session unless WhatsApp reports that it is logged out.'));
+        }
     }
 
     // Connection handling
