@@ -626,14 +626,6 @@ async function sendWormAIRequest(prompt) {
 }
 
 async function getAIResponse(userContext = {}) {
-    if (
-        !GEMINI_API_KEY ||
-        GEMINI_API_KEY === 'PASTE_YOUR_NEW_GEMINI_API_KEY_HERE'
-    ) {
-        console.error('Gemini API key missing!');
-        return null;
-    }
-
     const systemPrompt = `
 তুমি Mahiru। WhatsApp-এ একজন স্বাভাবিক মানুষের মতো কথা বলবে।
 
@@ -688,6 +680,11 @@ ${JSON.stringify(userContext.userInfo || {})}
         }
     } catch (error) {
         console.error('⚠️ Worm AI failed; switching to Gemini fallback:', error.message);
+    }
+
+    if (!GEMINI_API_KEY) {
+        console.error('Gemini API key missing; Worm AI also failed.');
+        return null;
     }
 
     const requestBody = JSON.stringify({
