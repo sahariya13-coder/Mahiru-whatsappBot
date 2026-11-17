@@ -181,7 +181,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const senderId = message.key.participant || message.key.remoteJid;
         const isGroup = chatId.endsWith('@g.us');
         const senderIsSudo = await isSudo(senderId);
-        const senderIsOwnerOrSudo = await isOwnerOrSudo(senderId, sock, chatId);
+        const senderIsOwnerOrSudo = await isOwnerOrSudo(senderId, sock, chatId, message);
 
         // Handle button responses
         if (message.message?.buttonsResponseMessage) {
