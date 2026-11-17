@@ -224,7 +224,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         // Unactivated groups can only inspect their ID and request activation.
         if (isGroup && !groupAccess.isActive(chatId) &&
-            !/^\.(gid|gact|gdeact|myid)(?:\s|$)/i.test(rawText || '')) {
+            !/^\.(gid|gact|gdeact|uid)(?:\s|$)/i.test(rawText || '')) {
             await sock.sendMessage(chatId, {
                 text: `এই গ্রুপে Mahiru এখনো Active করা হয়নি।\nBot Owner-এর কাছে Group ID পাঠিয়ে Active করিয়ে নিন।\n\nOwner: ${settings.ownerUsername ? 'https://wa.me//' + settings.ownerUsername.replace(/^@/, '') : (settings.botOwner || 'Bot Owner')}\nGroup ID: ${chatId}`,
                 linkPreview: null
@@ -1185,10 +1185,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await imagineCommand(sock, chatId, message);
                 break;
 
-            case userMessage === '.myid': {
+            case userMessage === '.uid': {
                 if (isGroup) {
                     await sock.sendMessage(chatId, {
-                        text: '🔐 নিজের WhatsApp ID দেখতে বটকে ব্যক্তিগত চ্যাটে গিয়ে .myid পাঠাও।'
+                        text: '🔐 নিজের WhatsApp ID দেখতে বটকে ব্যক্তিগত চ্যাটে গিয়ে .uid পাঠাও।'
                     }, { quoted: message });
                     break;
                 }
