@@ -14,6 +14,7 @@ const GEMINI_API_URL =
     'https://generativelanguage.googleapis.com/v1beta/interactions';
 
 const GEMINI_TIMEOUT = 100000;
+const API_ERROR_MESSAGE = 'এখন তোমার সাথে কথা বলবো না 😫';
 
 // Primary এবং Fallback models
 const GEMINI_MODELS = [
@@ -457,7 +458,7 @@ async function handleChatbotResponse(
 
         if (!response) {
             return await sock.sendMessage(chatId, {
-                text: 'এখন তোমার সাথে কথা বলবো না। 😫'
+                text: API_ERROR_MESSAGE
             }, { quoted: message });
         }
 
@@ -478,7 +479,7 @@ async function handleChatbotResponse(
 
         try {
             await sock.sendMessage(chatId, {
-                text: 'এখন তোমার সাথে কথা বলবো না। 😩'
+                text: API_ERROR_MESSAGE
             }, { quoted: message });
         } catch (sendError) {
             console.error('Message sending error:', sendError.message);
@@ -617,7 +618,17 @@ async function sendWormAIRequest(prompt) {
         parsed = body;
     }
 
-    if (typeof parsed === 'string') return parsed.trim();
+    if (typeof parsed === 'string') {
+        const text = parsed.trim();
+        if (!text || /something went wrong|internal server error|api error|\berror\b|failed to (fetch|process|generate)|contact .*dev/i.test(text)) {
+            throw new Error('Worm AI returned an error response');
+        }
+        return text;
+    }
+
+    if (parsed?.error || parsed?.success === false || parsed?.status === 'error') {
+        throw new Error('Worm AI API reported an error');
+    }
 
     const candidates = [
         parsed?.response,
@@ -635,7 +646,13 @@ async function sendWormAIRequest(prompt) {
     ];
 
     const answer = candidates.find(value => typeof value === 'string' && value.trim());
-    if (answer) return answer.trim();
+    if (answer) {
+        const text = answer.trim();
+        if (/something went wrong|internal server error|api error|\berror\b|failed to (fetch|process|generate)|contact .*dev/i.test(text)) {
+            throw new Error('Worm AI returned an error response');
+        }
+        return text;
+    }
 
     throw new Error('Worm AI returned an unrecognized or empty response');
 }
