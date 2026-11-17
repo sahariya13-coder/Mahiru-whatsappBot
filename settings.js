@@ -6,7 +6,8 @@ const settings = {
   botName: "Mahiru Shiina",
   botOwner: 'MSK', // Your display name
   ownerUsername: 'MSKBro0', // WhatsApp username without @
-  ownerNumber: '8801624235915', //Set your number here without + symbol, just add country code & number without any space
+  ownerNumber: '8801624235915', // Country code + number, no plus or spaces
+  ownerLid: '', // Optional: paste your WhatsApp @lid from the .myid command
   giphyApiKey: 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq',
   commandMode: "public",
   maxStoreMessages: 20, 
