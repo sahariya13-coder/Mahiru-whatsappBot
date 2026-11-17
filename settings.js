@@ -7,7 +7,7 @@ const settings = {
   botOwner: 'MSK', // Your display name
   ownerUsername: 'MSKBro0', // WhatsApp username without @
   ownerNumber: '8801624235915', // Country code + number, no plus or spaces
-  ownerLid: '', // Optional: paste your WhatsApp @lid from the .myid command
+  ownerLid: '216123442245856@lid', // Optional: paste your WhatsApp @lid from the .uid command
   giphyApiKey: 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq',
   commandMode: "public",
   maxStoreMessages: 20, 
