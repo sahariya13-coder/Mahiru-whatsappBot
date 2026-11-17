@@ -389,15 +389,30 @@ async function handleChatbotResponse(
             message.key?.remoteJid ||
             'unknown';
 
-        // Verify the configured owner number and the linked bot account JID/LID.
+        // Match the configured owner phone number against every sender JID
+        // WhatsApp may provide. On newer WhatsApp accounts, participant/remoteJid
+        // can be an @lid value while the corresponding phone JID is in an *Alt field.
         const settings = require('../settings');
         const ownerNumber = normalizeJid(settings.ownerNumber || '');
-        const senderNumber = normalizeJid(sender);
+        const senderCandidates = [
+            sender,
+            message.key?.participant,
+            message.key?.participantAlt,
+            message.key?.remoteJid,
+            message.key?.remoteJidAlt,
+            message.participant,
+            message.participantAlt
+        ].filter(Boolean);
+        const senderNumbers = [...new Set(senderCandidates.map(normalizeJid).filter(Boolean))];
         const linkedAccountIds = [sock.user?.id, sock.user?.lid].filter(Boolean);
         const isOwner = Boolean(
-            (ownerNumber && senderNumber === ownerNumber) ||
-            linkedAccountIds.some(id => String(id) === String(sender) ||
-                (normalizeJid(id) && normalizeJid(id) === senderNumber))
+            (ownerNumber && senderNumbers.includes(ownerNumber)) ||
+            linkedAccountIds.some(id =>
+                senderCandidates.some(candidate =>
+                    String(id) === String(candidate) ||
+                    (normalizeJid(id) && normalizeJid(id) === normalizeJid(candidate))
+                )
+            )
         );
 
         memoryKey = `${chatId}:${sender}`;
