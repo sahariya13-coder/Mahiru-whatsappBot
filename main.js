@@ -91,7 +91,7 @@ const { goodbyeCommand, handleLeaveEvent } = require('./commands/goodbye');
 const githubCommand = require('./commands/github');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
 const antibadwordCommand = require('./commands/antibadword');
-const { handleChatbotCommand, handleChatbotResponse } = require('./commands/chatbot');
+const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand } = require('./commands/chatbot');
 const takeCommand = require('./commands/take');
 const { flirtCommand } = require('./commands/flirt');
 const characterCommand = require('./commands/character');
@@ -357,6 +357,19 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage === '.human' || userMessage.startsWith('.human '): {
+                const humanAction = rawText.trim().split(' ').slice(1).join(' ');
+                await handleHumanCommand(
+                    sock,
+                    chatId,
+                    message,
+                    humanAction,
+                    Boolean(message.key.fromMe || senderIsOwnerOrSudo)
+                );
+                commandExecuted = true;
+                break;
+            }
+
             case userMessage === '.gid': {
                 if (!isGroup) {
                     await sock.sendMessage(chatId, { text: 'এই কমান্ডটি গ্রুপে ব্যবহার করুন।' }, { quoted: message });
