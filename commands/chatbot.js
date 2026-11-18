@@ -386,7 +386,7 @@ async function handleChatbotResponse(
         // In groups, a message starting with "Mahiru" wakes the AI,
         // including messages such as "Mahiru, how are you?".
         const nameCallMatch = isGroup
-            ? originalText.match(/^mahiru(?=$|\\s|[,!?।.!-])(?:[\\s,!?।.!-]*)/i)
+            ? originalText.match(/^mahiru(?=$|\s|[,!?।.!-])(?:[\s,!?।.!-]*)/i)
             : null;
         const calledByName = Boolean(nameCallMatch);
 
