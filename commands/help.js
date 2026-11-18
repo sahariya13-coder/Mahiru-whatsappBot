@@ -68,7 +68,7 @@ async function helpCommand(sock, chatId, message) {
 
 ╔═══════════════════╗
 🔒 *Owner Commands*:
-║ ➤ .gid (show Group ID; works before activation)\n║ ➤ .gact <Group ID> (activate group)\n║ ➤ .gdeact <Group ID> (deactivate group)\n║ ➤ .iai on/off (Inbox AI)\n║ ➤ .mode <public/private>
+║ ➤ .gid (show Group ID; works before activation)\n║ ➤ .gact <Group ID> (activate group)\n║ ➤ .gdeact <Group ID> (deactivate group)\n║ ➤ .iai on/off (Inbox AI)\\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
 ║ ➤ .clearsession
 ║ ➤ .antidelete
 ║ ➤ .cleartmp
@@ -84,7 +84,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .pmblocker <on/off/status>
 ║ ➤ .pmblocker setmsg <text>
 ║ ➤ .setmention <reply to msg>
-║ ➤ .mention <on/off>\n║ ➤ Owner: https://wa.me//${(settings.ownerUsername || settings.botOwner || 'Not set').replace(/^@/, '')}
+║ ➤ .mention <on/off>\n║ ➤ .human (show persona mode)\\n║ ➤ .human on/off (Owner only)\\n║ ➤ Owner: https://wa.me//${(settings.ownerUsername || settings.botOwner || 'Not set').replace(/^@/, '')}
 ╚═══════════════════╝
 
 ╔═══════════════════╗
