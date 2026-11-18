@@ -56,7 +56,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .tagall
 ║ ➤ .tagnotadmin
 ║ ➤ .hidetag <message>
-║ ➤ .gai on/off (Group AI: mention/reply to Mahiru)
+║ ➤ .gai on/off (Group AI: mention/reply to Mahiru)\n║ ➤ .chatbot on/off (Group AI)
 ║ ➤ .resetlink
 ║ ➤ .antitag <on/off>
 ║ ➤ .welcome <on/off>
@@ -128,7 +128,7 @@ async function helpCommand(sock, chatId, message) {
 🤖 *AI Commands*:
 ║ ➤ .gpt <question>
 ║ ➤ .gemini <question>
-║ ➤ Inbox AI: private chat-এ auto reply (Owner: .chatbot on/off)
+║ ➤ Inbox AI: private chat-এ auto reply (Owner: .chatbot on/off)\n║ ➤ Chatbot default: ON (Group + Inbox)
 ║ ➤ .imagine <prompt>
 ║ ➤ .flux <prompt>
 ║ ➤ .sora <prompt>
