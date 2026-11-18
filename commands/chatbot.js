@@ -39,7 +39,13 @@ function sleep(ms) {
 function loadUserGroupData() {
     try {
         if (!fs.existsSync(USER_GROUP_DATA)) {
-            return { groups: [], chatbot: {} };
+            const initialData = {
+                groups: [],
+                chatbot: {},
+                humanPersona: true
+            };
+            saveUserGroupData(initialData);
+            return initialData;
         }
 
         const data = JSON.parse(
@@ -50,10 +56,16 @@ function loadUserGroupData() {
             data.chatbot = {};
         }
 
+        // Human persona is ON by default. Preserve an explicit owner choice.
+        if (typeof data.humanPersona !== 'boolean') {
+            data.humanPersona = true;
+            saveUserGroupData(data);
+        }
+
         return data;
     } catch (error) {
         console.error('Data loading error:', error.message);
-        return { groups: [], chatbot: {} };
+        return { groups: [], chatbot: {}, humanPersona: true };
     }
 }
 
