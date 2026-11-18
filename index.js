@@ -15,6 +15,9 @@ const fs = require('fs')
 const chalk = require('chalk')
 const FileType = require('file-type')
 const path = require('path')
+
+// Restore runtime data before loading modules that read JSON settings.
+require('./lib/persistent_data').start()
 const axios = require('axios')
 const { handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main');
 const PhoneNumber = require('awesome-phonenumber')
