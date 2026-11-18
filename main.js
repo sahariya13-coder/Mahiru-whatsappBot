@@ -1181,22 +1181,71 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await imagineCommand(sock, chatId, message);
                 break;
 
-            case userMessage === '.uid': {
+            case userMessage === '.uid' || userMessage.startsWith('.uid '): {
                 const contextInfo = message.message?.extendedTextMessage?.contextInfo || {};
-                const quotedParticipant = contextInfo.participant || contextInfo.remoteJid || '';
-                const mentioned = contextInfo.mentionedJid || [];
-                const candidates = [
-                    quotedParticipant,
-                    contextInfo.participantAlt,
-                    contextInfo.remoteJidAlt,
-                    ...(mentioned || [])
-                ].filter(value => typeof value === 'string' && value);
-                const targetId = candidates.find(value => value.endsWith('@lid')) ||
-                    candidates[0] || senderId;
+                const mentioned = Array.isArray(contextInfo.mentionedJid) ? contextInfo.mentionedJid : [];
+                const args = rawText.trim().split(/\s+/).slice(1);
+                const hasMentionRequest = args.some(arg => arg.startsWith('@'));
+                const quoted = contextInfo.participant || contextInfo.remoteJid || '';
+                const isReply = Boolean(contextInfo.quotedMessage && quoted);
+
+                let candidates = [];
+                if (mentioned.length) {
+                    candidates = mentioned;
+                } else if (isReply) {
+                    candidates = [quoted, contextInfo.participantAlt, contextInfo.remoteJidAlt].filter(Boolean);
+                } else if (hasMentionRequest) {
+                    const numericMention = args.map(arg => arg.replace(/^@/, '').replace(/\D/g, '')).find(Boolean);
+                    if (numericMention) candidates = [numericMention + '@s.whatsapp.net'];
+                } else {
+                    candidates = [
+                        message.key?.participantAlt,
+                        message.key?.remoteJidAlt,
+                        message.key?.participant,
+                        message.key?.remoteJid,
+                        senderId
+                    ].filter(Boolean);
+                }
+
+                if (!candidates.length) {
+                    await sock.sendMessage(chatId, {
+                        text: '❌ মেনশন করা ব্যক্তির ID পাওয়া যায়নি। WhatsApp থেকে কাউকে আসল Mention করে আবার .uid @user দিন।'
+                    }, { quoted: message });
+                    break;
+                }
+
+                let targetId = candidates.find(value => typeof value === 'string' && value.endsWith('@lid')) || candidates[0];
+                let targetName = '';
+                const contact = sock.contacts?.[targetId] || sock.store?.contacts?.[targetId] || {};
+                targetName = contact.name || contact.notify || contact.verifiedName || '';
+
+                if (isGroup) {
+                    try {
+                        const metadata = await sock.groupMetadata(chatId);
+                        const participant = (metadata.participants || []).find(p => {
+                            const ids = [p.id, p.lid, p.phoneNumber, p.phone_number].filter(Boolean);
+                            return ids.some(id => candidates.includes(id)) || ids.includes(targetId);
+                        });
+                        if (participant) {
+                            targetName = targetName || participant.name || participant.notify || participant.verifiedName || '';
+                            const lid = [participant.lid, participant.id].find(id => typeof id === 'string' && id.endsWith('@lid'));
+                            if (lid) targetId = lid;
+                        }
+                    } catch (error) {
+                        console.log('[UID] Group contact lookup failed:', error.message);
+                    }
+                }
+
+                const isSelf = candidates.some(id => id === senderId || id === message.key?.participant || id === message.key?.remoteJid);
+                if (isSelf) targetName = targetName || message.pushName || 'Unknown';
+                targetName = targetName || 'Unknown';
 
                 await sock.sendMessage(chatId, {
-                    text: '🆔 *MAHIRU • WHATSAPP UID*\\n\\n' + targetId
+                    text: '🆔 *MAHIRU • WHATSAPP UID :*\\n\\n' +
+                        '👤 *Name:* ' + targetName + '\\n' +
+                        '🆔 *UID:* ' + targetId
                 }, { quoted: message });
+                commandExecuted = true;
                 break;
             }
 
