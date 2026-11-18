@@ -383,6 +383,10 @@ async function handleChatbotResponse(
 
         const botIdentifiers = getBotIdentifiers(sock);
 
+        // In groups, the exact standalone name "Mahiru" also wakes the AI.
+        // This is intentionally separate from command parsing and mention/reply checks.
+        const calledByName = isGroup && /^mahiru[.!?]*$/i.test(originalText);
+
         if (isGroup) {
             const mentioned = isBotMentioned(
                 message,
@@ -395,10 +399,10 @@ async function handleChatbotResponse(
                 botIdentifiers
             );
 
-            if (!mentioned && !replied) return;
+            if (!mentioned && !replied && !calledByName) return;
         }
 
-        let cleanedMessage = originalText;
+        let cleanedMessage = calledByName ? '' : originalText;
 
         for (const identifier of botIdentifiers) {
             const number = normalizeJid(identifier);
