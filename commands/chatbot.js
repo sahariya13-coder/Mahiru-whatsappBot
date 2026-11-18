@@ -166,6 +166,10 @@ async function handleChatbotCommand(sock, chatId, message, match) {
         if (!data.inboxChatbot || typeof data.inboxChatbot !== 'object') {
             data.inboxChatbot = {};
         }
+        if (typeof data.inboxChatbot[chatId] !== 'boolean') {
+            data.inboxChatbot[chatId] = true;
+            saveUserGroupData(data);
+        }
         if (!match) {
             const enabled = data.inboxChatbot[chatId] !== false;
             return sock.sendMessage(chatId, {
@@ -185,9 +189,15 @@ async function handleChatbotCommand(sock, chatId, message, match) {
     }
 
     if (!match) {
+        if (typeof data.chatbot[chatId] !== 'boolean') {
+            data.chatbot[chatId] = true;
+            saveUserGroupData(data);
+        }
+        const enabled = data.chatbot[chatId] !== false;
         return sock.sendMessage(chatId, {
             text:
                 '*MAHIRU GROUP AI SETTINGS*\n\n' +
+                `বর্তমান অবস্থা: ${enabled ? 'চালু ✅' : 'বন্ধ ❌'}\n\n` +
                 '`.chatbot on` — Group AI চালু\n' +
                 '`.chatbot off` — Group AI বন্ধ\n\n' +
                 'চালু থাকলে Mahiru-কে মেনশন করলে অথবা Mahiru-এর মেসেজে Reply দিলে উত্তর দেবে।'
@@ -347,12 +357,23 @@ async function handleChatbotResponse(
         const isGroup = chatId.endsWith('@g.us');
         const data = loadUserGroupData();
 
-        if (isGroup && data.chatbot[chatId] === false) {
-            return;
+        // First use defaults to ON and is persisted per chat.
+        if (isGroup && typeof data.chatbot[chatId] !== 'boolean') {
+            data.chatbot[chatId] = true;
+            saveUserGroupData(data);
         }
-        if (!isGroup && data.inboxChatbot?.[chatId] === false) {
-            return;
+        if (!isGroup) {
+            if (!data.inboxChatbot || typeof data.inboxChatbot !== 'object') {
+                data.inboxChatbot = {};
+            }
+            if (typeof data.inboxChatbot[chatId] !== 'boolean') {
+                data.inboxChatbot[chatId] = true;
+                saveUserGroupData(data);
+            }
         }
+
+        if (isGroup && data.chatbot[chatId] === false) return;
+        if (!isGroup && data.inboxChatbot[chatId] === false) return;
 
         const originalText = String(
             userMessage || getMessageText(message)
