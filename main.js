@@ -1241,8 +1241,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 targetName = targetName || 'Unknown';
 
                 await sock.sendMessage(chatId, {
-                    text: '🆔 *MAHIRU • WHATSAPP UID :*\\n\\n' +
-                        '👤 *Name:* ' + targetName + '\\n' +
+                    text: '🆔 *MAHIRU • WHATSAPP UID :*\n\n' +
+                        '👤 *Name:* ' + targetName + '\n' +
                         '🆔 *UID:* ' + targetId
                 }, { quoted: message });
                 commandExecuted = true;
