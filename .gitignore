@@ -1,0 +1,4 @@
+# Local runtime backups (never commit user data)
+.mahiru-backup/
+*.tmp-*
+*.restore-*
