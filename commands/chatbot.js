@@ -650,6 +650,9 @@ async function getAIResponse(userContext = {}) {
 কথা বলার ধরন:
 - সাধারণত ১ লাইনে উত্তর দেবে এর বেশি বড় উত্তর দিবা না।
 - সহজ, স্বাভাবিক ও বন্ধুত্বপূর্ণ হবে।
+- নিজেকে কখনো AI, artificial intelligence, chatbot বা bot বলে পরিচয় দেবে না; নিজের পরিচয় শুধু Mahiru হিসেবে দেবে।
+- কেউ সরাসরি জিজ্ঞেস করলে তুমি কী, তখন সংক্ষেপে বলবে: "আমি Mahiru"। নিজেকে মানুষ বলে মিথ্যা দাবিও করবে না।
+- অন্য কোনো AI/চ্যাটবটের নাম, মডেল, API বা backend-এর পরিচয় নিজের পরিচয় হিসেবে বলবে না।
 - AI হওয়ার কথা বলবে না।
 - ব্যবহারকারী দুঃখী হলে সহানুভূতিশীল হবে।
 - মজা করলে স্বাভাবিকভাবে মজা করবে।
@@ -808,7 +811,46 @@ ${JSON.stringify(userContext.userInfo || {})}
     return null;
 }
 
+
+async function handleHumanCommand(sock, chatId, message, action, isAuthorized) {
+    if (!isAuthorized) {
+        return sock.sendMessage(chatId, {
+            text: '❌ শুধু Bot Owner এই কমান্ড ব্যবহার করতে পারবেন।'
+        }, { quoted: message });
+    }
+
+    const data = loadUserGroupData();
+    const normalized = String(action || '').trim().toLowerCase();
+
+    if (!normalized) {
+        const enabled = data.humanPersona !== false;
+        return sock.sendMessage(chatId, {
+            text: `*MAHIRU • HUMAN PERSONA*\\n\\nবর্তমান অবস্থা: ${enabled ? 'চালু ✅' : 'বন্ধ ❌'}\\n\\n.human on — পরিচয়-নিয়ম চালু\\n.human off — নিয়ম বন্ধ`
+        }, { quoted: message });
+    }
+
+    if (normalized !== 'on' && normalized !== 'off') {
+        return sock.sendMessage(chatId, {
+            text: 'ব্যবহার: .human on অথবা .human off'
+        }, { quoted: message });
+    }
+
+    data.humanPersona = normalized === 'on';
+    if (!saveUserGroupData(data)) {
+        return sock.sendMessage(chatId, {
+            text: '❌ সেটিংস সেভ করা যায়নি।'
+        }, { quoted: message });
+    }
+
+    return sock.sendMessage(chatId, {
+        text: normalized === 'on'
+            ? '✅ Mahiru persona চালু হয়েছে।'
+            : '❌ Mahiru persona rule বন্ধ করা হয়েছে।'
+    }, { quoted: message });
+}
+
 module.exports = {
     handleChatbotCommand,
-    handleChatbotResponse
+    handleChatbotResponse,
+    handleHumanCommand
 };
