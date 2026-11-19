@@ -66,9 +66,9 @@ async function handleRuleCommand(sock, chatId, message, rawText) {
         const index = rules.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
         if (action === 'add') {
             if (index >= 0) return send('❌ এই নামে Rule আগে থেকেই আছে। Edit করতে .rule edit ব্যবহার করুন।');
-            rules.push({ name, text, enabled: false, createdAt: new Date().toISOString() });
+            rules.push({ name, text, enabled: true, createdAt: new Date().toISOString() });
             if (!saveRules(rules)) return send('❌ Rule save করা যায়নি।');
-            return send(`✅ Rule “${name}” যোগ হয়েছে। Status: OFF ❌\nচালু করতে: .rule on ${name}`);
+            return send(`✅ Rule “${name}” যোগ হয়েছে। Status: ON ✅\nবন্ধ করতে: .rule off ${name}`);
         }
         if (index < 0) return send('❌ এই নামে কোনো Rule পাওয়া যায়নি। .rule list দেখুন।');
         rules[index].text = text;
@@ -90,7 +90,7 @@ async function handleRuleCommand(sock, chatId, message, rawText) {
         rules[index].enabled = action === 'on';
         if (!saveRules(rules)) return send('❌ Rule status save করা যায়নি।');
         return send(action === 'on'
-            ? `✅ Rule “${name}” ON করা হয়েছে। Inbox AI এখন থেকে এটি অনুসরণ করবে।`
+            ? `✅ Rule “${name}” ON করা হয়েছে। Inbox ও Group AI এখন থেকে এটি অনুসরণ করবে।`
             : `❌ Rule “${name}” OFF করা হয়েছে।`);
     }
     return send('❌ Unknown action. .rule লিখে সব Command দেখুন।');
