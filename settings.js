@@ -15,9 +15,9 @@ const settings = {
   description: "This is a bot for managing group commands and automating tasks.",
   version: "3.0.8",
   // Media API providers (song, video, cards, etc.)
-  knightApiUrl: process.env.KNIGHT_API_URL || 'https://knightbotapi.stream',
+  knightApiUrl: process.env.KNIGHT_API_URL || 'https://Mahiru Shiinaapi.stream',
   knightApiKey: process.env.KNIGHT_API_KEY || 'knight',
-  mediaApiUrl: process.env.MEDIA_API_URL || 'https://knightbotapi.stream',
+  mediaApiUrl: process.env.MEDIA_API_URL || 'https://Mahiru Shiinaapi.stream',
   mediaApiKey: process.env.MEDIA_API_KEY || 'knight',
   princeApiUrl: process.env.PRINCE_API_URL || 'https://api.princetechn.com',
   princeApiKey: process.env.PRINCE_API_KEY || 'prince',
