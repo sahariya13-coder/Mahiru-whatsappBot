@@ -68,7 +68,7 @@ async function helpCommand(sock, chatId, message) {
 
 ╔═══════════════════╗
 🔒 *Owner Commands*:
-║ ➤ .gid (show Group ID; works before activation)\n║ ➤ .gact <Group ID> (activate group)\n║ ➤ .gdeact <Group ID> (deactivate group)\n║ ➤ .iai on/off (Inbox AI)\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
+║ ➤ .gid (show Group ID; works before activation)\n║ ➤ .gact <Group ID> (activate group)\n║ ➤ .gdeact <Group ID> (deactivate group)\n║ ➤ .iai on/off (Inbox AI)\n║ ➤ .rule add <name> | <rule> (প্রথমে OFF)\\n║ ➤ .rule list (সব Rule দেখুন)\\n║ ➤ .rule on/off <name>\\n║ ➤ .rule edit <name> | <new rule>\\n║ ➤ .rule del <name>\\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
 ║ ➤ .clearsession
 ║ ➤ .antidelete
 ║ ➤ .cleartmp
