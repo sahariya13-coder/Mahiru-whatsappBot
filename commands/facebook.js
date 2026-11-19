@@ -48,13 +48,13 @@ async function resolveFacebook(url) {
   try {
     return await APIs.knightFacebookDownload(url);
   } catch (err) {
-    console.log('[facebook] Knight failed:', err?.message || err);
+    console.log('[facebook] Mahiru Shiina failed:', err?.message || err);
   }
   return hanggtsFacebookDownload(url);
 }
 
 async function sendVideo(sock, chatId, message, videoUrl, title) {
-  const bot = (settings.botName || 'Knight Bot').toUpperCase();
+  const bot = (settings.botName || 'Mahiru Shiina').toUpperCase();
   const caption = title ? `*DOWNLOADED BY ${bot}*\n\n📝 ${title}` : `*DOWNLOADED BY ${bot}*`;
 
   try {
