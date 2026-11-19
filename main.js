@@ -897,10 +897,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
 
             case userMessage === '.rule' || userMessage.startsWith('.rule '): {
-                if (isGroup) {
-                    await sock.sendMessage(chatId, { text: '❌ .rule কমান্ডটি শুধু Inbox-এ ব্যবহার করা যাবে।' }, { quoted: message });
-                    break;
-                }
                 if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, { text: '❌ AI Rule পরিচালনা শুধু Bot Owner/Sudo করতে পারবে।' }, { quoted: message });
                     break;
