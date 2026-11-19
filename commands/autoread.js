@@ -137,8 +137,8 @@ function isBotMentionedInMessage(message, botNumber) {
         const botNames = [
             global.botname?.toLowerCase(),
             'bot',
-            'knight',
-            'knight bot'
+            'mahiru shiina',
+            'Mahiru Shiina'
         ];
 
         const words = textContent.toLowerCase().split(/\s+/);
