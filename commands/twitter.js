@@ -10,7 +10,7 @@ const TWITTER_PATTERNS = [
 ];
 
 function caption(quality) {
-  const bot = (settings.botName || 'Knight Bot').toUpperCase();
+  const bot = (settings.botName || 'Mahiru Shiina').toUpperCase();
   let text = `*DOWNLOADED BY ${bot}*`;
   if (quality) text += `\n\n📹 Quality: ${quality}`;
   return text;
