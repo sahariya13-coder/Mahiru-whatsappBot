@@ -131,7 +131,7 @@ async function addStickerMeta(webpBuffer) {
   await img.load(webpBuffer);
   const json = {
     'sticker-pack-id': crypto.randomBytes(32).toString('hex'),
-    'sticker-pack-name': settings.packname || 'KnightBot',
+    'sticker-pack-name': settings.packname || 'Mahiru Shiina',
     emojis: ['✂️'],
   };
   const exifAttr = Buffer.from([
