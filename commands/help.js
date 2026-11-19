@@ -56,7 +56,8 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .tagall
 ║ ➤ .tagnotadmin
 ║ ➤ .hidetag <message>
-║ ➤ .gai on/off (Group AI: mention/reply to Mahiru)\n║ ➤ .chatbot on/off (Group AI)
+║ ➤ .gai on/off (Group AI: mention/reply to Mahiru)
+║ ➤ .chatbot on/off (AI status/settings)
 ║ ➤ .resetlink
 ║ ➤ .antitag <on/off>
 ║ ➤ .welcome <on/off>
@@ -68,7 +69,18 @@ async function helpCommand(sock, chatId, message) {
 
 ╔═══════════════════╗
 🔒 *Owner Commands*:
-║ ➤ .gid (show Group ID; works before activation)\n║ ➤ .gact <Group ID> (activate group)\n║ ➤ .gdeact <Group ID> (deactivate group)\n║ ➤ .iai on/off (Inbox AI)\n║ ➤ .rule add <name> | <rule> (প্রথমে ON)\n║ ➤ .rule list (সব Rule দেখুন)\n║ ➤ .rule on/off <name>\n║ ➤ .rule edit <name> | <new rule>\n║ ➤ .rule del <name>\n║ ➤ Rule: Inbox + Group AI-তে কাজ করবে (Owner/Sudo only)\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
+║ ➤ .gid (show Group ID; works before activation)
+║ ➤ .gact <Group ID> (activate group)
+║ ➤ .gdeact <Group ID> (deactivate group)
+║ ➤ .iai on/off (Inbox AI চালু/বন্ধ)
+║ ➤ .rule add <name> | <rule text> (নতুন Rule default ON)
+║ ➤ .rule list (সব Rule ও status দেখুন)
+║ ➤ .rule on <name> (Rule চালু)
+║ ➤ .rule off <name> (Rule বন্ধ)
+║ ➤ .rule edit <name> | <new rule>
+║ ➤ .rule del <name> (Rule মুছুন)
+║ ➤ AI Rules: Inbox + Group উভয় AI-তে কার্যকর
+║ ➤ Rule management: শুধু Owner/Sudo\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
 ║ ➤ .clearsession
 ║ ➤ .antidelete
 ║ ➤ .cleartmp
@@ -128,7 +140,10 @@ async function helpCommand(sock, chatId, message) {
 🤖 *AI Commands*:
 ║ ➤ .gpt <question>
 ║ ➤ .gemini <question>
-║ ➤ Inbox AI: private chat-এ auto reply (Owner: .chatbot on/off)\n║ ➤ Chatbot default: ON (Group + Inbox)
+║ ➤ Inbox AI: private chat-এ auto reply (.iai on/off)
+║ ➤ Group AI: Mahiru-কে mention/reply করলে উত্তর দেবে (.gai on/off)
+║ ➤ Chatbot default: ON (Group + Inbox)
+║ ➤ Owner AI Rules: enabled Rules Inbox + Group উভয় জায়গায় মানবে
 ║ ➤ .imagine <prompt>
 ║ ➤ .flux <prompt>
 ║ ➤ .sora <prompt>
