@@ -65,7 +65,7 @@ async function getAudioDownload(videoUrl) {
   const providers = [
     ['Samplecut', () => samplecutSongDownload(videoUrl)],
     ['VidFetch', () => api.vidFetchSongDownload(videoUrl)],
-    ['Knight', () => api.knightSongDownload(videoUrl, 1)],
+    ['mahiru shiina', () => api.knightSongDownload(videoUrl, 1)],
     ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
     ['Prince', () => api.princeSongDownload(videoUrl, 1)],
     ['Prexzy', () => api.prexzySongDownload(videoUrl)],
