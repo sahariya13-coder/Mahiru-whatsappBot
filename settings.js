@@ -14,8 +14,7 @@ const settings = {
   storeWriteInterval: 10000,
   description: "This is a bot for managing group commands and automating tasks.",
   version: "3.0.8",
-  updateZipUrl: "https://github.com/mruniquehacker/Knightbot-MD/archive/refs/heads/main.zip",
-  // Media / Knight API (song, video, cards, etc.)
+  // Media API providers (song, video, cards, etc.)
   knightApiUrl: process.env.KNIGHT_API_URL || 'https://knightbotapi.stream',
   knightApiKey: process.env.KNIGHT_API_KEY || 'knight',
   mediaApiUrl: process.env.MEDIA_API_URL || 'https://knightbotapi.stream',
