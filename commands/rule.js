@@ -43,7 +43,7 @@ async function handleRuleCommand(sock, chatId, message, rawText) {
         '.rule off <name> — Rule বন্ধ\n' +
         '.rule edit <name> | <new rule> — Rule এডিট\n' +
         '.rule del <name> — Rule ডিলিট\n\n' +
-        'প্রতিটি Rule প্রথমে OFF থাকবে। একাধিক Rule একসাথে ON রাখা যাবে। শুধু Inbox AI-এর Prompt-এ যুক্ত হবে; Group AI-তে নয়।'
+        'প্রতিটি নতুন Rule প্রথমে ON থাকবে। একাধিক Rule একসাথে ON রাখা যাবে। Enabled Rule Inbox ও Group—দুই জায়গার AI Prompt-এ যুক্ত হবে।'
     );
 
     if (action === 'list') {
