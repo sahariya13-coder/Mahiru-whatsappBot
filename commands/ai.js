@@ -18,8 +18,8 @@ async function aiCommand(sock, chatId, message) {
 
     let answer;
     const steps = [
-      ['Knight chat', () => APIs.knightChatAI(query)],
-      ['Knight gpt', () => APIs.knightGptAI(query)],
+      ['Mahiru Shiina chat', () => APIs.knightChatAI(query)],
+      ['Mahiru Shiina GPT', () => APIs.knightGptAI(query)],
       ['fallback', () => APIs.fallbackChatAI(query)],
     ];
 
