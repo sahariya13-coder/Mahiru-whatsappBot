@@ -92,6 +92,7 @@ const githubCommand = require('./commands/github');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
 const antibadwordCommand = require('./commands/antibadword');
 const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand } = require('./commands/chatbot');
+const { handleRuleCommand } = require('./commands/rule');
 const takeCommand = require('./commands/take');
 const { flirtCommand } = require('./commands/flirt');
 const characterCommand = require('./commands/character');
@@ -892,6 +893,19 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 }
 
                 await antibadwordCommand(sock, chatId, message, senderId, isSenderAdmin);
+                break;
+            }
+
+            case userMessage === '.rule' || userMessage.startsWith('.rule '): {
+                if (isGroup) {
+                    await sock.sendMessage(chatId, { text: '❌ .rule কমান্ডটি শুধু Inbox-এ ব্যবহার করা যাবে।' }, { quoted: message });
+                    break;
+                }
+                if (!message.key.fromMe && !senderIsOwnerOrSudo) {
+                    await sock.sendMessage(chatId, { text: '❌ AI Rule পরিচালনা শুধু Bot Owner/Sudo করতে পারবে।' }, { quoted: message });
+                    break;
+                }
+                await handleRuleCommand(sock, chatId, message, rawText);
                 break;
             }
 
