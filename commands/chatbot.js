@@ -773,7 +773,7 @@ ${JSON.stringify(userContext.userInfo || {})}
         if (wormResponse) {
             console.log('✅ Worm AI success');
             return wormResponse
-                .replace(/^\\s*(Knight Bot|You|Mahiru)\\s*:\\s*/i, '')
+                .replace(/^\\s*(Mahiru Shiina|You|Mahiru)\\s*:\\s*/i, '')
                 .trim();
         }
     } catch (error) {
@@ -821,7 +821,7 @@ ${JSON.stringify(userContext.userInfo || {})}
 
                         return response
                             .replace(
-                                /^\s*(Knight Bot|You|Mahiru)\s*:\s*/i,
+                                /^\s*(Mahiru Shiina|You|Mahiru)\s*:\s*/i,
                                 ''
                             )
                             .trim();
