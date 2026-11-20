@@ -660,7 +660,7 @@ async function runGeminiFallback(apiKey, apiLabel, requestBody) {
                     if (response) {
                         console.log(`✅ ${apiLabel} success: ${model}`);
                         return response
-                            .replace(/^\\s*(Mahiru Shiina|You|Mahiru)\\s*:\\s*/i, '')
+                            .replace(/^\s*(Mahiru Shiina|You|Mahiru)\s*:\s*/i, '')
                             .trim();
                     }
 
