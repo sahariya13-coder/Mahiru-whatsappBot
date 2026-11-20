@@ -4,6 +4,7 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { sendVoiceReply } = require('../lib/voice');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 const execFileAsync = promisify(execFile);
 
@@ -22,7 +23,6 @@ const API_ERROR_MESSAGE = 'এখন তোমার সাথে কথা ব�
 // Primary এবং Fallback models
 const GEMINI_MODELS = [
     // High-volume free-tier text model first, then compatible free-tier fallbacks.
-    'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
     'gemini-2.5-flash-lite'
 ];
@@ -348,6 +348,86 @@ function isReplyToBot(message, botIdentifiers) {
     return false;
 }
 
+
+async function downloadWhatsAppImage(imageMessage) {
+    const stream = await downloadContentFromMessage(imageMessage, 'image');
+    const chunks = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const buffer = Buffer.concat(chunks);
+    if (!buffer.length) throw new Error('Downloaded image is empty');
+    return {
+        data: buffer.toString('base64'),
+        mimeType: String(imageMessage.mimetype || 'image/jpeg').split(';')[0].trim()
+    };
+}
+
+async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
+    if (!apiKey) {
+        console.log(`⏭️ ${apiLabel} vision skipped: API key not configured.`);
+        return null;
+    }
+
+    const models = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+    for (const model of models) {
+        try {
+            console.log(`🖼️ ${apiLabel} trying vision model: ${model}`);
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                { inline_data: { mime_type: imageData.mimeType, data: imageData.data } }
+                            ]
+                        }],
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 700 }
+                    }),
+                    signal: AbortSignal.timeout(90000)
+                }
+            );
+
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                console.error(`⚠️ ${apiLabel} vision ${model} HTTP ${response.status}:`, body.error?.message || 'Unknown API error');
+                if ([400, 404].includes(response.status)) continue;
+                if ([401, 403, 429, 500, 502, 503, 504].includes(response.status)) break;
+                continue;
+            }
+
+            const answer = (body.candidates?.[0]?.content?.parts || [])
+                .map(part => part.text || '')
+                .join('')
+                .trim();
+            if (answer) return answer;
+        } catch (error) {
+            console.error(`⚠️ ${apiLabel} vision ${model} failed:`, error.message);
+        }
+    }
+    return null;
+}
+
+async function getImageAIResponse(userContext, imageData) {
+    const history = (userContext.messages || []).slice(-10).join('\\n');
+    const prompt = `
+তুমি Mahiru। ব্যবহারকারীর পাঠানো ছবিটি ভালোভাবে বিশ্লেষণ করে তার প্রশ্নের উত্তর দাও।
+ছবিতে কী আছে, লেখা, বস্তু, দৃশ্য বা প্রয়োজনীয় বিবরণ বোঝার চেষ্টা করো।
+ব্যবহারকারী কোনো প্রশ্ন না লিখে শুধু ছবি পাঠালে ছবিটি সংক্ষেপে বর্ণনা করো।
+ভাষা: ব্যবহারকারী যে ভাষায় লিখেছে সেই ভাষাতেই স্বাভাবিকভাবে উত্তর দাও। সাধারণত সংক্ষিপ্ত উত্তর দেবে।
+System rules:
+${(userContext.systemRules || []).map((rule, index) => `${index + 1}. ${rule.name}: ${rule.text}`).join('\\n')}
+কথোপকথন:
+${history}
+`.trim();
+
+    const first = await runGeminiVisionFallback(GEMINI_API_KEY, 'Gemini API 1', prompt, imageData);
+    if (first) return first;
+    return await runGeminiVisionFallback(GEMINI_API_KEY_2, 'Gemini API 2', prompt, imageData);
+}
+
 async function handleChatbotResponse(
     sock,
     chatId,
@@ -488,13 +568,25 @@ async function handleChatbotResponse(
 
         const systemRules = require('./rule').getEnabledRules();
 
-        const response = await getAIResponse({
-            messages: history,
-            userInfo: chatMemory.userInfo.get(memoryKey),
-            isOwner,
-            ownerRomanticTerms,
-            systemRules
-        });
+        let response;
+        const imageMessage = message.message?.imageMessage ||
+            message.message?.ephemeralMessage?.message?.imageMessage;
+
+        if (imageMessage) {
+            const imageData = await downloadWhatsAppImage(imageMessage);
+            response = await getImageAIResponse({
+                messages: history,
+                systemRules
+            }, imageData);
+        } else {
+            response = await getAIResponse({
+                messages: history,
+                userInfo: chatMemory.userInfo.get(memoryKey),
+                isOwner,
+                ownerRomanticTerms,
+                systemRules
+            });
+        }
 
         if (!response) {
             return await sock.sendMessage(chatId, {
