@@ -216,7 +216,9 @@ async function handleMessages(sock, messageUpdate, printLog) {
             message.message?.viewOnceMessageV2?.message ||
             message.message;
         const incomingAudio = unwrappedMessage?.audioMessage || unwrappedMessage?.pttMessage;
+        let inputResponseMode = 'text';
         if (incomingAudio && !message.key?.fromMe) {
+            inputResponseMode = 'voice';
             try {
                 const transcript = await transcribeAudio(incomingAudio);
                 if (!transcript) throw new Error('Empty voice transcription');
@@ -317,7 +319,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     chatId,
                     message,
                     rawText || userMessage,
-                    senderId
+                    senderId,
+                    inputResponseMode
                 );
             }
 
