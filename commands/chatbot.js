@@ -11,6 +11,8 @@ const USER_GROUP_DATA = path.join(__dirname, '../data/userGroupData.json');
 
 // Set GEMINI_API_KEY in the hosting panel. Never hard-code API keys in source code.
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+// Secondary Gemini key used only when Gemini API 1 fails.
+const GEMINI_API_KEY_2 = process.env.GEMINI_API_KEY_2 || '';
 const GEMINI_API_URL =
     'https://generativelanguage.googleapis.com/v1beta/interactions';
 
@@ -532,7 +534,7 @@ async function handleChatbotResponse(
     }
 }
 
-async function sendGeminiRequest(model, requestBody) {
+async function sendGeminiRequest(model, requestBody, apiKey = GEMINI_API_KEY) {
     const body = JSON.stringify({
         ...JSON.parse(requestBody),
         model
@@ -546,7 +548,7 @@ async function sendGeminiRequest(model, requestBody) {
         '-X', 'POST',
         GEMINI_API_URL,
         '-H', 'Content-Type: application/json',
-        '-H', `x-goog-api-key: ${GEMINI_API_KEY}`,
+        '-H', `x-goog-api-key: ${apiKey}`,
         '--data-binary', body,
         '-w', '\n__HTTP_STATUS__:%{http_code}'
     ], {
@@ -632,6 +634,67 @@ function extractGeminiText(data) {
     }
 
     return String(result || '').trim();
+}
+
+
+async function runGeminiFallback(apiKey, apiLabel, requestBody) {
+    if (!apiKey) {
+        console.log(`⏭️ ${apiLabel} skipped: API key not configured.`);
+        return null;
+    }
+
+    for (const model of GEMINI_MODELS) {
+        console.log(`🤖 ${apiLabel} trying model: ${model}`);
+
+        for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+            let result = null;
+            let requestError = null;
+
+            try {
+                console.log(`🔄 ${apiLabel} ${model} attempt ${attempt + 1}/3`);
+                result = await sendGeminiRequest(model, requestBody, apiKey);
+                console.log(`🌐 ${apiLabel} API status:`, result.status);
+
+                if (result.status >= 200 && result.status < 300) {
+                    const response = extractGeminiText(result.data);
+                    if (response) {
+                        console.log(`✅ ${apiLabel} success: ${model}`);
+                        return response
+                            .replace(/^\\s*(Mahiru Shiina|You|Mahiru)\\s*:\\s*/i, '')
+                            .trim();
+                    }
+
+                    console.error(`${apiLabel} returned an empty response:`, JSON.stringify(result.data).slice(0, 1000));
+                    break;
+                }
+
+                console.error(`${apiLabel} ${model} error:`, result.responseText.slice(0, 1000));
+
+                if (result.status === 400 || result.status === 404) {
+                    console.log(`➡️ Skipping ${model} on ${apiLabel}.`);
+                    break;
+                }
+            } catch (error) {
+                requestError = error;
+                console.error(`${apiLabel} request failed:`, error.message);
+            }
+
+            if (!isRetryableError(result, requestError)) {
+                console.log(`➡️ ${apiLabel} unavailable; moving to the next fallback.`);
+                break;
+            }
+
+            if (attempt < RETRY_DELAYS.length) {
+                const delay = RETRY_DELAYS[attempt];
+                console.log(`⏳ ${apiLabel} busy. Retrying in ${delay / 1000}s`);
+                await sleep(delay);
+            } else {
+                console.log(`⚠️ ${apiLabel} failed after 3 attempts.`);
+            }
+        }
+    }
+
+    return null;
 }
 
 async function sendWormAIRequest(prompt) {
@@ -787,11 +850,6 @@ ${JSON.stringify(userContext.userInfo || {})}
         console.error('⚠️ Worm AI failed; switching to Gemini fallback:', error.message);
     }
 
-    if (!GEMINI_API_KEY) {
-        console.error('Gemini API key missing; Worm AI also failed.');
-        return null;
-    }
-
     const requestBody = JSON.stringify({
         system_instruction: systemPrompt,
         input: fullInput,
@@ -800,99 +858,23 @@ ${JSON.stringify(userContext.userInfo || {})}
         }
     });
 
-    // প্রতিটি মডেল সর্বোচ্চ ৩ বার চেষ্টা করবে
-    for (const model of GEMINI_MODELS) {
-        console.log(`🤖 Trying Gemini model: ${model}`);
+    // Gemini API 1 is the first fallback after Worm AI.
+    const gemini1Response = await runGeminiFallback(
+        GEMINI_API_KEY,
+        'Gemini API 1',
+        requestBody
+    );
+    if (gemini1Response) return gemini1Response;
 
-        for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
-            let result = null;
-            let requestError = null;
+    // Gemini API 2 is tried only if Gemini API 1 is missing or fails.
+    const gemini2Response = await runGeminiFallback(
+        GEMINI_API_KEY_2,
+        'Gemini API 2',
+        requestBody
+    );
+    if (gemini2Response) return gemini2Response;
 
-            try {
-                console.log(
-                    `🔄 ${model} attempt ${attempt + 1}/3`
-                );
-
-                result = await sendGeminiRequest(model, requestBody);
-
-                console.log(
-                    `🌐 ${model} API status:`,
-                    result.status
-                );
-
-                if (result.status >= 200 && result.status < 300) {
-                    const response = extractGeminiText(result.data);
-
-                    if (response) {
-                        console.log(`✅ Gemini success: ${model}`);
-
-                        return response
-                            .replace(
-                                /^\s*(Mahiru Shiina|You|Mahiru)\s*:\s*/i,
-                                ''
-                            )
-                            .trim();
-                    }
-
-                    console.error(
-                        'Empty Gemini response:',
-                        JSON.stringify(result.data).slice(0, 1000)
-                    );
-
-                    break;
-                }
-
-                console.error(
-                    `❌ ${model} error:`,
-                    result.responseText.slice(0, 1000)
-                );
-
-                // 400/404 হলে এই মডেলটি বাদ দিয়ে পরের মডেল চেষ্টা করবে
-                if (
-                    result.status === 400 ||
-                    result.status === 404
-                ) {
-                    console.log(
-                        `➡️ Skipping ${model}, trying next model...`
-                    );
-                    break;
-                }
-
-            } catch (error) {
-                requestError = error;
-
-                console.error(
-                    `${model} request failed:`,
-                    error.message
-                );
-            }
-
-            if (!isRetryableError(result, requestError)) {
-                console.log(
-                    `➡️ ${model} unavailable. Trying next model...`
-                );
-                break;
-            }
-
-            if (attempt < RETRY_DELAYS.length) {
-                const delay = RETRY_DELAYS[attempt];
-
-                console.log(
-                    `⏳ ${model} busy. Retrying in ${delay / 1000}s`
-                );
-
-                await sleep(delay);
-            } else {
-                console.log(
-                    `⚠️ ${model} failed after 3 attempts.`
-                );
-            }
-        }
-
-        console.log(`➡️ Moving to next model after ${model}`);
-    }
-
-    console.error('❌ All Gemini models failed.');
+    console.error('❌ Worm AI, Gemini API 1 and Gemini API 2 all failed.');
     return null;
 }
 
