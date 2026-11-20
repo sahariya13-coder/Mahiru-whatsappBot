@@ -11,21 +11,22 @@ const execFileAsync = promisify(execFile);
 const USER_GROUP_DATA = path.join(__dirname, '../data/userGroupData.json');
 
 // Set GEMINI_API_KEY in the hosting panel. Never hard-code API keys in source code.
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-// Secondary Gemini key used only when Gemini API 1 fails.
-const GEMINI_API_KEY_2 = process.env.GEMINI_API_KEY_2 || '';
-// Third Gemini key used when the first two Gemini keys fail.
-const GEMINI_API_KEY_3 = process.env.GEMINI_API_KEY_3 || '';
-// Groq is the final text-generation fallback after all Gemini keys.
-const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const GEMINI_API_KEYS = [
+    process.env.GEMINI_API_KEY || '',
+    process.env.GEMINI_API_KEY_2 || '',
+    process.env.GEMINI_API_KEY_3 || '',
+    process.env.GEMINI_API_KEY_4 || '',
+    process.env.GEMINI_API_KEY_5 || ''
+].filter((key, index, all) => key && all.indexOf(key) === index);
+const GROQ_API_KEYS = [
+    process.env.GROQ_API_KEY || '',
+    process.env.GROQ_API_KEY_2 || '',
+    process.env.GROQ_API_KEY_3 || '',
+    process.env.GROQ_API_KEY_4 || '',
+    process.env.GROQ_API_KEY_5 || ''
+].filter((key, index, all) => key && all.indexOf(key) === index);
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODELS = [
-    'openai/gpt-oss-120b',
-    'openai/gpt-oss-20b',
-    'qwen/qwen3.8-27b',
-    'minimaxai/minimax-m2.7',
-    'meta-models/muse-spark-open'
-];
+const GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
 const GEMINI_API_URL =
     'https://generativelanguage.googleapis.com/v1beta/interactions';
 
@@ -34,12 +35,8 @@ const API_ERROR_MESSAGE = 'এখন তোমার সাথে কথা ব�
 
 // Primary এবং Fallback models
 const GEMINI_MODELS = [
-    // Newest Gemini models first; lower-cost stable models remain as fallbacks.
-    'gemini-4-hydrogen',
-    'gemini-4-neon',
-    'gemini-4-carbon',
-    'gemini-4-argon',
-    'gemini-3.8-flash'
+    'gemini-3.8-flash',
+    'gemini-3.5-flash-lite'
 ];
 
 // Retry delay
@@ -422,7 +419,7 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
     }
 
     // Current stable multimodal models: Gemini 3.8 Flash first, then lower-cost fallbacks.
-    const models = GEMINI_MODELS;
+    const models = [...GEMINI_MODELS, 'gemini-3.1-flash-lite'];
     for (const model of models) {
         try {
             console.log(`🖼️ ${apiLabel} trying vision model: ${model}`);
@@ -478,11 +475,16 @@ ${(userContext.systemRules || []).map((rule, index) => `${index + 1}. ${rule.nam
 ${history}
 `.trim();
 
-    const first = await runGeminiVisionFallback(GEMINI_API_KEY, 'Gemini API 1', prompt, imageData);
-    if (first) return first;
-    const second = await runGeminiVisionFallback(GEMINI_API_KEY_2, 'Gemini API 2', prompt, imageData);
-    if (second) return second;
-    return await runGeminiVisionFallback(GEMINI_API_KEY_3, 'Gemini API 3', prompt, imageData);
+    for (let index = 0; index < GEMINI_API_KEYS.length; index++) {
+        const answer = await runGeminiVisionFallback(
+            GEMINI_API_KEYS[index],
+            `Gemini API ${index + 1}`,
+            prompt,
+            imageData
+        );
+        if (answer) return answer;
+    }
+    return null;
 }
 
 async function handleChatbotResponse(
@@ -936,50 +938,51 @@ async function sendWormAIRequest(prompt) {
 }
 
 async function runGroqFallback(systemPrompt, conversation) {
-    if (!GROQ_API_KEY) {
-        console.log('⏭️ Groq fallback skipped: GROQ_API_KEY is not configured.');
+    if (!GROQ_API_KEYS.length) {
+        console.log('⏭️ Groq fallback skipped: no GROQ_API_KEY configured.');
         return null;
     }
 
-    for (const model of GROQ_MODELS) {
-        try {
-            console.log(`🤖 Groq trying model: ${model}`);
-            const response = await fetch(GROQ_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${GROQ_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `আগের কথোপকথনসহ বর্তমান প্রসঙ্গ:\n${conversation}\nMahiru:` }
-                    ],
-                    temperature: 0.7,
-                    max_completion_tokens: 700
-                }),
-                signal: AbortSignal.timeout(90000)
-            });
+    for (let keyIndex = 0; keyIndex < GROQ_API_KEYS.length; keyIndex++) {
+        const apiKey = GROQ_API_KEYS[keyIndex];
+        for (const model of GROQ_MODELS) {
+            try {
+                console.log(`🤖 Groq API key ${keyIndex + 1} trying model: ${model}`);
+                const response = await fetch(GROQ_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: `আগের কথোপকথনসহ বর্তমান প্রসঙ্গ:\n${conversation}\nMahiru:` }
+                        ],
+                        temperature: 0.7,
+                        max_completion_tokens: 700
+                    }),
+                    signal: AbortSignal.timeout(90000)
+                });
 
-            const body = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                console.error(`⚠️ Groq ${model} HTTP ${response.status}:`, body.error?.message || 'Unknown API error');
-                // Model access/availability errors move to the next configured model.
-                if ([400, 403, 404, 429].includes(response.status)) continue;
-                return null;
-            }
+                const body = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    console.error(`⚠️ Groq key ${keyIndex + 1}, ${model} HTTP ${response.status}:`, body.error?.message || 'Unknown API error');
+                    if ([400, 401, 403, 404, 429].includes(response.status)) continue;
+                    break;
+                }
 
-            const answer = body.choices?.[0]?.message?.content;
-            const text = typeof answer === 'string' ? answer.trim() : '';
-            if (text) {
-                console.log(`✅ Groq success: ${model}`);
-                return text.replace(/^\s*(Mahiru Shiina|You|Mahiru)\s*:\s*/i, '').trim();
+                const answer = body.choices?.[0]?.message?.content;
+                const text = typeof answer === 'string' ? answer.trim() : '';
+                if (text) {
+                    console.log(`✅ Groq success: key ${keyIndex + 1}, ${model}`);
+                    return text.replace(/^\\s*(Mahiru Shiina|You|Mahiru)\\s*:\\s*/i, '').trim();
+                }
+            } catch (error) {
+                console.error(`⚠️ Groq key ${keyIndex + 1}, ${model} request failed:`, error.message);
+                break;
             }
-            console.error(`⚠️ Groq ${model} returned an empty response.`);
-        } catch (error) {
-            console.error(`⚠️ Groq ${model} request failed:`, error.message);
-            return null;
         }
     }
     return null;
@@ -1096,28 +1099,14 @@ ${JSON.stringify(userContext.userInfo || {})}
     });
 
     // Gemini API 1 is the first fallback after Worm AI.
-    const gemini1Response = await runGeminiFallback(
-        GEMINI_API_KEY,
-        'Gemini API 1',
-        requestBody
-    );
-    if (gemini1Response) return gemini1Response;
-
-    // Gemini API 2 is tried only if Gemini API 1 is missing or fails.
-    const gemini2Response = await runGeminiFallback(
-        GEMINI_API_KEY_2,
-        'Gemini API 2',
-        requestBody
-    );
-    if (gemini2Response) return gemini2Response;
-
-    // Gemini API 3 is the final Gemini key before switching providers.
-    const gemini3Response = await runGeminiFallback(
-        GEMINI_API_KEY_3,
-        'Gemini API 3',
-        requestBody
-    );
-    if (gemini3Response) return gemini3Response;
+    for (let index = 0; index < GEMINI_API_KEYS.length; index++) {
+        const geminiResponse = await runGeminiFallback(
+            GEMINI_API_KEYS[index],
+            `Gemini API ${index + 1}`,
+            requestBody
+        );
+        if (geminiResponse) return geminiResponse;
+    }
 
     // Groq is the final provider fallback and receives the same full conversation.
     const groqResponse = await runGroqFallback(systemPrompt, fullInput);
