@@ -32,6 +32,7 @@ const { isBanned } = require('./lib/isBanned');
 const yts = require('yt-search');
 const { fetchBuffer } = require('./lib/myfunc');
 const fetch = require('node-fetch');
+const { transcribeAudio } = require('./lib/voice');
 const ytdl = require('ytdl-core');
 const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
@@ -194,7 +195,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
         }
 
-        const userMessage = (
+        let userMessage = (
             message.message?.conversation?.trim() ||
             message.message?.extendedTextMessage?.text?.trim() ||
             message.message?.imageMessage?.caption?.trim() ||
@@ -203,11 +204,29 @@ async function handleMessages(sock, messageUpdate, printLog) {
             ''
         ).toLowerCase().replace(/\.\s+/g, '.').trim();
 
-        const rawText = message.message?.conversation?.trim() ||
+        let rawText = message.message?.conversation?.trim() ||
             message.message?.extendedTextMessage?.text?.trim() ||
             message.message?.imageMessage?.caption?.trim() ||
             message.message?.videoMessage?.caption?.trim() ||
             '';
+
+        // Convert incoming WhatsApp voice notes to text before AI processing.
+        const incomingAudio = message.message?.audioMessage || message.message?.pttMessage;
+        if (incomingAudio && !message.key?.fromMe) {
+            try {
+                const transcript = await transcribeAudio(incomingAudio);
+                if (!transcript) throw new Error('Empty voice transcription');
+                rawText = transcript;
+                userMessage = transcript.toLowerCase().replace(/\.\s+/g, '.').trim();
+                console.log('🎙️ Voice transcribed:', transcript.slice(0, 160));
+            } catch (voiceError) {
+                console.error('Voice transcription failed:', voiceError.message);
+                await sock.sendMessage(chatId, {
+                    text: 'দুঃখিত, Voice Message বুঝতে পারিনি। আবার পাঠাও।'
+                }, { quoted: message });
+                return;
+            }
+        }
 
         if (userMessage.startsWith('.')) {
             console.log(`📝 Command used in ${isGroup ? 'group' : 'private'}: ${userMessage}`);
@@ -497,7 +516,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage === '.settings':
                 await settingsCommand(sock, chatId, message);
                 break;
-
             case userMessage.startsWith('.mode'): {
                 if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, {
@@ -747,7 +765,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await lyricsCommand(sock, chatId, songTitle, message);
                 break;
             }
-
             case userMessage.startsWith('.simp'): {
                 const quotedMsg = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
                 const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
