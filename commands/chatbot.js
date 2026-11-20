@@ -434,7 +434,8 @@ async function handleChatbotResponse(
     chatId,
     message,
     userMessage,
-    senderId
+    senderId,
+    inputResponseMode = 'text'
 ) {
     let memoryKey = '';
 
@@ -601,15 +602,27 @@ async function handleChatbotResponse(
         }
 
         await sleep(getRandomDelay());
-        await sock.sendMessage(chatId, {
-            text: response
-        }, { quoted: message });
 
-        // Send the same AI reply as a WhatsApp voice note.
-        try {
-            await sendVoiceReply(sock, chatId, response, message);
-        } catch (voiceError) {
-            console.error('AI voice reply failed:', voiceError.message);
+        // Voice input gets a voice-only reply. Text can explicitly request voice/text output.
+        const asksForVoice = /(?:ভয়েস|ভয়েস|অডিও|voice|audio)(?:\s*(?:এ|e|এতে|তে|এ\s*করে))?.{0,24}(?:বলো|বল|দাও|দেবে|পাঠাও|reply|রিপ্লাই|say|send)|(?:বলো|বল|দাও|পাঠাও|reply|রিপ্লাই|say|send).{0,24}(?:ভয়েস|ভয়েস|অডিও|voice|audio)/i.test(cleanedMessage);
+        const asksForText = /(?:টেক্সট|লেখা|text|written)(?:\s*(?:এ|e|এতে|তে))?.{0,24}(?:বলো|দাও|পাঠাও|reply|রিপ্লাই|লিখে|লেখো|send)|(?:বলো|দাও|পাঠাও|reply|রিপ্লাই|লিখে|লেখো|send).{0,24}(?:টেক্সট|লেখা|text|written)/i.test(cleanedMessage);
+        const responseMode = asksForText
+            ? 'text'
+            : (asksForVoice ? 'voice' : inputResponseMode);
+
+        if (responseMode === 'voice') {
+            try {
+                await sendVoiceReply(sock, chatId, response, message);
+            } catch (voiceError) {
+                console.error('AI voice reply failed:', voiceError.message);
+                await sock.sendMessage(chatId, {
+                    text: 'দুঃখিত, এখন Voice Reply পাঠানো যাচ্ছে না।'
+                }, { quoted: message });
+            }
+        } else {
+            await sock.sendMessage(chatId, {
+                text: response
+            }, { quoted: message });
         }
 
         history.push(`Mahiru: ${response}`);
