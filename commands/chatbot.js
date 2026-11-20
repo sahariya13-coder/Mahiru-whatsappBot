@@ -367,7 +367,8 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
         return null;
     }
 
-    const models = ['gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+    // 2.5 Flash-Lite supports both image and audio input through generateContent.
+    const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
     for (const model of models) {
         try {
             console.log(`🖼️ ${apiLabel} trying vision model: ${model}`);
@@ -461,11 +462,16 @@ async function handleChatbotResponse(
         if (isGroup && data.chatbot[chatId] === false) return;
         if (!isGroup && data.inboxChatbot[chatId] === false) return;
 
+        const imageMessage = message.message?.imageMessage ||
+            message.message?.ephemeralMessage?.message?.imageMessage;
+        const hasImage = Boolean(imageMessage);
+
         const originalText = String(
             userMessage || getMessageText(message)
         ).trim();
 
-        if (!originalText || message.key?.fromMe) return;
+        // Image-only messages are valid AI input even when they have no caption.
+        if ((!originalText && !hasImage) || message.key?.fromMe) return;
 
         const botIdentifiers = getBotIdentifiers(sock);
 
@@ -509,7 +515,9 @@ async function handleChatbotResponse(
         cleanedMessage = cleanedMessage.trim();
 
         if (!cleanedMessage) {
-            cleanedMessage = 'হ্যাঁ, বলো 😊';
+            cleanedMessage = hasImage
+                ? 'এই ছবিটি বিশ্লেষণ করো।'
+                : 'হ্যাঁ, বলো 😊';
         }
 
         const sender =
@@ -569,8 +577,6 @@ async function handleChatbotResponse(
         const systemRules = require('./rule').getEnabledRules();
 
         let response;
-        const imageMessage = message.message?.imageMessage ||
-            message.message?.ephemeralMessage?.message?.imageMessage;
 
         if (imageMessage) {
             const imageData = await downloadWhatsAppImage(imageMessage);
