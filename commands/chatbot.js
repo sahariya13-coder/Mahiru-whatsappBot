@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
+const { sendVoiceReply } = require('../lib/voice');
 
 const execFileAsync = promisify(execFile);
 
@@ -497,10 +498,16 @@ async function handleChatbotResponse(
         }
 
         await sleep(getRandomDelay());
-
         await sock.sendMessage(chatId, {
             text: response
         }, { quoted: message });
+
+        // Send the same AI reply as a WhatsApp voice note.
+        try {
+            await sendVoiceReply(sock, chatId, response, message);
+        } catch (voiceError) {
+            console.error('AI voice reply failed:', voiceError.message);
+        }
 
         history.push(`Mahiru: ${response}`);
 
