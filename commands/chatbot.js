@@ -21,7 +21,10 @@ const API_ERROR_MESSAGE = 'এখন তোমার সাথে কথা ব�
 
 // Primary এবং Fallback models
 const GEMINI_MODELS = [
-    'gemini-3.5-flash-lite'
+    // High-volume free-tier text model first, then compatible free-tier fallbacks.
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-2.5-flash-lite'
 ];
 
 // Retry delay
