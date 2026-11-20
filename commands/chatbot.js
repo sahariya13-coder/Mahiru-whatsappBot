@@ -19,7 +19,13 @@ const GEMINI_API_KEY_3 = process.env.GEMINI_API_KEY_3 || '';
 // Groq is the final text-generation fallback after all Gemini keys.
 const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODELS = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+const GROQ_MODELS = [
+    'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
+    'qwen/qwen3.8-27b',
+    'minimaxai/minimax-m2.7',
+    'meta-models/muse-spark-open'
+];
 const GEMINI_API_URL =
     'https://generativelanguage.googleapis.com/v1beta/interactions';
 
@@ -28,9 +34,12 @@ const API_ERROR_MESSAGE = 'এখন তোমার সাথে কথা ব�
 
 // Primary এবং Fallback models
 const GEMINI_MODELS = [
-    // Current general-purpose Flash model first, then the efficient Flash-Lite fallback.
-    'gemini-3.8-flash',
-    'gemini-3.5-flash-lite'
+    // Newest Gemini models first; lower-cost stable models remain as fallbacks.
+    'gemini-4-hydrogen',
+    'gemini-4-neon',
+    'gemini-4-carbon',
+    'gemini-4-argon',
+    'gemini-3.8-flash'
 ];
 
 // Retry delay
@@ -413,7 +422,7 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
     }
 
     // Current stable multimodal models: Gemini 3.8 Flash first, then lower-cost fallbacks.
-    const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
+    const models = GEMINI_MODELS;
     for (const model of models) {
         try {
             console.log(`🖼️ ${apiLabel} trying vision model: ${model}`);
@@ -439,8 +448,8 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
             const body = await response.json().catch(() => ({}));
             if (!response.ok) {
                 console.error(`⚠️ ${apiLabel} vision ${model} HTTP ${response.status}:`, body.error?.message || 'Unknown API error');
-                if ([400, 404].includes(response.status)) continue;
-                if ([401, 403, 429, 500, 502, 503, 504].includes(response.status)) break;
+                if ([400, 403, 404, 429].includes(response.status)) continue;
+                if ([401, 500, 502, 503, 504].includes(response.status)) break;
                 continue;
             }
 
@@ -956,8 +965,8 @@ async function runGroqFallback(systemPrompt, conversation) {
             const body = await response.json().catch(() => ({}));
             if (!response.ok) {
                 console.error(`⚠️ Groq ${model} HTTP ${response.status}:`, body.error?.message || 'Unknown API error');
-                // A model-specific error should move to the next model; key/rate/server errors end this provider.
-                if ([400, 404].includes(response.status)) continue;
+                // Model access/availability errors move to the next configured model.
+                if ([400, 403, 404, 429].includes(response.status)) continue;
                 return null;
             }
 
