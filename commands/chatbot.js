@@ -614,9 +614,10 @@ async function handleChatbotResponse(
             try {
                 await sendVoiceReply(sock, chatId, response, message);
             } catch (voiceError) {
-                console.error('AI voice reply failed:', voiceError.message);
+                console.error('AI voice reply failed; falling back to text:', voiceError.message);
+                // If voice generation/sending fails, deliver the same AI answer as text.
                 await sock.sendMessage(chatId, {
-                    text: 'দুঃখিত, এখন Voice Reply পাঠানো যাচ্ছে না।'
+                    text: response
                 }, { quoted: message });
             }
         } else {
