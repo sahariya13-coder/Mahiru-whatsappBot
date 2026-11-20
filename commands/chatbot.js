@@ -33,10 +33,49 @@ const RETRY_DELAYS = [2000, 5000];
 // একই চ্যাটে একাধিক request আটকাবে
 const activeRequests = new Set();
 
+const MAX_CHAT_HISTORY = 15;
+const CHAT_HISTORY_FILE = path.join(__dirname, '../data/chatbotHistory.json');
+
 const chatMemory = {
     messages: new Map(),
     userInfo: new Map()
 };
+
+function loadSavedChatHistory(memoryKey) {
+    try {
+        if (!fs.existsSync(CHAT_HISTORY_FILE)) return [];
+        const saved = JSON.parse(fs.readFileSync(CHAT_HISTORY_FILE, 'utf8'));
+        const history = saved && typeof saved === 'object' ? saved[memoryKey] : [];
+        return Array.isArray(history) ? history.slice(-MAX_CHAT_HISTORY) : [];
+    } catch (error) {
+        console.error('[CHAT MEMORY] Could not load history:', error.message);
+        return [];
+    }
+}
+
+function saveChatHistory(memoryKey, history) {
+    try {
+        const dir = path.dirname(CHAT_HISTORY_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        let saved = {};
+        if (fs.existsSync(CHAT_HISTORY_FILE)) {
+            try {
+                const parsed = JSON.parse(fs.readFileSync(CHAT_HISTORY_FILE, 'utf8'));
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) saved = parsed;
+            } catch (_) {}
+        }
+
+        saved[memoryKey] = history.slice(-MAX_CHAT_HISTORY);
+        const tempFile = CHAT_HISTORY_FILE + '.tmp';
+        fs.writeFileSync(tempFile, JSON.stringify(saved, null, 2), 'utf8');
+        fs.renameSync(tempFile, CHAT_HISTORY_FILE);
+        return true;
+    } catch (error) {
+        console.error('[CHAT MEMORY] Could not save history:', error.message);
+        return false;
+    }
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -412,7 +451,7 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
 }
 
 async function getImageAIResponse(userContext, imageData) {
-    const history = (userContext.messages || []).slice(-10).join('\n');
+    const history = (userContext.messages || []).slice(-MAX_CHAT_HISTORY).join('\n');
     const prompt = `
 তুমি Mahiru। ব্যবহারকারীর পাঠানো ছবিটি ভালোভাবে বিশ্লেষণ করে তার প্রশ্নের উত্তর দাও।
 ছবিতে কী আছে, লেখা, বস্তু, দৃশ্য বা প্রয়োজনীয় বিবরণ বোঝার চেষ্টা করো।
@@ -552,7 +591,7 @@ async function handleChatbotResponse(
         activeRequests.add(memoryKey);
 
         if (!chatMemory.messages.has(memoryKey)) {
-            chatMemory.messages.set(memoryKey, []);
+            chatMemory.messages.set(memoryKey, loadSavedChatHistory(memoryKey));
             chatMemory.userInfo.set(memoryKey, {});
         }
 
@@ -569,9 +608,11 @@ async function handleChatbotResponse(
 
         history.push(`${isOwner ? 'MSK (Bot Owner)' : 'User'}: ${cleanedMessage}`);
 
-        while (history.length > 10) {
+        while (history.length > MAX_CHAT_HISTORY) {
             history.shift();
         }
+        // Persist before the API chain; Worm and every Gemini fallback share this exact context.
+        saveChatHistory(memoryKey, history);
 
         await showTyping(sock, chatId);
 
@@ -628,9 +669,10 @@ async function handleChatbotResponse(
 
         history.push(`Mahiru: ${response}`);
 
-        while (history.length > 10) {
+        while (history.length > MAX_CHAT_HISTORY) {
             history.shift();
         }
+        saveChatHistory(memoryKey, history);
 
     } catch (error) {
         console.error('Chatbot response error:', error);
@@ -947,7 +989,7 @@ ${JSON.stringify(userContext.userInfo || {})}
     `.trim();
 
     const fullInput = (userContext.messages || [])
-        .slice(-10)
+        .slice(-MAX_CHAT_HISTORY)
         .map(item => {
             const isMahiru = item.startsWith('Mahiru:');
             const isOwner = item.startsWith('MSK (Bot Owner):');
