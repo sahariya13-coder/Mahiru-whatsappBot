@@ -211,7 +211,11 @@ async function handleMessages(sock, messageUpdate, printLog) {
             '';
 
         // Convert incoming WhatsApp voice notes to text before AI processing.
-        const incomingAudio = message.message?.audioMessage || message.message?.pttMessage;
+        const unwrappedMessage = message.message?.ephemeralMessage?.message ||
+            message.message?.viewOnceMessage?.message ||
+            message.message?.viewOnceMessageV2?.message ||
+            message.message;
+        const incomingAudio = unwrappedMessage?.audioMessage || unwrappedMessage?.pttMessage;
         if (incomingAudio && !message.key?.fromMe) {
             try {
                 const transcript = await transcribeAudio(incomingAudio);
