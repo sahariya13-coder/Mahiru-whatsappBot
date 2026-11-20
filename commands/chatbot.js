@@ -367,8 +367,8 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
         return null;
     }
 
-    // 2.5 Flash-Lite supports both image and audio input through generateContent.
-    const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+    // Current stable multimodal models: Gemini 3.8 Flash first, then lower-cost fallbacks.
+    const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'];
     for (const model of models) {
         try {
             console.log(`🖼️ ${apiLabel} trying vision model: ${model}`);
