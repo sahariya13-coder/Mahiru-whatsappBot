@@ -411,14 +411,14 @@ async function runGeminiVisionFallback(apiKey, apiLabel, prompt, imageData) {
 }
 
 async function getImageAIResponse(userContext, imageData) {
-    const history = (userContext.messages || []).slice(-10).join('\\n');
+    const history = (userContext.messages || []).slice(-10).join('\n');
     const prompt = `
 তুমি Mahiru। ব্যবহারকারীর পাঠানো ছবিটি ভালোভাবে বিশ্লেষণ করে তার প্রশ্নের উত্তর দাও।
 ছবিতে কী আছে, লেখা, বস্তু, দৃশ্য বা প্রয়োজনীয় বিবরণ বোঝার চেষ্টা করো।
 ব্যবহারকারী কোনো প্রশ্ন না লিখে শুধু ছবি পাঠালে ছবিটি সংক্ষেপে বর্ণনা করো।
 ভাষা: ব্যবহারকারী যে ভাষায় লিখেছে সেই ভাষাতেই স্বাভাবিকভাবে উত্তর দাও। সাধারণত সংক্ষিপ্ত উত্তর দেবে।
 System rules:
-${(userContext.systemRules || []).map((rule, index) => `${index + 1}. ${rule.name}: ${rule.text}`).join('\\n')}
+${(userContext.systemRules || []).map((rule, index) => `${index + 1}. ${rule.name}: ${rule.text}`).join('\n')}
 কথোপকথন:
 ${history}
 `.trim();
