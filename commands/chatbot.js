@@ -945,10 +945,10 @@ async function runGroqFallback(systemPrompt, conversation) {
                     model,
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `আগের কথোপকথনসহ বর্তমান প্রসঙ্গ:\\n${conversation}\\nMahiru:` }
+                        { role: 'user', content: `আগের কথোপকথনসহ বর্তমান প্রসঙ্গ:\n${conversation}\nMahiru:` }
                     ],
                     temperature: 0.7,
-                    max_tokens: 700
+                    max_completion_tokens: 700
                 }),
                 signal: AbortSignal.timeout(90000)
             });
@@ -965,7 +965,7 @@ async function runGroqFallback(systemPrompt, conversation) {
             const text = typeof answer === 'string' ? answer.trim() : '';
             if (text) {
                 console.log(`✅ Groq success: ${model}`);
-                return text.replace(/^\\s*(Mahiru Shiina|You|Mahiru)\\s*:\\s*/i, '').trim();
+                return text.replace(/^\s*(Mahiru Shiina|You|Mahiru)\s*:\s*/i, '').trim();
             }
             console.error(`⚠️ Groq ${model} returned an empty response.`);
         } catch (error) {
