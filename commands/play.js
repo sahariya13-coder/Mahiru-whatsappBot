@@ -8,7 +8,7 @@ async function playCommand(sock, chatId, message) {
         
         if (!searchQuery) {
             return await sock.sendMessage(chatId, { 
-                text: "What song do you want to download?"
+                text: "কোন গানটি ডাউনলোড করতে চান?"
             });
         }
 
@@ -16,13 +16,13 @@ async function playCommand(sock, chatId, message) {
         const { videos } = await yts(searchQuery);
         if (!videos || videos.length === 0) {
             return await sock.sendMessage(chatId, { 
-                text: "No songs found!"
+                text: "কোনো গান পাওয়া যায়নি!"
             });
         }
 
         // Send loading message
         await sock.sendMessage(chatId, {
-            text: "_Please wait your download is in progress_"
+            text: "_আপনার গান ডাউনলোড হচ্ছে, অপেক্ষা করুন_"
         });
 
         // Get the first video result
@@ -35,7 +35,7 @@ async function playCommand(sock, chatId, message) {
 
         if (!data || !data.status || !data.result || !data.result.downloadUrl) {
             return await sock.sendMessage(chatId, { 
-                text: "Failed to fetch audio from the API. Please try again later."
+                text: "API থেকে অডিও আনা যায়নি। পরে আবার চেষ্টা করুন।"
             });
         }
 
@@ -52,7 +52,7 @@ async function playCommand(sock, chatId, message) {
     } catch (error) {
         console.error('Error in song2 command:', error);
         await sock.sendMessage(chatId, { 
-            text: "Download failed. Please try again later."
+            text: "ডাউনলোড ব্যর্থ হয়েছে। পরে আবার চেষ্টা করুন।"
         });
     }
 }
