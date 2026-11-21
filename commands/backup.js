@@ -92,7 +92,7 @@ function createBackupBuffer() {
     return zlib.gzipSync(Buffer.from(JSON.stringify(payload)), { level: 6 });
 }
 
-async function sendBackup(sock, destination = ownerJid(), label = 'Manual') {
+async function sendBackup(sock, destination = ownerJid(), label = 'ম্যানুয়াল') {
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
     const buffer = createBackupBuffer();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -102,9 +102,9 @@ async function sendBackup(sock, destination = ownerJid(), label = 'Manual') {
         document: buffer,
         mimetype: 'application/gzip',
         fileName,
-        caption: 'Mahiru ' + label + ' Backup\nCreated: ' +
-            new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' }) +
-            '\nContains: User, Group, Inbox and bot data'
+        caption: 'Mahiru ' + label + ' ব্যাকআপ\nতৈরির সময়: ' +
+            new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) +
+            '\nযা রয়েছে: ব্যবহারকারী, গ্রুপ, ইনবক্স ও বটের তথ্য'
     });
     return { fileName, size: buffer.length };
 }
@@ -207,24 +207,24 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
         if (action === 'restore') {
             REQUESTS.set(requestKey, { chatId, requestedAt: Date.now() });
             await sock.sendMessage(chatId, {
-                text: 'Restore করার জন্য এখন Mahiru Backup ফাইলটি Document হিসেবে পাঠান অথবা এই মেসেজের রিপ্লাই দিয়ে Backup ফাইল পাঠান।\n\nশুধু Mahiru-র .json.gz Backup ফাইল গ্রহণ করা হবে।'
+                text: 'রিস্টোর করতে এখন Mahiru Backup ফাইলটি Document হিসেবে পাঠান অথবা এই মেসেজে রিপ্লাই দিয়ে ফাইলটি পাঠান।\n\nশুধু Mahiru-র .json.gz ব্যাকআপ ফাইল গ্রহণ করা হবে।'
             }, { quoted: message });
             return true;
         }
         if (action && action !== 'now') {
-            await sock.sendMessage(chatId, { text: 'ব্যবহার:\n.backup — এখনই Backup পাঠাবে\n.backup restore — Backup ফাইল চাইবে' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'ব্যবহার:\n.backup — এখনই ব্যাকআপ পাঠাবে\n.backup restore — ব্যাকআপ ফাইল চাইবে' }, { quoted: message });
             return true;
         }
         try {
-            await sock.sendMessage(chatId, { text: 'Backup তৈরি হচ্ছে...' }, { quoted: message });
-            const result = await sendBackup(sock, ownerJid(), 'Manual');
+            await sock.sendMessage(chatId, { text: 'ব্যাকআপ তৈরি হচ্ছে...' }, { quoted: message });
+            const result = await sendBackup(sock, ownerJid(), 'ম্যানুয়াল');
             await sock.sendMessage(chatId, {
                 text: 'Backup Owner-এর WhatsApp-এ পাঠানো হয়েছে।\nFile: ' + result.fileName +
                     '\nSize: ' + (result.size / 1024 / 1024).toFixed(2) + ' MB'
             }, { quoted: message });
         } catch (error) {
             console.error('[BACKUP] Manual backup failed:', error);
-            await sock.sendMessage(chatId, { text: 'Backup তৈরি বা পাঠানো যায়নি: ' + error.message }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'ব্যাকআপ তৈরি বা পাঠানো যায়নি: ' + error.message }, { quoted: message });
         }
         return true;
     }
@@ -234,20 +234,20 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
 
     REQUESTS.delete(requestKey);
     try {
-        await sock.sendMessage(chatId, { text: 'Backup ফাইল যাচাই করে Restore করা হচ্ছে...' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'ব্যাকআপ ফাইল যাচাই করে রিস্টোর করা হচ্ছে...' }, { quoted: message });
         const compressed = await downloadDocument(document);
         const jsonBuffer = zlib.gunzipSync(compressed);
         const payload = JSON.parse(jsonBuffer.toString('utf8'));
         writeRestoreFiles(payload);
         await sock.sendMessage(chatId, {
-            text: '✅ Restore সফল হয়েছে।\nBackup Date: ' + (payload.createdAt || 'Unknown') +
+            text: '✅ রিস্টোর সফল হয়েছে।\nব্যাকআপের তারিখ: ' + (payload.createdAt || 'Unknown') +
                 '\nনিরাপদে Restore সম্পন্ন করতে বট Restart হচ্ছে।'
         }, { quoted: message });
         setTimeout(() => process.exit(1), 1500);
     } catch (error) {
         console.error('[BACKUP] Restore failed:', error);
         await sock.sendMessage(chatId, {
-            text: '❌ Restore ব্যর্থ হয়েছে: ' + error.message + '\nসঠিক Mahiru Backup ফাইল পাঠান।'
+            text: '❌ রিস্টোর ব্যর্থ হয়েছে: ' + error.message + '\nসঠিক Mahiru Backup ফাইল পাঠান।'
         }, { quoted: message });
     }
     return true;
@@ -263,11 +263,11 @@ function startDailyBackup(sock) {
         const delay = Math.max(1000, nextMidnight.valueOf() - Date.now());
         const timer = setTimeout(async () => {
             try {
-                const result = await sendBackup(activeSock, ownerJid(), 'Daily');
+                const result = await sendBackup(activeSock, ownerJid(), 'দৈনিক');
                 console.log('[BACKUP] Daily backup sent:', result.fileName);
             } catch (error) {
                 console.error('[BACKUP] Daily backup failed:', error.message);
-                try { await activeSock.sendMessage(ownerJid(), { text: 'Mahiru Daily Backup ব্যর্থ হয়েছে: ' + error.message }); }
+                try { await activeSock.sendMessage(ownerJid(), { text: 'Mahiru-র দৈনিক ব্যাকআপ ব্যর্থ হয়েছে: ' + error.message }); }
                 catch (_) {}
             }
             scheduleNext();
