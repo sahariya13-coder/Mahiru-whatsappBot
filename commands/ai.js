@@ -9,7 +9,7 @@ async function aiCommand(sock, chatId, message) {
     if (!query) {
       return sock.sendMessage(
         chatId,
-        { text: 'Usage: `.ai <question>`\nExample: `.ai write a basic html page`' },
+        { text: 'ব্যবহার: `.ai <প্রশ্ন>`\nউদাহরণ: `.ai একটি সাধারণ HTML পেজ লিখে দাও`' },
         { quoted: message }
       );
     }
@@ -38,7 +38,7 @@ async function aiCommand(sock, chatId, message) {
     if (!answer) {
       return sock.sendMessage(
         chatId,
-        { text: '❌ Failed to get AI response. Try again later.' },
+        { text: '❌ AI থেকে উত্তর পাওয়া যায়নি। পরে আবার চেষ্টা করুন।' },
         { quoted: message }
       );
     }
@@ -48,7 +48,7 @@ async function aiCommand(sock, chatId, message) {
     console.error('[ai]', err?.message || err);
     await sock.sendMessage(
       chatId,
-      { text: '❌ An error occurred. Please try again later.' },
+      { text: '❌ একটি সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।' },
       { quoted: message }
     );
   }
