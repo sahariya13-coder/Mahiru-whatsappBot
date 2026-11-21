@@ -18,6 +18,7 @@ const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/
 const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await, sleep, reSize } = require('./lib/myfunc')
 const {
     default: makeWASocket,
+    Browsers,
     useMultiFileAuthState,
     DisconnectReason,
     fetchLatestBaileysVersion,
@@ -95,7 +96,8 @@ async function startXeonBotInc() {
             version,
             logger: pino({ level: 'silent' }),
             printQRInTerminal: !pairingCode,
-            browser: ["Ubuntu", "Chrome", "20.0.04"],
+            // Use the supported WEB_BROWSER descriptor; the old Ubuntu tuple can be rejected by WhatsApp.
+            browser: Browsers.macOS("Chrome"),
             auth: {
                 creds: state.creds,
                 keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -266,15 +268,21 @@ async function startXeonBotInc() {
         }
         
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error)?.output?.statusCode !== DisconnectReason.loggedOut
-            const statusCode = lastDisconnect?.error?.output?.statusCode
-            
-            console.log(chalk.red(`Connection closed due to ${lastDisconnect?.error}, reconnecting ${shouldReconnect}`))
-            
-            if (statusCode === DisconnectReason.loggedOut || statusCode === 401) {
+            const disconnectError = lastDisconnect?.error
+            const statusCode = disconnectError?.output?.statusCode ?? disconnectError?.data?.statusCode
+            const isLoggedOut = statusCode === DisconnectReason.loggedOut
+            const shouldReconnect = !isLoggedOut
+
+            console.log(chalk.red(
+                `Connection closed | statusCode=${statusCode ?? 'unknown'} | message=${disconnectError?.message || 'unknown'} | details=${JSON.stringify(disconnectError?.data || disconnectError?.output?.payload || {})} | reconnecting=${shouldReconnect}`
+            ))
+
+            // Never erase an unregistered/fresh auth folder because of a generic connection failure.
+            // Only remove credentials when WhatsApp explicitly reports logout for a registered session.
+            if (isLoggedOut && state.creds.registered) {
                 try {
                     rmSync('./session', { recursive: true, force: true })
-                    console.log(chalk.yellow('Session folder deleted. Please re-authenticate.'))
+                    console.log(chalk.yellow('Registered session was logged out by WhatsApp; session folder deleted.'))
                 } catch (error) {
                     console.error('Error deleting session:', error)
                 }
