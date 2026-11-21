@@ -5,7 +5,7 @@ const isAdmin = require('../lib/isAdmin');
 async function handleAntilinkCommand(sock, chatId, userMessage, senderId, isSenderAdmin, message) {
     try {
         if (!isSenderAdmin) {
-            await sock.sendMessage(chatId, { text: '```For Group Admins Only!```' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: '```শুধু গ্রুপ অ্যাডমিনদের জন্য!```' }, { quoted: message });
             return;
         }
 
@@ -23,37 +23,37 @@ async function handleAntilinkCommand(sock, chatId, userMessage, senderId, isSend
             case 'on':
                 const existingConfig = await getAntilink(chatId, 'on');
                 if (existingConfig?.enabled) {
-                    await sock.sendMessage(chatId, { text: '*_Antilink is already on_*' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: '*_লিংক প্রতিরোধ আগে থেকেই চালু আছে_*' }, { quoted: message });
                     return;
                 }
                 const result = await setAntilink(chatId, 'on', 'delete');
                 await sock.sendMessage(chatId, { 
-                    text: result ? '*_Antilink has been turned ON_*' : '*_Failed to turn on Antilink_*' 
+                    text: result ? '*_লিংক প্রতিরোধ চালু করা হয়েছে_*' : '*_লিংক প্রতিরোধ চালু করা যায়নি_*' 
                 },{ quoted: message });
                 break;
 
             case 'off':
                 await removeAntilink(chatId, 'on');
-                await sock.sendMessage(chatId, { text: '*_Antilink has been turned OFF_*' }, { quoted: message });
+                await sock.sendMessage(chatId, { text: '*_লিংক প্রতিরোধ বন্ধ করা হয়েছে_*' }, { quoted: message });
                 break;
 
             case 'set':
                 if (args.length < 2) {
                     await sock.sendMessage(chatId, { 
-                        text: `*_Please specify an action: ${prefix}antilink set delete | kick | warn_*` 
+                        text: `*_করণীয় নির্ধারণ করুন: ${prefix}antilink set delete | kick | warn_*` 
                     }, { quoted: message });
                     return;
                 }
                 const setAction = args[1];
                 if (!['delete', 'kick', 'warn'].includes(setAction)) {
                     await sock.sendMessage(chatId, { 
-                        text: '*_Invalid action. Choose delete, kick, or warn._*' 
+                        text: '*_ভুল অপশন। delete, kick অথবা warn বেছে নিন।_*' 
                     }, { quoted: message });
                     return;
                 }
                 const setResult = await setAntilink(chatId, 'on', setAction);
                 await sock.sendMessage(chatId, { 
-                    text: setResult ? `*_Antilink action set to ${setAction}_*` : '*_Failed to set Antilink action_*' 
+                    text: setResult ? `*_লিংক প্রতিরোধের কাজ নির্ধারণ করা হয়েছে: ${setAction}_*` : '*_লিংক প্রতিরোধের কাজ নির্ধারণ করা যায়নি_*' 
                 }, { quoted: message });
                 break;
 
@@ -61,16 +61,16 @@ async function handleAntilinkCommand(sock, chatId, userMessage, senderId, isSend
                 const status = await getAntilink(chatId, 'on');
                 const actionConfig = await getAntilink(chatId, 'on');
                 await sock.sendMessage(chatId, { 
-                    text: `*_Antilink Configuration:_*\nStatus: ${status ? 'ON' : 'OFF'}\nAction: ${actionConfig ? actionConfig.action : 'Not set'}` 
+                    text: `*_লিংক প্রতিরোধের সেটিংস:_*\nStatus: ${status ? 'ON' : 'OFF'}\nAction: ${actionConfig ? actionConfig.action : 'Not set'}` 
                 }, { quoted: message });
                 break;
 
             default:
-                await sock.sendMessage(chatId, { text: `*_Use ${prefix}antilink for usage._*` });
+                await sock.sendMessage(chatId, { text: `*_ব্যবহার জানতে ${prefix}antilink লিখুন।_*` });
         }
     } catch (error) {
         console.error('Error in antilink command:', error);
-        await sock.sendMessage(chatId, { text: '*_Error processing antilink command_*' });
+        await sock.sendMessage(chatId, { text: '*_লিংক প্রতিরোধ কমান্ড চালাতে সমস্যা হয়েছে_*' });
     }
 }
 
@@ -129,7 +129,7 @@ async function handleLinkDetection(sock, chatId, message, userMessage, senderId)
         }
 
         const mentionedJidList = [senderId];
-        await sock.sendMessage(chatId, { text: `Warning! @${senderId.split('@')[0]}, posting links is not allowed.`, mentions: mentionedJidList });
+        await sock.sendMessage(chatId, { text: `সতর্কতা! @${senderId.split('@')[0]}, এখানে লিংক দেওয়া নিষিদ্ধ।`, mentions: mentionedJidList });
     } else {
         console.log('No link detected or protection not enabled for this type of link.');
     }
