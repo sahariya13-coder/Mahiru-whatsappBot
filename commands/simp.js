@@ -33,7 +33,7 @@ async function simpCommand(sock, chatId, quotedMsg, mentionedJid, sender) {
         // Send image without channel forwarding
         await sock.sendMessage(chatId, {
             image: imageBuffer,
-            caption: '*your religion is simping*'
+            caption: '*তোমার ধর্মই হলো সিম্পিং*'
         });
 
     } catch (error) {
