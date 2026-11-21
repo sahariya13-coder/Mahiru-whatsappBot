@@ -1,7 +1,7 @@
 /**
  * Mahiru owner backup and restore.
  * Exports persistent data/ files and the lightweight WhatsApp store.
- * Authentication/session secrets and API keys are intentionally excluded.
+ * WhatsApp authentication/session secrets are excluded; bot configuration is included.
  */
 const fs = require('fs');
 const path = require('path');
