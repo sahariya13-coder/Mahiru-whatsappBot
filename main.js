@@ -146,6 +146,7 @@ const { anticallCommand, readState: readAnticallState } = require('./commands/an
 const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/pmblocker');
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
+const { handleBackupMessage } = require('./commands/backup');
 
 // Global settings
 global.packname = settings.packname;
@@ -209,6 +210,9 @@ async function handleMessages(sock, messageUpdate, printLog) {
             message.message?.imageMessage?.caption?.trim() ||
             message.message?.videoMessage?.caption?.trim() ||
             '';
+
+        // Owner-only backup and restore flow (also intercepts the requested backup document).
+        if (await handleBackupMessage(sock, message, chatId, senderId, rawText)) return;
 
         // Convert incoming WhatsApp voice notes to text before AI processing.
         const unwrappedMessage = message.message?.ephemeralMessage?.message ||
