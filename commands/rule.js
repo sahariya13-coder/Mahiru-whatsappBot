@@ -49,7 +49,7 @@ async function handleRuleCommand(sock, chatId, message, rawText) {
     if (action === 'list') {
         if (!rules.length) return send('এখনো কোনো AI Rule যোগ করা হয়নি।\nযোগ করতে: .rule add <name> | <rule>');
         return send('*SAVED AI RULES*\n\n' + rules.map((rule, i) =>
-            `${i + 1}. ${rule.name}\n   Status: ${rule.enabled ? 'ON ✅' : 'OFF ❌'}\n   Rule: ${rule.text}`
+            `${i + 1}. ${rule.name}\n   অবস্থা: ${rule.enabled ? 'চালু ✅' : 'বন্ধ ❌'}\n   নিয়ম: ${rule.text}`
         ).join('\n\n'));
     }
 
@@ -68,13 +68,13 @@ async function handleRuleCommand(sock, chatId, message, rawText) {
             if (index >= 0) return send('❌ এই নামে Rule আগে থেকেই আছে। Edit করতে .rule edit ব্যবহার করুন।');
             rules.push({ name, text, enabled: true, createdAt: new Date().toISOString() });
             if (!saveRules(rules)) return send('❌ Rule save করা যায়নি।');
-            return send(`✅ Rule “${name}” যোগ হয়েছে। Status: ON ✅\nবন্ধ করতে: .rule off ${name}`);
+            return send(`✅ Rule “${name}” যোগ হয়েছে। অবস্থা: চালু ✅\nবন্ধ করতে: .rule off ${name}`);
         }
         if (index < 0) return send('❌ এই নামে কোনো Rule পাওয়া যায়নি। .rule list দেখুন।');
         rules[index].text = text;
         rules[index].updatedAt = new Date().toISOString();
         if (!saveRules(rules)) return send('❌ Rule update করা যায়নি।');
-        return send(`✅ Rule “${name}” আপডেট হয়েছে। Status: ${rules[index].enabled ? 'ON' : 'OFF'}`);
+        return send(`✅ Rule “${name}” আপডেট হয়েছে। অবস্থা: ${rules[index].enabled ? 'চালু' : 'বন্ধ'}`);
     }
 
     if (['on', 'off', 'del', 'delete'].includes(action)) {
