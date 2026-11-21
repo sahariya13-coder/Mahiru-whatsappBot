@@ -6,7 +6,7 @@ const isOwnerOrSudo = require('../lib/isOwner');
 function clearDirectory(dirPath) {
     try {
         if (!fs.existsSync(dirPath)) {
-            return { success: false, message: `Directory does not exist: ${dirPath}` };
+            return { success: false, message: `ফোল্ডারটি পাওয়া যায়নি: ${dirPath}` };
         }
         const files = fs.readdirSync(dirPath);
         let deletedCount = 0;
@@ -25,10 +25,10 @@ function clearDirectory(dirPath) {
                 console.error(`Error deleting file ${file}:`, err);
             }
         }
-        return { success: true, message: `Cleared ${deletedCount} files in ${path.basename(dirPath)}`, count: deletedCount };
+        return { success: true, message: `${path.basename(dirPath)} ফোল্ডার থেকে ${deletedCount}টি ফাইল পরিষ্কার করা হয়েছে`, count: deletedCount };
     } catch (error) {
         console.error('Error in clearDirectory:', error);
-        return { success: false, message: `Failed to clear files in ${path.basename(dirPath)}`, error: error.message };
+        return { success: false, message: `${path.basename(dirPath)} ফোল্ডারের ফাইল পরিষ্কার করা যায়নি`, error: error.message };
     }
 }
 
@@ -54,7 +54,7 @@ async function clearTmpCommand(sock, chatId, msg) {
         
         if (!msg.key.fromMe && !isOwner) {
             await sock.sendMessage(chatId, { 
-                text: '❌ This command is only available for the owner!' 
+                text: '❌ এই কমান্ডটি শুধু বটের মালিক ব্যবহার করতে পারবেন।' 
             });
             return;
         }
@@ -74,7 +74,7 @@ async function clearTmpCommand(sock, chatId, msg) {
     } catch (error) {
         console.error('Error in cleartmp command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Failed to clear temporary files!' 
+            text: '❌ অস্থায়ী ফাইল পরিষ্কার করা যায়নি!' 
         });
     }
 }
