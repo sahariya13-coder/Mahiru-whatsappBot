@@ -19,7 +19,7 @@ async function viewonceCommand(sock, chatId, message) {
         for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
         await sock.sendMessage(chatId, { video: buffer, fileName: 'media.mp4', caption: quotedVideo.caption || '' }, { quoted: message });
     } else {
-        await sock.sendMessage(chatId, { text: '❌ Please reply to a view-once image or video.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '❌ একবার দেখা যায় এমন কোনো ছবি অথবা ভিডিওতে রিপ্লাই দিন।' }, { quoted: message });
     }
 }
 
