@@ -26,7 +26,7 @@ async function handleTranslateCommand(sock, chatId, message, match) {
             const args = match.trim().split(' ');
             if (args.length < 2) {
                 return sock.sendMessage(chatId, {
-                    text: `*TRANSLATOR*\n\nUsage:\n1. Reply to a message with: .translate <lang> or .trt <lang>\n2. Or type: .translate <text> <lang> or .trt <text> <lang>\n\nExample:\n.translate hello fr\n.trt hello fr\n\nLanguage codes:\nfr - Bangla\nes - Spanish\nde - German\nit - Italian\npt - Portuguese\nru - Russian\nja - Japanese\nko - Korean\nzh - Chinese\nar - Arabic\nhi - Hindi`,
+                    text: `*অনুবাদক*\n\nব্যবহার:\n১. কোনো মেসেজে রিপ্লাই দিয়ে লিখুন: .translate <ভাষার কোড> অথবা .trt <ভাষার কোড>\n২. অথবা লিখুন: .translate <লেখা> <ভাষার কোড>\n\nউদাহরণ:\n.translate hello bn\n.trt hello bn\n\nভাষার কোড:\nbn — বাংলা\nen — ইংরেজি\nes — স্প্যানিশ\nde — জার্মান\nit — ইতালিয়ান\npt — পর্তুগিজ\nru — রুশ\nja — জাপানি\nko — কোরিয়ান\nzh — চীনা\nar — আরবি\nhi — হিন্দি`,
                     quoted: message
                 });
             }
@@ -37,7 +37,7 @@ async function handleTranslateCommand(sock, chatId, message, match) {
 
         if (!textToTranslate) {
             return sock.sendMessage(chatId, {
-                text: '❌ No text found to translate. Please provide text or reply to a message.',
+                text: '❌ অনুবাদের জন্য কোনো লেখা পাওয়া যায়নি। লেখা দিন অথবা কোনো মেসেজে রিপ্লাই করুন।',
                 quoted: message
             });
         }
@@ -103,7 +103,7 @@ async function handleTranslateCommand(sock, chatId, message, match) {
     } catch (error) {
         console.error('❌ Error in translate command:', error);
         await sock.sendMessage(chatId, {
-            text: '❌ Failed to translate text. Please try again later.\n\nUsage:\n1. Reply to a message with: .translate <lang> or .trt <lang>\n2. Or type: .translate <text> <lang> or .trt <text> <lang>',
+            text: '❌ লেখা অনুবাদ করা যায়নি। পরে আবার চেষ্টা করুন।\n\nব্যবহার:\n১. কোনো মেসেজে রিপ্লাই দিয়ে .translate <ভাষার কোড> লিখুন\n২. অথবা .translate <লেখা> <ভাষার কোড> লিখুন',
             quoted: message
         });
     }
