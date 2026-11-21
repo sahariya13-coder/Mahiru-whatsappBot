@@ -33,21 +33,37 @@ async function isOwnerMessage(senderId, message, sock, chatId) {
     }
 }
 
+// Only persistent application data is backed up. Media, generated files,
+// caches and temporary files are intentionally excluded to keep backups small.
+const BACKUP_DATA_EXTENSIONS = new Set([
+    '.json', '.json5', '.jsonl', '.db', '.sqlite', '.sqlite3',
+    '.txt', '.csv', '.yaml', '.yml', '.ini', '.conf', '.xml'
+]);
+const EXCLUDED_DATA_DIRS = new Set([
+    'cache', 'caches', 'tmp', 'temp', 'media', 'images', 'image',
+    'audio', 'voice', 'voices', 'video', 'videos', 'uploads',
+    'downloads', 'thumbnails'
+]);
+
+function shouldBackupDataFile(filePath) {
+    return BACKUP_DATA_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
 function collectFiles(dir, relative = 'data') {
     const output = {};
     if (!fs.existsSync(dir)) return output;
 
-    // Include every regular file recursively: hidden files, nested folders,
-    // temporary files and files larger than 50 MB are all included.
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
         const rel = path.posix.join(relative, entry.name);
 
         if (entry.isDirectory()) {
-            Object.assign(output, collectFiles(full, rel));
-        } else if (entry.isFile()) {
+            if (!EXCLUDED_DATA_DIRS.has(entry.name.toLowerCase())) {
+                Object.assign(output, collectFiles(full, rel));
+            }
+        } else if (entry.isFile() && shouldBackupDataFile(entry.name)) {
             output[rel] = fs.readFileSync(full).toString('base64');
-        } else if (entry.isSymbolicLink()) {
+        } else if (entry.isSymbolicLink() && shouldBackupDataFile(entry.name)) {
             const stat = fs.statSync(full);
             if (stat.isFile()) output[rel] = fs.readFileSync(full).toString('base64');
         }
@@ -122,7 +138,8 @@ function writeRestoreFiles(payload) {
         if (typeof relative !== 'string' ||
             !(relative === 'baileys_store.json' || relative === 'settings.js' ||
               relative === 'config.js' || relative === '.env' || relative.startsWith('data/')) ||
-            relative.includes('..') || path.isAbsolute(relative) || typeof encoded !== 'string') {
+            relative.includes('..') || path.isAbsolute(relative) || typeof encoded !== 'string' ||
+            (relative.startsWith('data/') && !shouldBackupDataFile(relative))) {
             throw new Error('Backup contains an unsafe file path');
         }
         const bytes = Buffer.from(encoded, 'base64');
