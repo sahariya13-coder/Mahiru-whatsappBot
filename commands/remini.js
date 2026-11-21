@@ -36,7 +36,7 @@ async function reminiCommand(sock, chatId, message, args) {
                 imageUrl = url;
             } else {
                 return sock.sendMessage(chatId, { 
-                    text: '❌ Invalid URL provided.\n\nUsage: `.remini https://example.com/image.jpg`' 
+                    text: '❌ ভুল URL দেওয়া হয়েছে।\n\nব্যবহার: `.remini <ছবির লিংক>`' 
                 }, { quoted: message });
             }
         } else {
@@ -45,7 +45,7 @@ async function reminiCommand(sock, chatId, message, args) {
             
             if (!imageUrl) {
                 return sock.sendMessage(chatId, { 
-                    text: '📸 *Remini AI Enhancement Command*\n\nUsage:\n• `.remini <image_url>`\n• Reply to an image with `.remini`\n• Send image with `.remini`\n\nExample: `.remini https://example.com/image.jpg`' 
+                    text: '📸 *Remini AI দিয়ে ছবি উন্নত করুন*\n\nব্যবহার:\n• `.remini <ছবির লিংক>`\n• কোনো ছবিতে রিপ্লাই দিয়ে `.remini` লিখুন\n• `.remini` ক্যাপশন দিয়ে ছবি পাঠান' 
                 }, { quoted: message });
             }
         }
@@ -75,7 +75,7 @@ async function reminiCommand(sock, chatId, message, args) {
                     // Send the enhanced image
                     await sock.sendMessage(chatId, {
                         image: imageResponse.data,
-                        caption: '✨ *Image enhanced successfully!*\n\n𝗘𝗡𝗛𝗔𝗡𝗖𝗘𝗗 𝗕𝗬 *Mahiru*'
+                        caption: '✨ *ছবির মান সফলভাবে উন্নত করা হয়েছে!*\n\n𝗘𝗡𝗛𝗔𝗡𝗖𝗘𝗗 𝗕𝗬 *Mahiru*'
                     }, { quoted: message });
                 } else {
                     throw new Error('Failed to download enhanced image');
@@ -90,20 +90,20 @@ async function reminiCommand(sock, chatId, message, args) {
     } catch (error) {
         console.error('Remini Error:', error.message);
         
-        let errorMessage = '❌ Failed to enhance image.';
+        let errorMessage = '❌ ছবির মান উন্নত করা যায়নি।';
         
         if (error.response?.status === 429) {
-            errorMessage = '⏰ Rate limit exceeded. Please try again later.';
+            errorMessage = '⏰ অনুরোধের সীমা শেষ হয়েছে। পরে আবার চেষ্টা করুন।';
         } else if (error.response?.status === 400) {
             errorMessage = '❌ Invalid image URL or format.';
         } else if (error.response?.status === 500) {
-            errorMessage = '🔧 Server error. Please try again later.';
+            errorMessage = '🔧 সার্ভারে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।';
         } else if (error.code === 'ECONNABORTED') {
-            errorMessage = '⏰ Request timeout. Please try again.';
+            errorMessage = '⏰ অনুরোধের সময় শেষ হয়েছে। আবার চেষ্টা করুন।';
         } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-            errorMessage = '🌐 Network error. Please check your connection.';
+            errorMessage = '🌐 নেটওয়ার্কে সমস্যা হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।';
         } else if (error.message.includes('Error processing image')) {
-            errorMessage = '❌ Image processing failed. Please try with a different image.';
+            errorMessage = '❌ ছবিটি প্রক্রিয়া করা যায়নি। অন্য ছবি দিয়ে চেষ্টা করুন।';
         }
         
         await sock.sendMessage(chatId, { 
