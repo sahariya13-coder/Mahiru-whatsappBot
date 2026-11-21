@@ -193,12 +193,12 @@ async function fetchStatusMedia(sock, fullMsg, mediaMsg, type) {
 function statusHeader(candidates) {
   // participantAlt (phone) first, then participant (may be @lid)
   const who = lidToMention(candidates);
-  if (!who.jid) return { text: '💾 *Saved Status*', mentions: [] };
+  if (!who.jid) return { text: '💾 *সংরক্ষিত স্ট্যাটাস*', mentions: [] };
   if (who.number) {
-    return { text: `💾 *Saved Status* from ${who.text}`, mentions: who.mentions };
+    return { text: `💾 *সংরক্ষিত স্ট্যাটাস* from ${who.text}`, mentions: who.mentions };
   }
   // LID not mapped yet — still mention, but don't show raw lid as "+number"
-  return { text: `💾 *Saved Status* from ${who.text}`, mentions: who.mentions };
+  return { text: `💾 *সংরক্ষিত স্ট্যাটাস* from ${who.text}`, mentions: who.mentions };
 }
 
 function remember(msg) {
@@ -409,7 +409,7 @@ async function savestatusCommand(sock, chatId, message, senderId) {
     if (['on', 'off', 'enable', 'disable'].includes(sub)) {
       const enable = sub === 'on' || sub === 'enable';
       if (enable === isEnabled()) {
-        return reply(`💾 Auto-save is already *${enable ? 'ON' : 'OFF'}*.`);
+        return reply(`💾 স্বয়ংক্রিয় সংরক্ষণ আগে থেকেই *${enable ? 'চালু' : 'বন্ধ'}* আছে।`);
       }
       setEnabled(enable);
       return reply(
