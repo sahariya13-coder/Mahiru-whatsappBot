@@ -6,12 +6,12 @@ async function deleteCommand(sock, chatId, message, senderId) {
         const { isSenderAdmin, isBotAdmin } = await isAdmin(sock, chatId, senderId);
 
         if (!isBotAdmin) {
-            await sock.sendMessage(chatId, { text: 'I need to be an admin to delete messages.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'মেসেজ মুছতে হলে আমাকে গ্রুপ অ্যাডমিন করতে হবে।' }, { quoted: message });
             return;
         }
 
         if (!isSenderAdmin) {
-            await sock.sendMessage(chatId, { text: 'Only admins can use the .delete command.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিনরা .delete কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
             return;
         }
 
@@ -40,7 +40,7 @@ async function deleteCommand(sock, chatId, message, senderId) {
         // If no number provided and not replying/mentioning, show usage message
         else if (countArg === null && !repliedParticipant && !mentioned) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Please specify the number of messages to delete.\n\nUsage:\n• `.del 5` - Delete last 5 messages from group\n• `.del 3 @user` - Delete last 3 messages from @user\n• `.del 2` (reply to message) - Delete last 2 messages from replied user' 
+                text: '❌ কতটি মেসেজ মুছতে চান তা লিখুন।\n\nব্যবহার:\n• `.del 5` — গ্রুপের শেষ ৫টি মেসেজ মুছবে\n• `.del 3 @user` — নির্দিষ্ট ব্যক্তির শেষ ৩টি মেসেজ মুছবে\n• `.del 2` (মেসেজে রিপ্লাই দিয়ে) — রিপ্লাই করা ব্যক্তির শেষ ২টি মেসেজ মুছবে' 
             }, { quoted: message });
             return;
         }
@@ -152,7 +152,7 @@ async function deleteCommand(sock, chatId, message, senderId) {
 
     
     } catch (err) {
-        await sock.sendMessage(chatId, { text: 'Failed to delete messages.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'মেসেজ মুছতে ব্যর্থ হয়েছে।' }, { quoted: message });
     }
 }
 
