@@ -6,12 +6,12 @@ async function tagAllCommand(sock, chatId, senderId, message) {
         
 
         if (!isBotAdmin) {
-            await sock.sendMessage(chatId, { text: 'Please make the bot an admin first.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'আগে বটকে গ্রুপ অ্যাডমিন করুন।' }, { quoted: message });
             return;
         }
 
         if (!isSenderAdmin) {
-            await sock.sendMessage(chatId, { text: 'Only group admins can use the .tagall command.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিনরা .tagall কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
             return;
         }
 
@@ -20,7 +20,7 @@ async function tagAllCommand(sock, chatId, senderId, message) {
         const participants = groupMetadata.participants;
 
         if (!participants || participants.length === 0) {
-            await sock.sendMessage(chatId, { text: 'No participants found in the group.' });
+            await sock.sendMessage(chatId, { text: 'গ্রুপে কোনো সদস্য পাওয়া যায়নি।' });
             return;
         }
 
@@ -38,7 +38,7 @@ async function tagAllCommand(sock, chatId, senderId, message) {
 
     } catch (error) {
         console.error('Error in tagall command:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to tag all members.' });
+        await sock.sendMessage(chatId, { text: 'সব সদস্যকে ট্যাগ করা যায়নি।' });
     }
 }
 
