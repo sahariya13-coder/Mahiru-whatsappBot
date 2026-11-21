@@ -45,7 +45,7 @@ async function warningsCommand(sock, chatId, mentionedJidList = [], message = nu
     const count = Number(groupWarnings[target] || 0);
 
     await sock.sendMessage(chatId, {
-        text: '⚠️ *Warning তথ্য*\nব্যবহারকারী: @' + target.split('@')[0] +
+        text: '⚠️ *সতর্কবার্তার তথ্য*\nব্যবহারকারী: @' + target.split('@')[0] +
             '\nএই গ্রুপে Warning: ' + count + '/3',
         mentions: [target]
     }, message ? { quoted: message } : {});
