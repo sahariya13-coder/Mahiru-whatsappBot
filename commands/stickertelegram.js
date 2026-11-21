@@ -19,7 +19,7 @@ async function stickerTelegramCommand(sock, chatId, msg) {
         
         if (!args[0]) {
             await sock.sendMessage(chatId, { 
-                text: '⚠️ Please enter the Telegram sticker URL!\n\nExample: .tg https://t.me/addstickers/Porcientoreal' 
+                text: '⚠️ Telegram স্টিকার প্যাকের লিংক দিন!\n\nউদাহরণ: .tg https://t.me/addstickers/Porcientoreal' 
             });
             return;
         }
@@ -27,7 +27,7 @@ async function stickerTelegramCommand(sock, chatId, msg) {
         // Validate URL format
         if (!args[0].match(/(https:\/\/t.me\/addstickers\/)/gi)) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Invalid URL! Make sure it\'s a Telegram sticker URL.' 
+                text: '❌ ভুল লিংক! Telegram স্টিকার প্যাকের লিংক দিন।' 
             });
             return;
         }
@@ -63,7 +63,7 @@ async function stickerTelegramCommand(sock, chatId, msg) {
 
             // Send initial message with sticker count
             await sock.sendMessage(chatId, { 
-                text: `📦 Found ${stickerSet.result.stickers.length} stickers\n⏳ Starting download...` 
+                text: `📦 ${stickerSet.result.stickers.length}টি স্টিকার পাওয়া গেছে\n⏳ ডাউনলোড শুরু হচ্ছে...` 
             });
 
             // Create temp directory if it doesn't exist
@@ -168,7 +168,7 @@ async function stickerTelegramCommand(sock, chatId, msg) {
 
             // Only send completion message at the end
             await sock.sendMessage(chatId, { 
-                text: `✅ Successfully downloaded ${successCount}/${stickerSet.result.stickers.length} stickers!` 
+                text: `✅ ${successCount}/${stickerSet.result.stickers.length}টি স্টিকার সফলভাবে ডাউনলোড হয়েছে!` 
             });
 
         } catch (error) {
@@ -178,7 +178,7 @@ async function stickerTelegramCommand(sock, chatId, msg) {
     } catch (error) {
         console.error('Error in stickertelegram command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Failed to process Telegram stickers!\nMake sure:\n1. The URL is correct\n2. The sticker pack exists\n3. The sticker pack is public' 
+            text: '❌ Telegram স্টিকার ডাউনলোড করা যায়নি! নিশ্চিত করুন:\n১. লিংকটি সঠিক\n২. স্টিকার প্যাকটি আছে\n৩. স্টিকার প্যাকটি সবার জন্য উন্মুক্ত' 
         });
     }
 }
