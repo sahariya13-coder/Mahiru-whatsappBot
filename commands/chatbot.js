@@ -12,7 +12,7 @@ const USER_GROUP_DATA = path.join(__dirname, '../data/userGroupData.json');
 
 // Set GEMINI_API_KEY in the hosting panel. Never hard-code API keys in source code.
 const GEMINI_API_KEYS = [
-    process.env.GEMINI_API_KEY || '',
+    process.env.GEMINI_API_KEY_1 || process.env.GEMINI_API_KEY || '',
     process.env.GEMINI_API_KEY_2 || '',
     process.env.GEMINI_API_KEY_3 || '',
     process.env.GEMINI_API_KEY_4 || '',
