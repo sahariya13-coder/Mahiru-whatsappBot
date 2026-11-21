@@ -15,12 +15,12 @@ async function resetlinkCommand(sock, chatId, senderId) {
             .includes(botId);
 
         if (!isAdmin) {
-            await sock.sendMessage(chatId, { text: '❌ Only admins can use this command!' });
+            await sock.sendMessage(chatId, { text: '❌ শুধু গ্রুপ অ্যাডমিনরা এই কমান্ড ব্যবহার করতে পারবেন!' });
             return;
         }
 
         if (!isBotAdmin) {
-            await sock.sendMessage(chatId, { text: '❌ Bot must be admin to reset group link!' });
+            await sock.sendMessage(chatId, { text: '❌ গ্রুপের লিংক রিসেট করতে বটকে অ্যাডমিন হতে হবে!' });
             return;
         }
 
@@ -29,12 +29,12 @@ async function resetlinkCommand(sock, chatId, senderId) {
         
         // Send the new link
         await sock.sendMessage(chatId, { 
-            text: `✅ Group link has been successfully reset\n\n📌 New link:\nhttps://chat.whatsapp.com/${newCode}`
+            text: `✅ গ্রুপের লিংক সফলভাবে রিসেট হয়েছে\n\n📌 নতুন লিংক:\nhttps://chat.whatsapp.com/${newCode}`
         });
 
     } catch (error) {
         console.error('Error in resetlink command:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to reset group link!' });
+        await sock.sendMessage(chatId, { text: 'গ্রুপের লিংক রিসেট করা যায়নি!' });
     }
 }
 
