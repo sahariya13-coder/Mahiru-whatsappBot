@@ -42,7 +42,7 @@ async function stupidCommand(sock, chatId, quotedMsg, mentionedJid, sender, args
     } catch (error) {
         console.error('Error in stupid command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Sorry, I couldn\'t generate the stupid card. Please try again later!'
+            text: '❌ কার্ড তৈরি করা যায়নি। পরে আবার চেষ্টা করুন!'
         });
     }
 }
