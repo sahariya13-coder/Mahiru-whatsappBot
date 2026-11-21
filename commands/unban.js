@@ -11,18 +11,18 @@ async function unbanCommand(sock, chatId, message) {
         const senderId = message.key.participant || message.key.remoteJid;
         const { isSenderAdmin, isBotAdmin } = await isAdmin(sock, chatId, senderId);
         if (!isBotAdmin) {
-            await sock.sendMessage(chatId, { text: 'Please make the bot an admin to use .unban', ...channelInfo }, { quoted: message });
+            await sock.sendMessage(chatId, { text: ' .unban ব্যবহার করতে বটকে গ্রুপ অ্যাডমিন করুন।', ...channelInfo }, { quoted: message });
             return;
         }
         if (!isSenderAdmin && !message.key.fromMe) {
-            await sock.sendMessage(chatId, { text: 'Only group admins can use .unban', ...channelInfo }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিনরা .unban ব্যবহার করতে পারবেন।', ...channelInfo }, { quoted: message });
             return;
         }
     } else {
         const senderId = message.key.participant || message.key.remoteJid;
         const senderIsSudo = await isSudo(senderId);
         if (!message.key.fromMe && !senderIsSudo) {
-            await sock.sendMessage(chatId, { text: 'Only owner/sudo can use .unban in private chat', ...channelInfo }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু Owner/Sudo ব্যক্তিগত চ্যাটে .unban ব্যবহার করতে পারবেন।', ...channelInfo }, { quoted: message });
             return;
         }
     }
@@ -39,7 +39,7 @@ async function unbanCommand(sock, chatId, message) {
     
     if (!userToUnban) {
         await sock.sendMessage(chatId, { 
-            text: 'Please mention the user or reply to their message to unban!', 
+            text: 'যাকে নিষেধাজ্ঞা থেকে মুক্ত করতে চান তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!', 
             ...channelInfo 
         }, { quoted: message });
         return;
@@ -53,20 +53,20 @@ async function unbanCommand(sock, chatId, message) {
             fs.writeFileSync('./data/banned.json', JSON.stringify(bannedUsers, null, 2));
             
             await sock.sendMessage(chatId, { 
-                text: `Successfully unbanned ${userToUnban.split('@')[0]}!`,
+                text: `${userToUnban.split('@')[0]}-এর নিষেধাজ্ঞা তুলে নেওয়া হয়েছে!`,
                 mentions: [userToUnban],
                 ...channelInfo 
             });
         } else {
             await sock.sendMessage(chatId, { 
-                text: `${userToUnban.split('@')[0]} is not banned!`,
+                text: `${userToUnban.split('@')[0]} নিষিদ্ধ নন!`,
                 mentions: [userToUnban],
                 ...channelInfo 
             });
         }
     } catch (error) {
         console.error('Error in unban command:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to unban user!', ...channelInfo }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'ব্যবহারকারীর নিষেধাজ্ঞা তোলা যায়নি!', ...channelInfo }, { quoted: message });
     }
 }
 
