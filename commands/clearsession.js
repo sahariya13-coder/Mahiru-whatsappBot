@@ -10,7 +10,7 @@ async function clearSessionCommand(sock, chatId, msg) {
 
         if (!msg.key.fromMe && !isOwner) {
             await sock.sendMessage(chatId, {
-                text: '❌ This command can only be used by the owner!'
+                text: '❌ এই কমান্ডটি শুধু বটের মালিক ব্যবহার করতে পারবেন।'
             });
             return;
         }
@@ -20,7 +20,7 @@ async function clearSessionCommand(sock, chatId, msg) {
 
         if (!fs.existsSync(sessionDir)) {
             await sock.sendMessage(chatId, {
-                text: '❌ Session directory not found!'
+                text: '❌ সেশন ফোল্ডার পাওয়া যায়নি!'
             });
             return;
         }
@@ -31,7 +31,7 @@ async function clearSessionCommand(sock, chatId, msg) {
 
         // Send initial status
         await sock.sendMessage(chatId, {
-            text: '🔍 Optimizing session files for better performance...'
+            text: '🔍 পারফরম্যান্স বাড়াতে সেশন ফাইলগুলো গুছিয়ে নেওয়া হচ্ছে...'
         });
 
         const files = fs.readdirSync(sessionDir);
@@ -68,14 +68,14 @@ async function clearSessionCommand(sock, chatId, msg) {
             } catch (error) {
                 errors++;
                 errorDetails.push(
-                    `Failed to delete ${file}: ${error.message}`
+                    `${file} মুছতে ব্যর্থ: ${error.message}`
                 );
             }
         }
 
         // Completion message
         const resultMessage =
-            `✅ Session files cleared successfully!\n\n` +
+            `✅ সেশন ফাইল সফলভাবে পরিষ্কার করা হয়েছে!\n\n` +
             `📊 Statistics:\n` +
             `• Total files cleared: ${filesCleared}\n` +
             `• App state sync files: ${appStateSyncCount}\n` +
@@ -94,7 +94,7 @@ async function clearSessionCommand(sock, chatId, msg) {
         console.error('Error in clearsession command:', error);
 
         await sock.sendMessage(chatId, {
-            text: '❌ Failed to clear session files!'
+            text: '❌ সেশন ফাইল পরিষ্কার করা যায়নি!'
         });
     }
 }
