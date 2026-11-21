@@ -15,6 +15,7 @@ const STORE_FILE = path.join(ROOT, 'baileys_store.json');
 const BACKUP_DIR = path.join(ROOT, '.mahiru-backup');
 const REQUESTS = new Map();
 let dailyStarted = false;
+let activeSock = null;
 
 function ownerJid() {
     const number = String(settings.ownerNumber || '').replace(/\D/g, '');
@@ -22,15 +23,14 @@ function ownerJid() {
     return number + '@s.whatsapp.net';
 }
 
-function isOwnerMessage(senderId, message) {
-    const ownerNumber = String(settings.ownerNumber || '').replace(/\D/g, '');
-    const candidates = [
-        senderId, message?.key?.participant, message?.key?.participantAlt,
-        message?.key?.remoteJid, message?.key?.remoteJidAlt, message?.key?.senderPn
-    ].filter(Boolean);
-    return Boolean(message?.key?.fromMe) || candidates.some(value =>
-        String(value).split(':')[0].split('@')[0].replace(/\D/g, '') === ownerNumber
-    );
+async function isOwnerMessage(senderId, message, sock, chatId) {
+    if (message?.key?.fromMe) return true;
+    try {
+        return await require('../lib/isOwner').isConfiguredOwner(senderId, sock, chatId, message);
+    } catch (error) {
+        console.error('[BACKUP] Owner verification failed:', error.message);
+        return false;
+    }
 }
 
 function collectFiles(dir, relative = 'data') {
@@ -139,7 +139,7 @@ function writeRestoreFiles(payload) {
 
 async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
     const text = String(rawText || '').trim();
-    const owner = isOwnerMessage(senderId, message);
+    const owner = await isOwnerMessage(senderId, message, sock, chatId);
     const requestKey = String(senderId || chatId);
     const document = readDocument(message);
 
@@ -200,6 +200,7 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
 }
 
 function startDailyBackup(sock) {
+    activeSock = sock;
     if (dailyStarted) return;
     dailyStarted = true;
     const moment = require('moment-timezone');
@@ -208,11 +209,11 @@ function startDailyBackup(sock) {
         const delay = Math.max(1000, nextMidnight.valueOf() - Date.now());
         const timer = setTimeout(async () => {
             try {
-                const result = await sendBackup(sock, ownerJid(), 'Daily');
+                const result = await sendBackup(activeSock, ownerJid(), 'Daily');
                 console.log('[BACKUP] Daily backup sent:', result.fileName);
             } catch (error) {
                 console.error('[BACKUP] Daily backup failed:', error.message);
-                try { await sock.sendMessage(ownerJid(), { text: 'Mahiru Daily Backup ব্যর্থ হয়েছে: ' + error.message }); }
+                try { await activeSock.sendMessage(ownerJid(), { text: 'Mahiru Daily Backup ব্যর্থ হয়েছে: ' + error.message }); }
                 catch (_) {}
             }
             scheduleNext();
