@@ -22,7 +22,7 @@ async function shayariCommand(sock, chatId, message) {
     } catch (error) {
         console.error('Error in shayari command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Failed to fetch shayari. Please try again later.',
+            text: '❌ শায়েরি পাওয়া যায়নি। পরে আবার চেষ্টা করুন।',
         }, { quoted: message });
     }
 }
