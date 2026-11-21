@@ -33,7 +33,7 @@ function incrementMessageCount(groupId, userId) {
 
 function topMembers(sock, chatId, isGroup) {
     if (!isGroup) {
-        sock.sendMessage(chatId, { text: 'This command is only available in group chats.' });
+        sock.sendMessage(chatId, { text: 'এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে।' });
         return;
     }
 
@@ -45,7 +45,7 @@ function topMembers(sock, chatId, isGroup) {
         .slice(0, 5); // Get top 5 members
 
     if (sortedMembers.length === 0) {
-        sock.sendMessage(chatId, { text: 'No message activity recorded yet.' });
+        sock.sendMessage(chatId, { text: 'এখনো কোনো মেসেজের কার্যক্রম রেকর্ড করা হয়নি।' });
         return;
     }
 
