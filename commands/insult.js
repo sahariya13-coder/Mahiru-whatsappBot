@@ -50,7 +50,7 @@ async function insultCommand(sock, chatId, message) {
         
         if (!userToInsult) {
             await sock.sendMessage(chatId, { 
-                text: 'Please mention someone or reply to their message to insult them!'
+                text: 'কাউকে মজা করে খোঁচা দিতে তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!'
             });
             return;
         }
@@ -70,7 +70,7 @@ async function insultCommand(sock, chatId, message) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             try {
                 await sock.sendMessage(chatId, { 
-                    text: 'Please try again in a few seconds.'
+                    text: 'কয়েক সেকেন্ড পর আবার চেষ্টা করুন।'
                 });
             } catch (retryError) {
                 console.error('Error sending retry message:', retryError);
@@ -78,7 +78,7 @@ async function insultCommand(sock, chatId, message) {
         } else {
             try {
                 await sock.sendMessage(chatId, { 
-                    text: 'An error occurred while sending the insult.'
+                    text: 'মেসেজটি পাঠাতে সমস্যা হয়েছে।'
                 });
             } catch (sendError) {
                 console.error('Error sending error message:', sendError);
