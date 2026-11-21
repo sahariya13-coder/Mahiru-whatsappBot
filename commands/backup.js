@@ -93,6 +93,9 @@ function createBackupBuffer() {
 }
 
 async function sendBackup(sock, destination = ownerJid(), label = 'ম্যানুয়াল') {
+    // Push the latest persistent data to Redis before producing the WhatsApp archive.
+    try { await require('../lib/persistent_data').syncActiveToRedis(); }
+    catch (error) { console.warn('[BACKUP] Redis sync warning:', error.message); }
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
     const buffer = createBackupBuffer();
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
