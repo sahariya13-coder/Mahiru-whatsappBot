@@ -195,29 +195,38 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
         }
 
-        let userMessage = (
-            message.message?.conversation?.trim() ||
-            message.message?.extendedTextMessage?.text?.trim() ||
-            message.message?.imageMessage?.caption?.trim() ||
-            message.message?.videoMessage?.caption?.trim() ||
-            message.message?.buttonsResponseMessage?.selectedButtonId?.trim() ||
-            ''
-        ).toLowerCase().replace(/\.\s+/g, '.').trim();
+        // Unwrap ephemeral and view-once messages before reading captions/media.
+        let unwrappedMessage = message.message;
+        for (let depth = 0; depth < 5; depth++) {
+            const nested = unwrappedMessage?.ephemeralMessage?.message ||
+                unwrappedMessage?.viewOnceMessage?.message ||
+                unwrappedMessage?.viewOnceMessageV2?.message ||
+                unwrappedMessage?.viewOnceMessageV2Extension?.message;
+            if (!nested) break;
+            unwrappedMessage = nested;
+        }
 
-        let rawText = message.message?.conversation?.trim() ||
-            message.message?.extendedTextMessage?.text?.trim() ||
-            message.message?.imageMessage?.caption?.trim() ||
-            message.message?.videoMessage?.caption?.trim() ||
+        let userMessage = (
+            unwrappedMessage?.conversation?.trim() ||
+            unwrappedMessage?.extendedTextMessage?.text?.trim() ||
+            unwrappedMessage?.imageMessage?.caption?.trim() ||
+            unwrappedMessage?.videoMessage?.caption?.trim() ||
+            unwrappedMessage?.documentMessage?.caption?.trim() ||
+            unwrappedMessage?.buttonsResponseMessage?.selectedButtonId?.trim() ||
+            ''
+        ).toLowerCase().replace(/\\.\\s+/g, '.').trim();
+
+        let rawText = unwrappedMessage?.conversation?.trim() ||
+            unwrappedMessage?.extendedTextMessage?.text?.trim() ||
+            unwrappedMessage?.imageMessage?.caption?.trim() ||
+            unwrappedMessage?.videoMessage?.caption?.trim() ||
+            unwrappedMessage?.documentMessage?.caption?.trim() ||
             '';
 
         // Owner-only backup and restore flow (also intercepts the requested backup document).
         if (await handleBackupMessage(sock, message, chatId, senderId, rawText)) return;
 
         // Convert incoming WhatsApp voice notes to text before AI processing.
-        const unwrappedMessage = message.message?.ephemeralMessage?.message ||
-            message.message?.viewOnceMessage?.message ||
-            message.message?.viewOnceMessageV2?.message ||
-            message.message;
         const incomingAudio = unwrappedMessage?.audioMessage || unwrappedMessage?.pttMessage;
         let inputResponseMode = 'text';
         if (incomingAudio && !message.key?.fromMe) {
