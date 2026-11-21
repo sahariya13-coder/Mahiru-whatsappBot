@@ -27,7 +27,7 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
         // First check if it's a group
         if (!chatId.endsWith('@g.us')) {
             await sock.sendMessage(chatId, { 
-                text: 'This command can only be used in groups!'
+                text: 'এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে!'
             });
             return;
         }
@@ -38,21 +38,21 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
             
             if (!isBotAdmin) {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Error: Please make the bot an admin first to use this command.'
+                    text: '❌ এই কমান্ড ব্যবহারের আগে বটকে গ্রুপ অ্যাডমিন করুন।'
                 });
                 return;
             }
 
             if (!isSenderAdmin) {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Error: Only group admins can use the warn command.'
+                    text: '❌ শুধু গ্রুপ অ্যাডমিনরা warn কমান্ড ব্যবহার করতে পারবেন।'
                 });
                 return;
             }
         } catch (adminError) {
             console.error('Error checking admin status:', adminError);
             await sock.sendMessage(chatId, { 
-                text: '❌ Error: Please make sure the bot is an admin of this group.'
+                text: '❌ নিশ্চিত করুন যে বট এই গ্রুপের অ্যাডমিন।'
             });
             return;
         }
@@ -70,7 +70,7 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
         
         if (!userToWarn) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Error: Please mention the user or reply to their message to warn!'
+                text: '❌ যাকে সতর্ক করতে চান তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!'
             });
             return;
         }
@@ -125,7 +125,7 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
         } catch (error) {
             console.error('Error in warn command:', error);
             await sock.sendMessage(chatId, { 
-                text: '❌ Failed to warn user!'
+                text: '❌ ব্যবহারকারীকে সতর্ক করা যায়নি!'
             });
         }
     } catch (error) {
@@ -134,7 +134,7 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             try {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Rate limit reached. Please try again in a few seconds.'
+                    text: '❌ অনুরোধের সীমা অতিক্রম করেছে। কয়েক সেকেন্ড পর আবার চেষ্টা করুন।'
                 });
             } catch (retryError) {
                 console.error('Error sending retry message:', retryError);
@@ -142,7 +142,7 @@ async function warnCommand(sock, chatId, senderId, mentionedJids, message) {
         } else {
             try {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Failed to warn user. Make sure the bot is admin and has sufficient permissions.'
+                    text: '❌ ব্যবহারকারীকে সতর্ক করা যায়নি। বটের অ্যাডমিন অনুমতি পরীক্ষা করুন।'
                 });
             } catch (sendError) {
                 console.error('Error sending error message:', sendError);
