@@ -6,13 +6,13 @@ async function stickerCommand(sock, chatId, message) {
     try {
         const quotedMsg = message.message.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quotedMsg) {
-            await sock.sendMessage(chatId, { text: 'Please reply to an image or video!' });
+            await sock.sendMessage(chatId, { text: 'কোনো ছবি অথবা ভিডিওতে রিপ্লাই দিন!' });
             return;
         }
 
         const type = Object.keys(quotedMsg)[0];
         if (!['imageMessage', 'videoMessage'].includes(type)) {
-            await sock.sendMessage(chatId, { text: 'Please reply to an image or video!' });
+            await sock.sendMessage(chatId, { text: 'কোনো ছবি অথবা ভিডিওতে রিপ্লাই দিন!' });
             return;
         }
 
@@ -54,7 +54,7 @@ async function stickerCommand(sock, chatId, message) {
 
     } catch (error) {
         console.error('Error in sticker command:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to create sticker!' });
+        await sock.sendMessage(chatId, { text: 'স্টিকার তৈরি করা যায়নি!' });
     }
 }
 
