@@ -114,14 +114,14 @@ async function tiktokCommand(sock, chatId, message) {
     if (!url) {
       return sock.sendMessage(
         chatId,
-        { text: 'Please provide a TikTok link.\nExample: `.tiktok https://vm.tiktok.com/...`' },
+        { text: 'TikTok লিংক দিন।\nউদাহরণ: `.tiktok https://vm.tiktok.com/...`' },
         { quoted: message }
       );
     }
     if (!TT_PATTERNS.some((p) => p.test(url))) {
       return sock.sendMessage(
         chatId,
-        { text: 'That is not a valid TikTok link.' },
+        { text: 'এটি সঠিক TikTok লিংক নয়।' },
         { quoted: message }
       );
     }
@@ -149,7 +149,7 @@ async function tiktokCommand(sock, chatId, message) {
     console.error('[tiktok]', err?.message || err);
     await sock.sendMessage(
       chatId,
-      { text: '❌ Failed to download TikTok video. Try again with a different link.' },
+      { text: '❌ TikTok ভিডিও ডাউনলোড করা যায়নি। অন্য লিংক দিয়ে চেষ্টা করুন।' },
       { quoted: message }
     );
   }
