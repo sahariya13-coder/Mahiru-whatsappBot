@@ -189,7 +189,7 @@ async function igsCommand(sock, chatId, message, crop = false) {
         const text = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
         const urlMatch = text.match(/https?:\/\/\S+/);
         if (!urlMatch) {
-            await sock.sendMessage(chatId, { text: `Send an Instagram post/reel link.\nUsage:\n.igs <url>\n.igsc <url>` }, { quoted: message });
+            await sock.sendMessage(chatId, { text: `Instagram পোস্ট/রিলের লিংক দিন।\nব্যবহার:\n.igs <লিংক>\n.igsc <লিংক>` }, { quoted: message });
             return;
         }
 
@@ -197,7 +197,7 @@ async function igsCommand(sock, chatId, message, crop = false) {
 
         const downloadData = await igdl(urlMatch[0]).catch(() => null);
         if (!downloadData || !downloadData.data) {
-            await sock.sendMessage(chatId, { text: '❌ Failed to fetch media from Instagram link.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: '❌ Instagram লিংক থেকে মিডিয়া আনা যায়নি।' }, { quoted: message });
             return;
         }
         // Raw items
@@ -212,7 +212,7 @@ async function igsCommand(sock, chatId, message, crop = false) {
             }
         }
         if (items.length === 0) {
-            await sock.sendMessage(chatId, { text: '❌ No media found at the provided link.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: '❌ দেওয়া লিংকে কোনো মিডিয়া পাওয়া যায়নি।' }, { quoted: message });
             return;
         }
 
@@ -265,7 +265,7 @@ async function igsCommand(sock, chatId, message, crop = false) {
 
     } catch (err) {
         console.error('Error in igs command:', err);
-        await sock.sendMessage(chatId, { text: 'Failed to create sticker from Instagram link.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'Instagram লিংক থেকে স্টিকার তৈরি করা যায়নি।' }, { quoted: message });
     }
 }
 
