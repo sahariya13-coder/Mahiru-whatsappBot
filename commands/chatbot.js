@@ -165,8 +165,21 @@ async function showTyping(sock, chatId) {
     }
 }
 
+function unwrapMessageContent(content) {
+    let current = content || {};
+    for (let depth = 0; depth < 5; depth++) {
+        const nested = current?.ephemeralMessage?.message ||
+            current?.viewOnceMessage?.message ||
+            current?.viewOnceMessageV2?.message ||
+            current?.viewOnceMessageV2Extension?.message;
+        if (!nested) break;
+        current = nested;
+    }
+    return current;
+}
+
 function getMessageText(message) {
-    const msg = message?.message || {};
+    const msg = unwrapMessageContent(message?.message);
 
     return (
         msg.conversation ||
@@ -525,8 +538,8 @@ async function handleChatbotResponse(
         if (isGroup && data.chatbot[chatId] === false) return;
         if (!isGroup && data.inboxChatbot[chatId] === false) return;
 
-        const imageMessage = message.message?.imageMessage ||
-            message.message?.ephemeralMessage?.message?.imageMessage;
+        const contentMessage = unwrapMessageContent(message.message);
+        const imageMessage = contentMessage?.imageMessage;
         const hasImage = Boolean(imageMessage);
 
         const originalText = String(
@@ -648,7 +661,8 @@ async function handleChatbotResponse(
             response = await getImageAIResponse({
                 messages: history,
                 systemRules,
-                isOwner
+                isOwner,
+                caption: cleanedMessage
             }, imageData);
         } else {
             response = await getAIResponse({
