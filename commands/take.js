@@ -9,7 +9,7 @@ async function takeCommand(sock, chatId, message, args) {
         // Check if message is a reply to a sticker
         const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
         if (!quotedMessage?.stickerMessage) {
-            await sock.sendMessage(chatId, { text: '❌ Reply to a sticker with .take <packname>' });
+            await sock.sendMessage(chatId, { text: '❌ কোনো স্টিকারে রিপ্লাই দিয়ে .take <প্যাকের নাম> লিখুন' });
             return;
         }
 
@@ -33,7 +33,7 @@ async function takeCommand(sock, chatId, message, args) {
             );
 
             if (!stickerBuffer) {
-                await sock.sendMessage(chatId, { text: '❌ Failed to download sticker' });
+                await sock.sendMessage(chatId, { text: '❌ স্টিকার ডাউনলোড করা যায়নি' });
                 return;
             }
 
@@ -69,12 +69,12 @@ async function takeCommand(sock, chatId, message, args) {
 
         } catch (error) {
             console.error('Sticker processing error:', error);
-            await sock.sendMessage(chatId, { text: '❌ Error processing sticker' });
+            await sock.sendMessage(chatId, { text: '❌ স্টিকার প্রক্রিয়া করতে সমস্যা হয়েছে' });
         }
 
     } catch (error) {
         console.error('Error in take command:', error);
-        await sock.sendMessage(chatId, { text: '❌ Error processing command' });
+        await sock.sendMessage(chatId, { text: '❌ কমান্ডটি চালাতে সমস্যা হয়েছে' });
     }
 }
 
