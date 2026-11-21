@@ -122,7 +122,7 @@ async function songCommand(sock, chatId, message) {
 
     if (!query) {
       await sock.sendMessage(chatId, {
-        text: 'ব্যবহার: .play গানের নাম অথবা YouTube link'
+        text: 'ব্যবহার: .play গানের নাম অথবা YouTube লিংক'
       }, { quoted: message });
       return;
     }
