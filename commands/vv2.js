@@ -88,7 +88,7 @@ async function vv2Command(sock, chatId, message, senderId) {
     await sock.sendMessage(dest, payload);
 
     if (dest !== chatId) {
-      await sock.sendMessage(chatId, { text: '✅ Sent to your DM.' }, { quoted: message });
+      await sock.sendMessage(chatId, { text: '✅ আপনার ইনবক্সে পাঠানো হয়েছে।' }, { quoted: message });
     }
   } catch (error) {
     console.error('[vv2]', error?.message || error);
