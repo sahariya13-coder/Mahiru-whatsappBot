@@ -5,7 +5,7 @@ async function demoteCommand(sock, chatId, mentionedJids, message) {
         // First check if it's a group
         if (!chatId.endsWith('@g.us')) {
             await sock.sendMessage(chatId, { 
-                text: 'This command can only be used in groups!'
+                text: 'এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে!'
             });
             return;
         }
@@ -16,21 +16,21 @@ async function demoteCommand(sock, chatId, mentionedJids, message) {
             
             if (!adminStatus.isBotAdmin) {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Error: Please make the bot an admin first to use this command.'
+                    text: '❌ এই কমান্ড ব্যবহারের আগে বটকে গ্রুপ অ্যাডমিন করুন।'
                 });
                 return;
             }
 
             if (!adminStatus.isSenderAdmin) {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Error: Only group admins can use the demote command.'
+                    text: '❌ শুধু গ্রুপ অ্যাডমিনরা demote কমান্ড ব্যবহার করতে পারবেন।'
                 });
                 return;
             }
         } catch (adminError) {
             console.error('Error checking admin status:', adminError);
             await sock.sendMessage(chatId, { 
-                text: '❌ Error: Please make sure the bot is an admin of this group.'
+                text: '❌ নিশ্চিত করুন যে বট এই গ্রুপের অ্যাডমিন।'
             });
             return;
         }
@@ -49,7 +49,7 @@ async function demoteCommand(sock, chatId, mentionedJids, message) {
         // If no user found through either method
         if (userToDemote.length === 0) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Error: Please mention the user or reply to their message to demote!'
+                text: '❌ যাকে অ্যাডমিন পদ থেকে সরাতে চান তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!'
             });
             return;
         }
@@ -83,7 +83,7 @@ async function demoteCommand(sock, chatId, mentionedJids, message) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             try {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Rate limit reached. Please try again in a few seconds.'
+                    text: '❌ অনুরোধের সীমা অতিক্রম করেছে। কয়েক সেকেন্ড পর আবার চেষ্টা করুন।'
                 });
             } catch (retryError) {
                 console.error('Error sending retry message:', retryError);
@@ -91,7 +91,7 @@ async function demoteCommand(sock, chatId, mentionedJids, message) {
         } else {
             try {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Failed to demote user(s). Make sure the bot is admin and has sufficient permissions.'
+                    text: '❌ ব্যবহারকারীকে অ্যাডমিন পদ থেকে সরানো যায়নি। বট অ্যাডমিন কি না এবং প্রয়োজনীয় অনুমতি আছে কি না দেখুন।'
                 });
             } catch (sendError) {
                 console.error('Error sending error message:', sendError);
