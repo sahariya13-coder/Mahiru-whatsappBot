@@ -328,7 +328,7 @@ async function startXeonBotInc() {
         }
     })
 
-    // Send a message to callers without rejecting calls or blocking them.
+    // Reject incoming calls and notify the caller with a message.
     const antiCallNotified = new Set();
 
     XeonBotInc.ev.on('call', async (calls) => {
@@ -337,15 +337,26 @@ async function startXeonBotInc() {
             if (!readAnticallState().enabled) return;
 
             for (const call of calls) {
-                const callerJid = call.from || call.peerJid || call.chatId;
-                if (!callerJid || antiCallNotified.has(callerJid)) continue;
+                // Only handle incoming call offers; ignore later call-state updates.
+                if (call.status !== 'offer') continue;
 
+                const callerJid = call.from || call.peerJid || call.chatId;
+                if (!callerJid || !call.id) continue;
+
+                try {
+                    // Cut/reject the incoming call first.
+                    await XeonBotInc.rejectCall(call.id, callerJid);
+                } catch (error) {
+                    console.error('[ANTICALL] Could not reject call:', error?.message || error);
+                }
+
+                if (antiCallNotified.has(callerJid)) continue;
                 antiCallNotified.add(callerJid);
                 setTimeout(() => antiCallNotified.delete(callerJid), 60000);
 
                 try {
                     await XeonBotInc.sendMessage(callerJid, {
-                        text: '📵 অনুগ্রহ করে WhatsApp-এ কল না করে মেসেজ পাঠান। আমি মেসেজের মাধ্যমে উত্তর দেব।'
+                        text: '📵 আপনার কলটি কেটে দেওয়া হয়েছে। অনুগ্রহ করে কল না করে মেসেজ পাঠান।'
                     });
                 } catch (error) {
                     console.error('[ANTICALL] Could not send caller message:', error?.message || error);
