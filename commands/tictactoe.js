@@ -11,7 +11,7 @@ async function tictactoeCommand(sock, chatId, senderId, text) {
             [room.game.playerX, room.game.playerO].includes(senderId)
         )) {
             await sock.sendMessage(chatId, { 
-                text: '❌ You are still in a game. Type *surrender* to quit.' 
+                text: '❌ আপনি এখনো একটি গেমে আছেন। বের হতে *surrender* লিখুন।' 
             });
             return;
         }
@@ -77,7 +77,7 @@ ${arr.slice(6).join('')}
             if (text) room.name = text;
 
             await sock.sendMessage(chatId, { 
-                text: `⏳ *Waiting for opponent*\nType *.ttt ${text || ''}* to join!`
+                text: `⏳ *প্রতিপক্ষের অপেক্ষায়*\nযোগ দিতে *.ttt ${text || ''}* লিখুন!`
             });
 
             games[room.id] = room;
@@ -86,7 +86,7 @@ ${arr.slice(6).join('')}
     } catch (error) {
         console.error('Error in tictactoe command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Error starting game. Please try again.' 
+            text: '❌ গেম শুরু করা যায়নি। আবার চেষ্টা করুন।' 
         });
     }
 }
@@ -109,7 +109,7 @@ async function handleTicTacToeMove(sock, chatId, senderId, text) {
         // Allow surrender at any time, not just during player's turn
         if (senderId !== room.game.currentTurn && !isSurrender) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Not your turn!' 
+                text: '❌ এখন আপনার চাল নয়!' 
             });
             return;
         }
@@ -121,7 +121,7 @@ async function handleTicTacToeMove(sock, chatId, senderId, text) {
 
         if (!ok) {
             await sock.sendMessage(chatId, { 
-                text: '❌ Invalid move! That position is already taken.' 
+                text: '❌ ভুল চাল! এই ঘরটি আগে থেকেই নেওয়া হয়েছে।' 
             });
             return;
         }
@@ -149,7 +149,7 @@ async function handleTicTacToeMove(sock, chatId, senderId, text) {
             
             // Send a surrender message
             await sock.sendMessage(chatId, { 
-                text: `🏳️ @${senderId.split('@')[0]} has surrendered! @${winner.split('@')[0]} wins the game!`,
+                text: `🏳️ @${senderId.split('@')[0]} খেলা ছেড়ে দিয়েছে! @${winner.split('@')[0]} গেমে জয়ী হয়েছে!`,
                 mentions: [senderId, winner]
             });
             
@@ -160,7 +160,7 @@ async function handleTicTacToeMove(sock, chatId, senderId, text) {
 
         let gameStatus;
         if (winner) {
-            gameStatus = `🎉 @${winner.split('@')[0]} wins the game!`;
+            gameStatus = `🎉 @${winner.split('@')[0]} গেমে জয়ী হয়েছে!`;
         } else if (isTie) {
             gameStatus = `🤝 Game ended in a draw!`;
         } else {
