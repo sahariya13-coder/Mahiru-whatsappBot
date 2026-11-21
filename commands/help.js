@@ -11,13 +11,13 @@ async function helpCommand(sock, chatId, message) {
     const helpMessage = `
 ╔═══════════════════╗
    *🤖 ${settings.botName || 'Mahiru Shiina'}*
-   Version: *${settings.version || '3.0.0'}*
-   by ${settings.botOwner || 'MSK'}
+   সংস্করণ: *${settings.version || '3.0.0'}*
+   নির্মাতা: ${settings.botOwner || 'MSK'}
 ╚═══════════════════╝
 
-${menuTitle}\n\n*Available Commands:*\n
+${menuTitle}\n\n*ব্যবহারযোগ্য কমান্ডসমূহ:*\n
 ╔═══════════════════╗
-🌐 *General Commands*:
+🌐 *সাধারণ কমান্ড:*
 ║ ➤ .help / .menu / .bot / .list
 ║ ➤ .ping
 ║ ➤ .alive
@@ -47,7 +47,7 @@ ${menuTitle}\n\n*Available Commands:*\n
 ╚═══════════════════╝
 
 ${isPrivileged ? `╔═══════════════════╗
-👮‍♂️ *Admin Commands*:
+👮‍♂️ *অ্যাডমিন কমান্ড:*
 ║ ➤ .ban @user
 ║ ➤ .unban @user
 ║ ➤ .promote @user
@@ -79,29 +79,29 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🔒 *Owner Commands*:
-║ ➤ .gid (show Group ID; works before activation)
-║ ➤ .gact <Group ID> (activate group)
-║ ➤ .gdeact <Group ID> (deactivate group)
+🔒 *মালিকের কমান্ড:*
+║ ➤ .gid (গ্রুপ আইডি দেখুন; চালু করার আগেও কাজ করবে)
+║ ➤ .gact <গ্রুপ আইডি> (গ্রুপ চালু করুন)
+║ ➤ .gdeact <গ্রুপ আইডি> (গ্রুপ বন্ধ করুন)
 ║ ➤ .iai on/off (Inbox AI চালু/বন্ধ)
-║ ➤ .rule add <name> | <rule text> (নতুন Rule default ON)
-║ ➤ .rule list (সব Rule ও status দেখুন)
-║ ➤ .rule on <name> (Rule চালু)
-║ ➤ .rule off <name> (Rule বন্ধ)
-║ ➤ .rule edit <name> | <new rule>
-║ ➤ .rule del <name> (Rule মুছুন)
-║ ➤ AI Rules: Inbox + Group উভয় AI-তে কার্যকর
-║ ➤ Rule management: শুধু Owner/Sudo\n║ ➤ Mahiru persona: default ON (.human on/off)\n║ ➤ .mode <public/private>
+║ ➤ .rule add <নাম> | <নিয়ম> (নতুন নিয়ম ডিফল্টভাবে চালু)
+║ ➤ .rule list (সব নিয়ম ও অবস্থা দেখুন)
+║ ➤ .rule on <নাম> (নিয়ম চালু)
+║ ➤ .rule off <নাম> (নিয়ম বন্ধ)
+║ ➤ .rule edit <নাম> | <নতুন নিয়ম>
+║ ➤ .rule del <নাম> (নিয়ম মুছুন)
+║ ➤ AI নিয়ম: ইনবক্স ও গ্রুপ—উভয় AI-তে কার্যকর
+║ ➤ নিয়ম পরিচালনা: শুধু Owner/Sudo\n║ ➤ Mahiru-র ব্যক্তিত্ব: ডিফল্টভাবে চালু (.human on/off)\n║ ➤ .mode <সবার জন্য/ব্যক্তিগত>
 ║ ➤ .clearsession
 ║ ➤ .antidelete
 ║ ➤ .cleartmp
 ║ ➤ .update
 ║ ➤ .settings
-║ ➤ .sudo add/remove/list
-║ ➤ .backup (backup/restore)
+║ ➤ .sudo add/remove/list (Sudo ব্যবহারকারী পরিচালনা)
+║ ➤ .backup (ব্যাকআপ/রিস্টোর)
 ║ ➤ .pair
 ║ ➤ .update
-║ ➤ .setpp <reply to image>
+║ ➤ .setpp <ছবিতে রিপ্লাই দিন>
 ║ ➤ .autoreact <on/off>
 ║ ➤ .autostatus <on/off>
 ║ ➤ .autostatus react <on/off>
@@ -110,14 +110,14 @@ ${isPrivileged ? `╔═══════════════════�
 ║ ➤ .anticall <on/off>
 ║ ➤ .pmblocker <on/off/status>
 ║ ➤ .pmblocker setmsg <text>
-║ ➤ .setmention <reply to msg>
-║ ➤ .mention <on/off>\n║ ➤ .human (show persona mode)\n║ ➤ .human on/off (Owner only)\n║ ➤ Owner: https://wa.me//${(settings.ownerUsername || settings.botOwner || 'Not set').replace(/^@/, '')}
+║ ➤ .setmention <মেসেজে রিপ্লাই দিন>
+║ ➤ .mention <on/off>\n║ ➤ .human (show persona mode)\n║ ➤ .human on/off (Owner only)\n║ ➤ বটের মালিক: https://wa.me//${(settings.ownerUsername || settings.botOwner || 'Not set').replace(/^@/, '')}
 ╚═══════════════════╝
 
 ` : ''}
 
 ╔═══════════════════╗
-🎨 *Image/Sticker Commands*:
+🎨 *ছবি ও স্টিকার কমান্ড:*
 ║ ➤ .blur <image>
 ║ ➤ .simage <reply to sticker>
 ║ ➤ .sticker <reply to image>
@@ -136,7 +136,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🖼️ *Pies Commands*:
+🖼️ *পাই কমান্ড:*
 ║ ➤ .pies <country>
 ║ ➤ .china
 ║ ➤ .indonesia
@@ -146,7 +146,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🎮 *Game Commands*:
+🎮 *গেম কমান্ড:*
 ║ ➤ .tictactoe @user
 ║ ➤ .hangman
 ║ ➤ .guess <letter>
@@ -157,20 +157,20 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🤖 *AI Commands*:
+🤖 *কৃত্রিম বুদ্ধিমত্তা (AI) কমান্ড:*
 ║ ➤ .gpt <question>
 ║ ➤ .gemini <question>
-║ ➤ Inbox AI: private chat-এ auto reply (.iai on/off)
-║ ➤ Group AI: Mahiru-কে mention/reply করলে উত্তর দেবে (.gai on/off)
-║ ➤ Chatbot default: ON (Group + Inbox)
-║ ➤ Owner-এর AI নিয়ম: চালু করা নিয়ম ইনবক্স ও গ্রুপ—দুই জায়গাতেই মানবে
-║ ➤ .imagine <prompt>
+║ ➤ ইনবক্স AI: ব্যক্তিগত চ্যাটে স্বয়ংক্রিয় উত্তর (.iai on/off)
+║ ➤ গ্রুপ AI: Mahiru-কে মেনশন বা রিপ্লাই করলে উত্তর দেবে (.gai on/off)
+║ ➤ চ্যাটবট ডিফল্ট: চালু (গ্রুপ + ইনবক্স)
+║ ➤ মালিকের AI নিয়ম: চালু করা নিয়ম ইনবক্স ও গ্রুপ—দুই জায়গাতেই মানবে
+║ ➤ .imagine <ছবির বর্ণনা>
 ║ ➤ .flux <prompt>
-║ ➤ .sora <prompt>
+║ ➤ .sora <ভিডিওর বর্ণনা>
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🎯 *Fun Commands*:
+🎯 *বিনোদনমূলক কমান্ড:*
 ║ ➤ .compliment @user
 ║ ➤ .insult @user
 ║ ➤ .flirt
@@ -185,7 +185,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🔤 *Textmaker*:
+🔤 *লেখা থেকে ডিজাইন কমান্ড:*
 ║ ➤ .metallic <text>
 ║ ➤ .ice <text>
 ║ ➤ .snow <text>
@@ -207,7 +207,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-📥 *Downloader*:
+📥 *ডাউনলোড কমান্ড:*
 ║ ➤ .play <song_name>
 ║ ➤ .song <song_name>
 ║ ➤ .spotify <query>
@@ -220,7 +220,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🧩 *MISC*:
+🧩 *অন্যান্য কমান্ড:*
 ║ ➤ .heart
 ║ ➤ .horny
 ║ ➤ .circle
@@ -240,7 +240,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-🖼️ *ANIME*:
+🖼️ *অ্যানিমে কমান্ড:*
 ║ ➤ .nom
 ║ ➤ .poke
 ║ ➤ .cry
@@ -252,7 +252,7 @@ ${isPrivileged ? `╔═══════════════════�
 ╚═══════════════════╝
 
 ╔═══════════════════╗
-💻 *Github Commands:*
+💻 *GitHub কমান্ড:*
 ║ ➤ .git
 ║ ➤ .github
 ║ ➤ .sc
