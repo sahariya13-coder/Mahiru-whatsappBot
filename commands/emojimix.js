@@ -12,13 +12,13 @@ async function emojimixCommand(sock, chatId, msg) {
         const args = text.split(' ').slice(1);
         
         if (!args[0]) {
-            await sock.sendMessage(chatId, { text: '🎴 Example: .emojimix 😎+🥰' });
+            await sock.sendMessage(chatId, { text: '🎴 উদাহরণ: .emojimix 😎+🥰' });
             return;
         }
 
         if (!text.includes('+')) {
             await sock.sendMessage(chatId, { 
-                text: '✳️ Separate the emoji with a *+* sign\n\n📌 Example: \n*.emojimix* 😎+🥰' 
+                text: '✳️ দুটি ইমোজির মাঝে *+* চিহ্ন দিন।\n\n📌 উদাহরণ:\n*.emojimix* 😎+🥰' 
             });
             return;
         }
@@ -33,7 +33,7 @@ async function emojimixCommand(sock, chatId, msg) {
 
         if (!data.results || data.results.length === 0) {
             await sock.sendMessage(chatId, { 
-                text: '❌ These emojis cannot be mixed! Try different ones.' 
+                text: '❌ এই ইমোজি দুটি মিশিয়ে তৈরি করা যাচ্ছে না। অন্য ইমোজি দিয়ে চেষ্টা করুন।' 
             });
             return;
         }
@@ -94,7 +94,7 @@ async function emojimixCommand(sock, chatId, msg) {
     } catch (error) {
         console.error('Error in emojimix command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Failed to mix emojis! Make sure you\'re using valid emojis.\n\nExample: .emojimix 😎+🥰' 
+            text: '❌ ইমোজি মিক্স করা যায়নি। সঠিক ইমোজি ব্যবহার করুন।\n\nউদাহরণ: .emojimix 😎+🥰' 
         });
     }
 }
