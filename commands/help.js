@@ -2,8 +2,12 @@
 const settings = require('../settings');
 const fs = require('fs');
 const path = require('path');
+const isOwnerOrSudo = require('../lib/isOwner');
 
 async function helpCommand(sock, chatId, message) {
+    const senderId = message?.key?.participant || message?.key?.remoteJid || '';
+    const isPrivileged = Boolean(message?.key?.fromMe) || await isOwnerOrSudo(senderId, sock, chatId, message);
+    const menuTitle = isPrivileged ? '*OWNER / SUDO MENU*' : '*USER MENU*';
     const helpMessage = `
 ╔═══════════════════╗
    *🤖 ${settings.botName || 'Mahiru Shiina'}*
@@ -11,8 +15,7 @@ async function helpCommand(sock, chatId, message) {
    by ${settings.botOwner || 'MSK'}
 ╚═══════════════════╝
 
-*Available Commands:*
-
+${menuTitle}\n\n*Available Commands:*\n
 ╔═══════════════════╗
 🌐 *General Commands*:
 ║ ➤ .help / .menu / .bot / .list
@@ -43,7 +46,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .viewonce
 ╚═══════════════════╝
 
-╔═══════════════════╗
+${isPrivileged ? `╔═══════════════════╗
 👮‍♂️ *Admin Commands*:
 ║ ➤ .ban @user
 ║ ➤ .unban @user
@@ -110,6 +113,8 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .setmention <reply to msg>
 ║ ➤ .mention <on/off>\n║ ➤ .human (show persona mode)\n║ ➤ .human on/off (Owner only)\n║ ➤ Owner: https://wa.me//${(settings.ownerUsername || settings.botOwner || 'Not set').replace(/^@/, '')}
 ╚═══════════════════╝
+
+` : ''}
 
 ╔═══════════════════╗
 🎨 *Image/Sticker Commands*:
