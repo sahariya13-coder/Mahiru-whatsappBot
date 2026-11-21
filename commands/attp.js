@@ -8,7 +8,7 @@ async function attpCommand(sock, chatId, message) {
     const text = userMessage.split(' ').slice(1).join(' ');
 
     if (!text) {
-        await sock.sendMessage(chatId, { text: 'Please provide text after the .attp command.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '.attp কমান্ডের পরে স্টিকারে লেখার টেক্সট দিন।' }, { quoted: message });
         return;
     }
 
@@ -20,7 +20,7 @@ async function attpCommand(sock, chatId, message) {
         await sock.sendMessage(chatId, { sticker: webpBuffer }, { quoted: message });
     } catch (error) {
         console.error('Error generating local sticker:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to generate the sticker locally.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'স্টিকার তৈরি করা যায়নি।' }, { quoted: message });
     }
 }
 
