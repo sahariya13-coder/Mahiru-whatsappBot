@@ -643,7 +643,8 @@ async function handleChatbotResponse(
             const imageData = await downloadWhatsAppImage(imageMessage);
             response = await getImageAIResponse({
                 messages: history,
-                systemRules
+                systemRules,
+                isOwner
             }, imageData);
         } else {
             response = await getAIResponse({
