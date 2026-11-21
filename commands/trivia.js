@@ -4,7 +4,7 @@ let triviaGames = {};
 
 async function startTrivia(sock, chatId) {
     if (triviaGames[chatId]) {
-        sock.sendMessage(chatId, { text: 'A trivia game is already in progress!' });
+        sock.sendMessage(chatId, { text: 'একটি কুইজ গেম আগে থেকেই চলছে!' });
         return;
     }
 
@@ -19,25 +19,25 @@ async function startTrivia(sock, chatId) {
         };
 
         sock.sendMessage(chatId, {
-            text: `Trivia Time!\n\nQuestion: ${triviaGames[chatId].question}\nOptions:\n${triviaGames[chatId].options.join('\n')}`
+            text: `কুইজের সময়!\n\nপ্রশ্ন: ${triviaGames[chatId].question}\nবিকল্পসমূহ:\n${triviaGames[chatId].options.join('\n')}`
         });
     } catch (error) {
-        sock.sendMessage(chatId, { text: 'Error fetching trivia question. Try again later.' });
+        sock.sendMessage(chatId, { text: 'কুইজের প্রশ্ন আনা যায়নি। পরে আবার চেষ্টা করুন।' });
     }
 }
 
 function answerTrivia(sock, chatId, answer) {
     if (!triviaGames[chatId]) {
-        sock.sendMessage(chatId, { text: 'No trivia game is in progress.' });
+        sock.sendMessage(chatId, { text: 'এখন কোনো কুইজ গেম চলছে না।' });
         return;
     }
 
     const game = triviaGames[chatId];
 
     if (answer.toLowerCase() === game.correctAnswer.toLowerCase()) {
-        sock.sendMessage(chatId, { text: `Correct! The answer is ${game.correctAnswer}` });
+        sock.sendMessage(chatId, { text: `সঠিক উত্তর! উত্তরটি হলো ${game.correctAnswer}` });
     } else {
-        sock.sendMessage(chatId, { text: `Wrong! The correct answer was ${game.correctAnswer}` });
+        sock.sendMessage(chatId, { text: `ভুল উত্তর! সঠিক উত্তর ছিল ${game.correctAnswer}` });
     }
 
     delete triviaGames[chatId];
