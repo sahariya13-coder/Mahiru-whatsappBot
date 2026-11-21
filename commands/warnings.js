@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const isAdmin = require('../lib/isAdmin');
 
 const warningsFilePath = path.join(process.cwd(), 'data', 'warnings.json');
 
@@ -21,6 +22,13 @@ function loadWarnings() {
 async function warningsCommand(sock, chatId, mentionedJidList = [], message = null) {
     if (!chatId.endsWith('@g.us')) {
         await sock.sendMessage(chatId, { text: 'এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে।' }, message ? { quoted: message } : {});
+        return;
+    }
+
+    const senderId = message?.key?.participant || message?.key?.remoteJid || '';
+    const adminStatus = await isAdmin(sock, chatId, senderId);
+    if (!adminStatus.isSenderAdmin) {
+        await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিন Warning-এর তালিকা দেখতে পারবেন।' }, message ? { quoted: message } : {});
         return;
     }
 
