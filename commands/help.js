@@ -163,7 +163,7 @@ ${isPrivileged ? `╔═══════════════════�
 ║ ➤ Inbox AI: private chat-এ auto reply (.iai on/off)
 ║ ➤ Group AI: Mahiru-কে mention/reply করলে উত্তর দেবে (.gai on/off)
 ║ ➤ Chatbot default: ON (Group + Inbox)
-║ ➤ Owner AI Rules: enabled Rules Inbox + Group উভয় জায়গায় মানবে
+║ ➤ Owner-এর AI নিয়ম: চালু করা নিয়ম ইনবক্স ও গ্রুপ—দুই জায়গাতেই মানবে
 ║ ➤ .imagine <prompt>
 ║ ➤ .flux <prompt>
 ║ ➤ .sora <prompt>
