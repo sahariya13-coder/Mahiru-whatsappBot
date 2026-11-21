@@ -176,7 +176,7 @@ async function updateViaZip(sock, chatId, message, zipOverride) {
 
 async function restartProcess(sock, chatId, message) {
     try {
-        await sock.sendMessage(chatId, { text: '✅ Update complete! Restarting…' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '✅ আপডেট সম্পন্ন! বট রিস্টার্ট হচ্ছে…' }, { quoted: message });
     } catch {}
     try {
         // Preferred: PM2
@@ -195,12 +195,12 @@ async function updateCommand(sock, chatId, message, zipOverride) {
     const isOwner = await isOwnerOrSudo(senderId, sock, chatId);
     
     if (!message.key.fromMe && !isOwner) {
-        await sock.sendMessage(chatId, { text: 'Only bot owner or sudo can use .update' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'শুধু বটের মালিক অথবা Sudo .update ব্যবহার করতে পারবেন।' }, { quoted: message });
         return;
     }
     try {
         // Minimal UX
-        await sock.sendMessage(chatId, { text: '🔄 Updating the bot, please wait…' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '🔄 বট আপডেট হচ্ছে, অপেক্ষা করুন…' }, { quoted: message });
         if (await hasGitRepo()) {
             // silent
             const { oldRev, newRev, alreadyUpToDate, commits, files } = await updateViaGit();
@@ -215,14 +215,14 @@ async function updateCommand(sock, chatId, message, zipOverride) {
         }
         try {
             const v = require('../settings').version || '';
-            await sock.sendMessage(chatId, { text: `✅ Update done. Restarting…` }, { quoted: message });
+            await sock.sendMessage(chatId, { text: `✅ আপডেট সম্পন্ন। বট রিস্টার্ট হচ্ছে…` }, { quoted: message });
         } catch {
-            await sock.sendMessage(chatId, { text: '✅ Restared Successfully\n Type .ping to check latest version.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: '✅ সফলভাবে রিস্টার্ট হয়েছে।\nনতুন সংস্করণ দেখতে .ping লিখুন।' }, { quoted: message });
         }
         await restartProcess(sock, chatId, message);
     } catch (err) {
         console.error('Update failed:', err);
-        await sock.sendMessage(chatId, { text: `❌ Update failed:\n${String(err.message || err)}` }, { quoted: message });
+        await sock.sendMessage(chatId, { text: `❌ আপডেট ব্যর্থ হয়েছে:\n${String(err.message || err)}` }, { quoted: message });
     }
 }
 
