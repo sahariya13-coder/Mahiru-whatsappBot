@@ -5,15 +5,15 @@ const PMBLOCKER_PATH = './data/pmblocker.json';
 
 function readState() {
     try {
-        if (!fs.existsSync(PMBLOCKER_PATH)) return { enabled: false, message: '⚠️ Direct messages are blocked!\nYou cannot DM this bot. Please contact the owner in group chats only.' };
+        if (!fs.existsSync(PMBLOCKER_PATH)) return { enabled: false, message: '⚠️ ব্যক্তিগত মেসেজ বন্ধ রয়েছে!\nএই বটকে ইনবক্সে মেসেজ পাঠানো যাবে না। শুধু গ্রুপে মালিকের সঙ্গে যোগাযোগ করুন।' };
         const raw = fs.readFileSync(PMBLOCKER_PATH, 'utf8');
         const data = JSON.parse(raw || '{}');
         return {
             enabled: !!data.enabled,
-            message: typeof data.message === 'string' && data.message.trim() ? data.message : '⚠️ Direct messages are blocked!\nYou cannot DM this bot. Please contact the owner in group chats only.'
+            message: typeof data.message === 'string' && data.message.trim() ? data.message : '⚠️ ব্যক্তিগত মেসেজ বন্ধ রয়েছে!\nএই বটকে ইনবক্সে মেসেজ পাঠানো যাবে না। শুধু গ্রুপে মালিকের সঙ্গে যোগাযোগ করুন।'
         };
     } catch {
-        return { enabled: false, message: '⚠️ Direct messages are blocked!\nYou cannot DM this bot. Please contact the owner in group chats only.' };
+        return { enabled: false, message: '⚠️ ব্যক্তিগত মেসেজ বন্ধ রয়েছে!\nএই বটকে ইনবক্সে মেসেজ পাঠানো যাবে না। শুধু গ্রুপে মালিকের সঙ্গে যোগাযোগ করুন।' };
     }
 }
 
@@ -34,7 +34,7 @@ async function pmblockerCommand(sock, chatId, message, args) {
     const isOwner = await isOwnerOrSudo(senderId, sock, chatId);
     
     if (!message.key.fromMe && !isOwner) {
-        await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'শুধু বটের মালিক এই কমান্ড ব্যবহার করতে পারবেন!' }, { quoted: message });
         return;
     }
     
@@ -43,29 +43,29 @@ async function pmblockerCommand(sock, chatId, message, args) {
     const state = readState();
 
     if (!sub || !['on', 'off', 'status', 'setmsg'].includes(sub.toLowerCase())) {
-        await sock.sendMessage(chatId, { text: '*PMBLOCKER (Owner only)*\n\n.pmblocker on - Enable PM auto-block\n.pmblocker off - Disable PM blocker\n.pmblocker status - Show current status\n.pmblocker setmsg <text> - Set warning message' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '*ব্যক্তিগত মেসেজ নিয়ন্ত্রণ (শুধু Owner)*\n\n.pmblocker on — ব্যক্তিগত মেসেজ বন্ধ চালু\n.pmblocker off — ব্যক্তিগত মেসেজ নিয়ন্ত্রণ বন্ধ\n.pmblocker status — বর্তমান অবস্থা দেখুন\n.pmblocker setmsg <লেখা> — সতর্কবার্তা নির্ধারণ করুন' }, { quoted: message });
         return;
     }
 
     if (sub.toLowerCase() === 'status') {
-        await sock.sendMessage(chatId, { text: `PM Blocker is currently *${state.enabled ? 'ON' : 'OFF'}*\nMessage: ${state.message}` }, { quoted: message });
+        await sock.sendMessage(chatId, { text: `ব্যক্তিগত মেসেজ নিয়ন্ত্রণ *${state.enabled ? 'চালু' : 'বন্ধ'}*\nবার্তা: ${state.message}` }, { quoted: message });
         return;
     }
 
     if (sub.toLowerCase() === 'setmsg') {
         const newMsg = rest.join(' ').trim();
         if (!newMsg) {
-            await sock.sendMessage(chatId, { text: 'Usage: .pmblocker setmsg <message>' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'ব্যবহার: .pmblocker setmsg <বার্তা>' }, { quoted: message });
             return;
         }
         writeState(state.enabled, newMsg);
-        await sock.sendMessage(chatId, { text: 'PM Blocker message updated.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'সতর্কবার্তা আপডেট হয়েছে।' }, { quoted: message });
         return;
     }
 
     const enable = sub.toLowerCase() === 'on';
     writeState(enable);
-    await sock.sendMessage(chatId, { text: `PM Blocker is now *${enable ? 'ENABLED' : 'DISABLED'}*.` }, { quoted: message });
+    await sock.sendMessage(chatId, { text: `ব্যক্তিগত মেসেজ নিয়ন্ত্রণ *${enable ? 'চালু' : 'বন্ধ'}* করা হয়েছে।` }, { quoted: message });
 }
 
 module.exports = { pmblockerCommand, readState };
