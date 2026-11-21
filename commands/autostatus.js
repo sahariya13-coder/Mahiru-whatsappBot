@@ -30,7 +30,7 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
         if (!msg.key.fromMe && !isOwner) {
             await sock.sendMessage(chatId, {
-                text: '❌ This command can only be used by the owner!'
+                text: '❌ এই কমান্ডটি শুধু বটের মালিক ব্যবহার করতে পারবেন।'
             });
             return;
         }
@@ -52,19 +52,19 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
         // If no arguments, show current status
         if (!args || args.length === 0) {
-            const status = config.enabled ? 'enabled' : 'disabled';
-            const reactStatus = config.reactOn ? 'enabled' : 'disabled';
+            const status = config.enabled ? 'চালু' : 'বন্ধ';
+            const reactStatus = config.reactOn ? 'চালু' : 'বন্ধ';
 
             await sock.sendMessage(chatId, {
                 text:
-                    `🔄 *Auto Status Settings*\n\n` +
-                    `📱 *Auto Status View:* ${status}\n` +
-                    `💫 *Status Reactions:* ${reactStatus}\n\n` +
-                    `*Commands:*\n` +
-                    `.autostatus on - Enable auto status view\n` +
-                    `.autostatus off - Disable auto status view\n` +
-                    `.autostatus react on - Enable status reactions\n` +
-                    `.autostatus react off - Disable status reactions`
+                    `🔄 *স্বয়ংক্রিয় স্ট্যাটাস সেটিংস*\n\n` +
+                    `📱 *স্বয়ংক্রিয় স্ট্যাটাস দেখা:* ${status}\n` +
+                    `💫 *স্ট্যাটাসে রিঅ্যাকশন:* ${reactStatus}\n\n` +
+                    `*কমান্ডসমূহ:*\n` +
+                    `.autostatus on — স্বয়ংক্রিয়ভাবে স্ট্যাটাস দেখা চালু\n` +
+                    `.autostatus off — স্বয়ংক্রিয়ভাবে স্ট্যাটাস দেখা বন্ধ\n` +
+                    `.autostatus react on — স্ট্যাটাসে রিঅ্যাকশন চালু\n` +
+                    `.autostatus react off — স্ট্যাটাসে রিঅ্যাকশন বন্ধ`
             });
             return;
         }
@@ -82,8 +82,8 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
             await sock.sendMessage(chatId, {
                 text:
-                    '✅ Auto status view has been enabled!\n' +
-                    'Bot will now automatically view all contact statuses.'
+                    '✅ স্বয়ংক্রিয় স্ট্যাটাস দেখা চালু হয়েছে!\n' +
+                    'এখন থেকে বট স্বয়ংক্রিয়ভাবে সবার স্ট্যাটাস দেখবে।'
             });
 
         } else if (command === 'off') {
@@ -96,8 +96,8 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
             await sock.sendMessage(chatId, {
                 text:
-                    '❌ Auto status view has been disabled!\n' +
-                    'Bot will no longer automatically view statuses.'
+                    '❌ স্বয়ংক্রিয় স্ট্যাটাস দেখা বন্ধ হয়েছে!\n' +
+                    'এখন থেকে বট আর স্বয়ংক্রিয়ভাবে স্ট্যাটাস দেখবে না।'
             });
 
         } else if (command === 'react') {
@@ -105,8 +105,8 @@ async function autoStatusCommand(sock, chatId, msg, args) {
             if (!args[1]) {
                 await sock.sendMessage(chatId, {
                     text:
-                        '❌ Please specify on/off for reactions!\n' +
-                        'Use: .autostatus react on/off'
+                        '❌ রিঅ্যাকশন চালু বা বন্ধ নির্ধারণ করুন!\n' +
+                        'ব্যবহার: .autostatus react on/off'
                 });
                 return;
             }
@@ -123,8 +123,8 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
                 await sock.sendMessage(chatId, {
                     text:
-                        '💫 Status reactions have been enabled!\n' +
-                        'Bot will now react to status updates.'
+                        '💫 স্ট্যাটাসে রিঅ্যাকশন চালু হয়েছে!\n' +
+                        'এখন থেকে বট স্ট্যাটাসে রিঅ্যাকশন দেবে।'
                 });
 
             } else if (reactCommand === 'off') {
@@ -137,14 +137,14 @@ async function autoStatusCommand(sock, chatId, msg, args) {
 
                 await sock.sendMessage(chatId, {
                     text:
-                        '❌ Status reactions have been disabled!\n' +
-                        'Bot will no longer react to status updates.'
+                        '❌ স্ট্যাটাসে রিঅ্যাকশন বন্ধ হয়েছে!\n' +
+                        'এখন থেকে বট স্ট্যাটাসে রিঅ্যাকশন দেবে না।'
                 });
 
             } else {
                 await sock.sendMessage(chatId, {
                     text:
-                        '❌ Invalid reaction command! Use: ' +
+                        '❌ ভুল রিঅ্যাকশন কমান্ড! ব্যবহার করুন: ' +
                         '.autostatus react on/off'
                 });
             }
@@ -152,9 +152,9 @@ async function autoStatusCommand(sock, chatId, msg, args) {
         } else {
             await sock.sendMessage(chatId, {
                 text:
-                    '❌ Invalid command! Use:\n' +
-                    '.autostatus on/off - Enable/disable auto status view\n' +
-                    '.autostatus react on/off - Enable/disable status reactions'
+                    '❌ ভুল কমান্ড! ব্যবহার করুন:\n' +
+                    '.autostatus on/off — স্বয়ংক্রিয় স্ট্যাটাস দেখা চালু/বন্ধ\n' +
+                    '.autostatus react on/off — স্ট্যাটাসে রিঅ্যাকশন চালু/বন্ধ'
             });
         }
 
@@ -162,7 +162,7 @@ async function autoStatusCommand(sock, chatId, msg, args) {
         console.error('Error in autostatus command:', error);
 
         await sock.sendMessage(chatId, {
-            text: '❌ Error occurred while managing auto status!\n' + error.message
+            text: '❌ স্বয়ংক্রিয় স্ট্যাটাস পরিচালনায় সমস্যা হয়েছে!\n' + error.message
         });
     }
 }
