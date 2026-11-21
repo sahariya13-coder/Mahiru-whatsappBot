@@ -17,7 +17,7 @@ async function settingsCommand(sock, chatId, message) {
         const isOwner = await isOwnerOrSudo(senderId, sock, chatId);
         
         if (!message.key.fromMe && !isOwner) {
-            await sock.sendMessage(chatId, { text: 'Only bot owner can use this command!' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু বটের মালিক এই কমান্ড ব্যবহার করতে পারবেন!' }, { quoted: message });
             return;
         }
 
@@ -48,11 +48,11 @@ async function settingsCommand(sock, chatId, message) {
         lines.push('*BOT SETTINGS*');
         lines.push('');
         lines.push(`• Mode: ${mode.isPublic ? 'Public' : 'Private'}`);
-        lines.push(`• Auto Status: ${autoStatus.enabled ? 'ON' : 'OFF'}`);
-        lines.push(`• Autoread: ${autoread.enabled ? 'ON' : 'OFF'}`);
-        lines.push(`• Autotyping: ${autotyping.enabled ? 'ON' : 'OFF'}`);
-        lines.push(`• PM Blocker: ${pmblocker.enabled ? 'ON' : 'OFF'}`);
-        lines.push(`• Anticall: ${anticall.enabled ? 'ON' : 'OFF'}`);
+        lines.push(`• স্বয়ংক্রিয় স্ট্যাটাস: ${autoStatus.enabled ? 'চালু' : 'বন্ধ'}`);
+        lines.push(`• স্বয়ংক্রিয় মেসেজ পড়া: ${autoread.enabled ? 'চালু' : 'বন্ধ'}`);
+        lines.push(`• টাইপিং ইন্ডিকেটর: ${autotyping.enabled ? 'চালু' : 'বন্ধ'}`);
+        lines.push(`• ইনবক্স নিয়ন্ত্রণ: ${pmblocker.enabled ? 'চালু' : 'বন্ধ'}`);
+        lines.push(`• কল নিয়ন্ত্রণ: ${anticall.enabled ? 'চালু' : 'বন্ধ'}`);
         lines.push(`• Auto Reaction: ${autoReaction ? 'ON' : 'OFF'}`);
         if (groupId) {
             lines.push('');
@@ -85,7 +85,7 @@ async function settingsCommand(sock, chatId, message) {
         await sock.sendMessage(chatId, { text: lines.join('\n') }, { quoted: message });
     } catch (error) {
         console.error('Error in settings command:', error);
-        await sock.sendMessage(chatId, { text: 'Failed to read settings.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'সেটিংস পড়া যায়নি।' }, { quoted: message });
     }
 }
 
