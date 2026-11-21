@@ -500,7 +500,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             case userMessage.startsWith('.warnings'): {
                 const mentionedJidListWarnings = message.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
-                await warningsCommand(sock, chatId, mentionedJidListWarnings);
+                await warningsCommand(sock, chatId, mentionedJidListWarnings, message);
                 break;
             }
 
