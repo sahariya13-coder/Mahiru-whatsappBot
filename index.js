@@ -43,6 +43,7 @@ const { join } = require('path')
 
 // Import lightweight store
 const store = require('./lib/lightweight_store')
+const { startDailyBackup } = require('./commands/backup');
 
 // Initialize store
 store.readFromFile()
@@ -277,6 +278,7 @@ async function startXeonBotInc() {
         }
         
         if (connection == "open") {
+            startDailyBackup(XeonBotInc);
             console.log(chalk.magenta(` `))
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
