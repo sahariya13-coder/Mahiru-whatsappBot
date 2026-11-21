@@ -52,7 +52,7 @@ async function videoCommand(sock, chatId, message) {
     if (!query) {
       return sock.sendMessage(
         chatId,
-        { text: 'Usage: `.video <name or YouTube URL>`' },
+        { text: 'ব্যবহার: `.video <ভিডিওর নাম অথবা YouTube লিংক>`' },
         { quoted: message }
       );
     }
@@ -71,7 +71,7 @@ async function videoCommand(sock, chatId, message) {
       const search = await yts(query);
       preview = search?.videos?.[0];
       if (!preview) {
-        return sock.sendMessage(chatId, { text: '❌ No results found.' }, { quoted: message });
+        return sock.sendMessage(chatId, { text: '❌ কোনো ফলাফল পাওয়া যায়নি।' }, { quoted: message });
       }
       videoUrl = preview.url;
     }
@@ -82,14 +82,14 @@ async function videoCommand(sock, chatId, message) {
           chatId,
           {
             image: { url: preview.thumbnail },
-            caption: `${formatInfo(preview)}\n\nDownloading...`,
+            caption: `${formatInfo(preview)}\n\nডাউনলোড হচ্ছে...`,
           },
           { quoted: message }
         );
       } catch {
         await sock.sendMessage(
           chatId,
-          { text: `${formatInfo(preview)}\n\nDownloading...` },
+          { text: `${formatInfo(preview)}\n\nডাউনলোড হচ্ছে...` },
           { quoted: message }
         );
       }
@@ -107,7 +107,7 @@ async function videoCommand(sock, chatId, message) {
         video,
         mimetype: 'video/mp4',
         fileName,
-        caption: `*${title}*\n\n> *_Downloaded by ${botName}_*`,
+        caption: `*${title}*\n\n> *_ডাউনলোড করেছে ${botName}_*`,
       },
       { quoted: message }
     );
@@ -115,7 +115,7 @@ async function videoCommand(sock, chatId, message) {
     console.error('[video]', err?.message || err);
     await sock.sendMessage(
       chatId,
-      { text: `❌ Download failed: ${err?.message || 'Unknown error'}` },
+      { text: `❌ ডাউনলোড ব্যর্থ হয়েছে: ${err?.message || 'Unknown error'}` },
       { quoted: message }
     );
   }
