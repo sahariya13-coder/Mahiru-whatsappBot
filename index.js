@@ -9,10 +9,10 @@ const chalk = require('chalk')
 const FileType = require('file-type')
 const path = require('path')
 
-// Restore runtime data before loading modules that read JSON settings.
-require('./lib/persistent_data').start()
+// Restore local + Redis active data before loading modules that read JSON settings.
+const persistentDataReady = require('./lib/persistent_data').start()
 const axios = require('axios')
-const { handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main');
+let handleMessages, handleGroupParticipantUpdate, handleStatus;
 const PhoneNumber = require('awesome-phonenumber')
 const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif')
 const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await, sleep, reSize } = require('./lib/myfunc')
@@ -45,10 +45,7 @@ const { join } = require('path')
 const store = require('./lib/lightweight_store')
 const { startDailyBackup } = require('./commands/backup');
 
-// Initialize store
-store.readFromFile()
 const settings = require('./settings')
-setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000)
 
 // Memory optimization - Force garbage collection if available
 setInterval(() => {
@@ -68,7 +65,7 @@ setInterval(() => {
 }, 30_000) // check every 30 seconds
 
 let phoneNumber = settings.ownerNumber || ''
-let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
+let owner
 
 global.botname = "Mahiru"
 global.themeemoji = "•"
@@ -396,10 +393,17 @@ async function startXeonBotInc() {
 
 
 // Start the bot with error handling
-startXeonBotInc().catch(error => {
-    console.error('Fatal error:', error)
-    process.exit(1)
-})
+persistentDataReady.then(() => {
+    // Load handlers and data-backed state only after Redis/local restoration.
+    ({ handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main'));
+    store.readFromFile();
+    owner = JSON.parse(fs.readFileSync('./data/owner.json'));
+    setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000);
+    return startXeonBotInc();
+}).catch(error => {
+    console.error('Fatal startup error:', error);
+    process.exit(1);
+});
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err)
 })
