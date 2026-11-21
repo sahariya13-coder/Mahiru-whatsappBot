@@ -46,7 +46,7 @@ async function sendAnimu(sock, chatId, message, type) {
 
         const json = {
             'sticker-pack-id': crypto.randomBytes(32).toString('hex'),
-            'sticker-pack-name': 'Anime Stickers',
+            'sticker-pack-name': 'অ্যানিমে স্টিকার',
             'emojis': ['🎌']
         };
         const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00]);
@@ -93,7 +93,7 @@ async function sendAnimu(sock, chatId, message, type) {
         try {
             await sock.sendMessage(
                 chatId,
-                { image: { url: link }, caption: `anime: ${type}` },
+                { image: { url: link }, caption: `অ্যানিমে: ${type}` },
                 { quoted: message }
             );
             return;
@@ -110,7 +110,7 @@ async function sendAnimu(sock, chatId, message, type) {
 
     await sock.sendMessage(
         chatId,
-        { text: '❌ Failed to fetch animu.' },
+        { text: '❌ অ্যানিমে কনটেন্ট আনা যায়নি।' },
         { quoted: message }
     );
 }
@@ -129,22 +129,22 @@ async function animeCommand(sock, chatId, message, args) {
             try {
                 const res = await axios.get(ANIMU_BASE);
                 const apiTypes = res.data && res.data.types ? res.data.types.map(s => s.replace('/animu/', '')).join(', ') : supported.join(', ');
-                await sock.sendMessage(chatId, { text: `Usage: .animu <type>\nTypes: ${apiTypes}` }, { quoted: message });
+                await sock.sendMessage(chatId, { text: `ব্যবহার: .animu <ধরন>\nধরনসমূহ: ${apiTypes}` }, { quoted: message });
             } catch {
-                await sock.sendMessage(chatId, { text: `Usage: .animu <type>\nTypes: ${supported.join(', ')}` }, { quoted: message });
+                await sock.sendMessage(chatId, { text: `ব্যবহার: .animu <ধরন>\nধরনসমূহ: ${supported.join(', ')}` }, { quoted: message });
             }
             return;
         }
 
         if (!supported.includes(sub)) {
-            await sock.sendMessage(chatId, { text: `❌ Unsupported type: ${sub}. Try one of: ${supported.join(', ')}` }, { quoted: message });
+            await sock.sendMessage(chatId, { text: `❌ এই ধরনটি সমর্থিত নয়: ${sub}। এগুলোর একটি ব্যবহার করুন: ${supported.join(', ')}` }, { quoted: message });
             return;
         }
 
         await sendAnimu(sock, chatId, message, sub);
     } catch (err) {
         console.error('Error in animu command:', err);
-        await sock.sendMessage(chatId, { text: '❌ An error occurred while fetching animu.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '❌ অ্যানিমে কনটেন্ট আনতে সমস্যা হয়েছে।' }, { quoted: message });
     }
 }
 
