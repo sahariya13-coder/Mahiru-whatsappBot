@@ -50,7 +50,7 @@ async function instagramCommand(sock, chatId, message) {
         
         if (!text) {
             return await sock.sendMessage(chatId, { 
-                text: "Please provide an Instagram link for the video."
+                text: "ভিডিও ডাউনলোডের জন্য Instagram লিংক দিন।"
             });
         }
 
@@ -67,7 +67,7 @@ async function instagramCommand(sock, chatId, message) {
         
         if (!isValidUrl) {
             return await sock.sendMessage(chatId, { 
-                text: "That is not a valid Instagram link. Please provide a valid Instagram post, reel, or video link."
+                text: "এটি সঠিক Instagram লিংক নয়। সঠিক পোস্ট, রিল অথবা ভিডিওর লিংক দিন।"
             });
         }
 
@@ -79,7 +79,7 @@ async function instagramCommand(sock, chatId, message) {
         
         if (!downloadData || !downloadData.data || downloadData.data.length === 0) {
             return await sock.sendMessage(chatId, { 
-                text: "❌ No media found at the provided link. The post might be private or the link is invalid."
+                text: "❌ দেওয়া লিংকে মিডিয়া পাওয়া যায়নি। পোস্টটি ব্যক্তিগত হতে পারে অথবা লিংকটি ভুল।"
             });
         }
 
@@ -93,7 +93,7 @@ async function instagramCommand(sock, chatId, message) {
         
         if (mediaToDownload.length === 0) {
             return await sock.sendMessage(chatId, { 
-                text: "❌ No valid media found to download. This might be a private post or the scraper failed."
+                text: "❌ ডাউনলোড করার মতো মিডিয়া পাওয়া যায়নি। পোস্টটি ব্যক্তিগত হতে পারে অথবা ডাউনলোড সেবা ব্যর্থ হয়েছে।"
             });
         }
 
@@ -113,12 +113,12 @@ async function instagramCommand(sock, chatId, message) {
                     await sock.sendMessage(chatId, {
                         video: { url: mediaUrl },
                         mimetype: "video/mp4",
-                        caption: "𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗗 𝗕𝗬 *Mahiru*"
+                        caption: "*Mahiru দিয়ে ডাউনলোড করা হয়েছে*"
                     }, { quoted: message });
                 } else {
                     await sock.sendMessage(chatId, {
                         image: { url: mediaUrl },
-                        caption: "𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗘𝗗 𝗕𝗬 *Mahiru*"
+                        caption: "*Mahiru দিয়ে ডাউনলোড করা হয়েছে*"
                     }, { quoted: message });
                 }
                 
@@ -136,7 +136,7 @@ async function instagramCommand(sock, chatId, message) {
     } catch (error) {
         console.error('Error in Instagram command:', error);
         await sock.sendMessage(chatId, { 
-            text: "❌ An error occurred while processing the Instagram request. Please try again."
+            text: "❌ Instagram অনুরোধটি সম্পন্ন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।"
         });
     }
 }
