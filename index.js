@@ -356,7 +356,7 @@ async function startXeonBotInc() {
 
                 try {
                     await XeonBotInc.sendMessage(callerJid, {
-                        text: '📵 আপনার কলটি কেটে দেওয়া হয়েছে। অনুগ্রহ করে কল না করে মেসেজ পাঠান।'
+                        text: '📵 অনুগ্রহ করে WhatsApp-এ কল না করে মেসেজ পাঠান। আমি মেসেজের মাধ্যমে উত্তর দেব।'
                     });
                 } catch (error) {
                     console.error('[ANTICALL] Could not send caller message:', error?.message || error);
