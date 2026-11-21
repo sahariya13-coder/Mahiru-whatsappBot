@@ -119,14 +119,14 @@ async function twitterCommand(sock, chatId, message) {
     if (!url) {
       return sock.sendMessage(
         chatId,
-        { text: 'Please provide a Twitter / X link.\nUsage: `.twitter <url>`' },
+        { text: 'Twitter / X লিংক দিন।\nব্যবহার: `.twitter <লিংক>`' },
         { quoted: message }
       );
     }
     if (!TWITTER_PATTERNS.some((p) => p.test(url))) {
       return sock.sendMessage(
         chatId,
-        { text: '❌ Invalid link. Use an `x.com` or `twitter.com` post URL.' },
+        { text: '❌ ভুল লিংক। `x.com` অথবা `twitter.com` পোস্টের লিংক দিন।' },
         { quoted: message }
       );
     }
@@ -151,14 +151,14 @@ async function twitterCommand(sock, chatId, message) {
 
     await sock.sendMessage(
       chatId,
-      { text: '❌ No downloadable media found for this post.' },
+      { text: '❌ এই পোস্টে ডাউনলোডযোগ্য মিডিয়া পাওয়া যায়নি।' },
       { quoted: message }
     );
   } catch (err) {
     console.error('[twitter]', err?.message || err);
     await sock.sendMessage(
       chatId,
-      { text: '❌ Failed to download from Twitter / X. Try another link.' },
+      { text: '❌ Twitter / X থেকে ডাউনলোড করা যায়নি। অন্য লিংক দিয়ে চেষ্টা করুন।' },
       { quoted: message }
     );
   }
