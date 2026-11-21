@@ -15,7 +15,7 @@ async function helpCommand(sock, chatId, message) {
 
 ╔═══════════════════╗
 🌐 *General Commands*:
-║ ➤ .help or .menu
+║ ➤ .help / .menu / .bot / .list
 ║ ➤ .ping
 ║ ➤ .alive
 ║ ➤ .tts <text>
@@ -36,11 +36,17 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .jid
 ║ ➤ .uid (reply/mention someone to view their UID)
 ║ ➤ .url
+║ ➤ .topmembers
+║ ➤ .translate <text> <language>
+║ ➤ .pair
+║ ➤ .savestatus
+║ ➤ .viewonce
 ╚═══════════════════╝
 
 ╔═══════════════════╗
 👮‍♂️ *Admin Commands*:
 ║ ➤ .ban @user
+║ ➤ .unban @user
 ║ ➤ .promote @user
 ║ ➤ .demote @user
 ║ ➤ .mute <minutes>
@@ -51,6 +57,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .warn @user
 ║ ➤ .antilink
 ║ ➤ .antibadword
+║ ➤ .antibot <on/off>
 ║ ➤ .clear
 ║ ➤ .tag <message>
 ║ ➤ .tagall
@@ -65,6 +72,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .setgdesc <description>
 ║ ➤ .setgname <new name>
 ║ ➤ .setgpp (reply to image)
+║ ➤ .topmembers
 ╚═══════════════════╝
 
 ╔═══════════════════╗
@@ -86,6 +94,10 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .cleartmp
 ║ ➤ .update
 ║ ➤ .settings
+║ ➤ .sudo add/remove/list
+║ ➤ .backup (backup/restore)
+║ ➤ .pair
+║ ➤ .update
 ║ ➤ .setpp <reply to image>
 ║ ➤ .autoreact <on/off>
 ║ ➤ .autostatus <on/off>
@@ -104,6 +116,9 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .blur <image>
 ║ ➤ .simage <reply to sticker>
 ║ ➤ .sticker <reply to image>
+║ ➤ .sticker-alt <reply to image>
+║ ➤ .stickercrop <reply to sticker>
+║ ➤ .gif <query>
 ║ ➤ .removebg
 ║ ➤ .remini
 ║ ➤ .crop <reply to image>
@@ -196,6 +211,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .tiktok <link>
 ║ ➤ .video <song name>
 ║ ➤ .ytmp4 <Link>
+║ ➤ .twitter <link>
 ╚═══════════════════╝
 
 ╔═══════════════════╗
@@ -237,6 +253,7 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .sc
 ║ ➤ .script
 ║ ➤ .repo
+║ ➤ .script
 ╚═══════════════════╝
 `;
 
