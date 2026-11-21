@@ -12,7 +12,7 @@ async function spotifyCommand(sock, chatId, message) {
         const query = rawText.slice(used.length).trim();
 
         if (!query) {
-            await sock.sendMessage(chatId, { text: 'Usage: .spotify <song/artist/keywords>\nExample: .spotify con calma' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'ব্যবহার: .spotify <গান/শিল্পী/শব্দ>\nউদাহরণ: .spotify con calma' }, { quoted: message });
             return;
         }
 
@@ -26,7 +26,7 @@ async function spotifyCommand(sock, chatId, message) {
         const r = data.result;
         const audioUrl = r.audio;
         if (!audioUrl) {
-            await sock.sendMessage(chatId, { text: 'No downloadable audio found for this query.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'এই অনুসন্ধানে ডাউনলোডযোগ্য অডিও পাওয়া যায়নি।' }, { quoted: message });
             return;
         }
 
@@ -48,7 +48,7 @@ async function spotifyCommand(sock, chatId, message) {
 
     } catch (error) {
         console.error('[SPOTIFY] error:', error?.message || error);
-        await sock.sendMessage(chatId, { text: 'Failed to fetch Spotify audio. Try another query later.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'Spotify থেকে অডিও আনা যায়নি। পরে অন্যভাবে খুঁজে দেখুন।' }, { quoted: message });
     }
 }
 
