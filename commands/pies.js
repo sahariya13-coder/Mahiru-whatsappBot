@@ -15,23 +15,23 @@ async function fetchPiesImageBuffer(country) {
 async function piesCommand(sock, chatId, message, args) {
 	const sub = (args && args[0] ? args[0] : '').toLowerCase();
 	if (!sub) {
-		await sock.sendMessage(chatId, { text: `Usage: .pies <country>\nCountries: ${VALID_COUNTRIES.join(', ')}` }, { quoted: message });
+		await sock.sendMessage(chatId, { text: `ব্যবহার: .pies <দেশ>\nদেশসমূহ: ${VALID_COUNTRIES.join(', ')}` }, { quoted: message });
 		return;
 	}
 	if (!VALID_COUNTRIES.includes(sub)) {
-		await sock.sendMessage(chatId, { text: `❌ Unsupported country: ${sub}. Try one of: ${VALID_COUNTRIES.join(', ')}` }, { quoted: message });
+		await sock.sendMessage(chatId, { text: `❌ এই দেশটি সমর্থিত নয়: ${sub}। তালিকা থেকে একটি বেছে নিন: ${VALID_COUNTRIES.join(', ')}` }, { quoted: message });
 		return;
 	}
 	try {
 		const imageBuffer = await fetchPiesImageBuffer(sub);
 		await sock.sendMessage(
 			chatId,
-			{ image: imageBuffer, caption: `pies: ${sub}` },
+			{ image: imageBuffer, caption: `পাই: ${sub}` },
 			{ quoted: message }
 		);
 	} catch (err) {
 		console.error('Error in pies command:', err);
-		await sock.sendMessage(chatId, { text: '❌ Failed to fetch image. Please try again.' }, { quoted: message });
+		await sock.sendMessage(chatId, { text: '❌ ছবি আনা যায়নি। আবার চেষ্টা করুন।' }, { quoted: message });
 	}
 }
 
@@ -45,7 +45,7 @@ async function piesAlias(sock, chatId, message, country) {
 		);
 	} catch (err) {
 		console.error(`Error in pies alias (${country}) command:`, err);
-		await sock.sendMessage(chatId, { text: '❌ Failed to fetch image. Please try again.' }, { quoted: message });
+		await sock.sendMessage(chatId, { text: '❌ ছবি আনা যায়নি। আবার চেষ্টা করুন।' }, { quoted: message });
 	}
 }
 
