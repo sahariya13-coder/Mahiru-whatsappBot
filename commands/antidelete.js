@@ -13,6 +13,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(MEDIA_DIR, { recursive: true });
 
 const messageStore = new Map();
+const pendingMediaDownloads = new Map();
 
 // Prevent duplicate WhatsApp revoke events from sending the same report twice.
 const processedRevocations = new Set();
@@ -52,7 +53,7 @@ function loadAntideleteConfig() {
 
 // Migrate older installations that were created with antidelete disabled.
 // This makes the feature ready immediately after the bot restarts.
-if (!fs.existsSync(CONFIG_PATH)) {
+if (!fs.existsSync(CONFIG_PATH) || !loadJSON(CONFIG_PATH, { enabled: false }).enabled) {
     saveAntideleteConfig({ enabled: true });
 }
 
@@ -197,7 +198,7 @@ async function storeMessage(sock, message) {
 
         // Download media in the background and update the saved record later.
         if (media) {
-            (async () => {
+            const downloadTask = (async () => {
                 try {
                     const buffer = await streamToBuffer(
                         await downloadContentFromMessage(media.message, media.type)
@@ -217,6 +218,8 @@ async function storeMessage(sock, message) {
                     console.error('Antidelete media download error:', error.message);
                 }
             })();
+            pendingMediaDownloads.set(storeKey, downloadTask);
+            downloadTask.finally(() => pendingMediaDownloads.delete(storeKey));
         }
     } catch (error) {
         console.error('Antidelete storeMessage error:', error);
@@ -246,6 +249,9 @@ async function handleMessageRevocation(sock, revocationMessage) {
             console.log('[ANTIDELETE] Duplicate revoke ignored:', storeKey);
             return;
         }
+
+        const pendingMedia = pendingMediaDownloads.get(storeKey);
+        if (pendingMedia) await pendingMedia;
 
         const original = messageStore.get(storeKey);
         if (!original) return;
