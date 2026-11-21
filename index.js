@@ -328,42 +328,32 @@ async function startXeonBotInc() {
         }
     })
 
-    // Track recently-notified callers to avoid spamming messages
+    // Send a message to callers without rejecting calls or blocking them.
     const antiCallNotified = new Set();
 
-    // Anticall handler: block callers when enabled
     XeonBotInc.ev.on('call', async (calls) => {
         try {
             const { readState: readAnticallState } = require('./commands/anticall');
-            const state = readAnticallState();
-            if (!state.enabled) return;
+            if (!readAnticallState().enabled) return;
+
             for (const call of calls) {
                 const callerJid = call.from || call.peerJid || call.chatId;
-                if (!callerJid) continue;
-                try {
-                    // First: attempt to reject the call if supported
-                    try {
-                        if (typeof XeonBotInc.rejectCall === 'function' && call.id) {
-                            await XeonBotInc.rejectCall(call.id, callerJid);
-                        } else if (typeof XeonBotInc.sendCallOfferAck === 'function' && call.id) {
-                            await XeonBotInc.sendCallOfferAck(call.id, callerJid, 'reject');
-                        }
-                    } catch {}
+                if (!callerJid || antiCallNotified.has(callerJid)) continue;
 
-                    // Notify the caller only once within a short window
-                    if (!antiCallNotified.has(callerJid)) {
-                        antiCallNotified.add(callerJid);
-                        setTimeout(() => antiCallNotified.delete(callerJid), 60000);
-                        await XeonBotInc.sendMessage(callerJid, { text: '📵 Anticall is enabled. Your call was rejected and you will be blocked.' });
-                    }
-                } catch {}
-                // Then: block after a short delay to ensure rejection and message are processed
-                setTimeout(async () => {
-                    try { await XeonBotInc.updateBlockStatus(callerJid, 'block'); } catch {}
-                }, 800);
+                antiCallNotified.add(callerJid);
+                setTimeout(() => antiCallNotified.delete(callerJid), 60000);
+
+                try {
+                    await XeonBotInc.sendMessage(callerJid, {
+                        text: '📵 অনুগ্রহ করে WhatsApp-এ কল না করে মেসেজ পাঠান। আমি মেসেজের মাধ্যমে উত্তর দেব।'
+                    });
+                } catch (error) {
+                    console.error('[ANTICALL] Could not send caller message:', error?.message || error);
+                    antiCallNotified.delete(callerJid);
+                }
             }
-        } catch (e) {
-            // ignore
+        } catch (error) {
+            console.error('[ANTICALL] Handler error:', error?.message || error);
         }
     });
 
