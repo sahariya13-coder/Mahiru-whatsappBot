@@ -6,12 +6,12 @@ async function kickCommand(sock, chatId, senderId, mentionedJids, message) {
         const { isSenderAdmin, isBotAdmin } = await isAdmin(sock, chatId, senderId);
 
         if (!isBotAdmin) {
-            await sock.sendMessage(chatId, { text: 'Please make the bot an admin first.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'আগে বটকে গ্রুপ অ্যাডমিন করুন।' }, { quoted: message });
             return;
         }
 
         if (!isSenderAdmin) {
-            await sock.sendMessage(chatId, { text: 'Only group admins can use the kick command.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিনরা kick কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
             return;
         }
     }
@@ -27,7 +27,7 @@ async function kickCommand(sock, chatId, senderId, mentionedJids, message) {
     
     if (usersToKick.length === 0) {
         await sock.sendMessage(chatId, { 
-            text: 'Please mention the user or reply to their message to kick!'
+            text: 'যাকে গ্রুপ থেকে বের করতে চান তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!'
         }, { quoted: message });
         return;
     }
@@ -103,7 +103,7 @@ async function kickCommand(sock, chatId, senderId, mentionedJids, message) {
 
     if (isTryingToKickBot) {
         await sock.sendMessage(chatId, { 
-            text: "I can't kick myself🤖"
+            text: "আমি নিজেকে গ্রুপ থেকে বের করতে পারি না 🤖"
         }, { quoted: message });
         return;
     }
@@ -116,13 +116,13 @@ async function kickCommand(sock, chatId, senderId, mentionedJids, message) {
         }));
         
         await sock.sendMessage(chatId, { 
-            text: `${usernames.join(', ')} has been kicked successfully!`,
+            text: `${usernames.join(', ')} -কে সফলভাবে গ্রুপ থেকে বের করা হয়েছে!`,
             mentions: usersToKick
         });
     } catch (error) {
         console.error('Error in kick command:', error);
         await sock.sendMessage(chatId, { 
-            text: 'Failed to kick user(s)!'
+            text: 'ব্যবহারকারীকে গ্রুপ থেকে বের করা যায়নি!'
         });
     }
 }
