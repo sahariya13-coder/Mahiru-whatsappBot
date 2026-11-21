@@ -21,7 +21,7 @@ function formatTime(seconds) {
 async function pingCommand(sock, chatId, message) {
     try {
         const start = Date.now();
-        await sock.sendMessage(chatId, { text: 'Pong!' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'বট সচল!' }, { quoted: message });
         const end = Date.now();
         const ping = Math.round((end - start) / 2);
 
@@ -40,7 +40,7 @@ async function pingCommand(sock, chatId, message) {
 
     } catch (error) {
         console.error('Error in ping command:', error);
-        await sock.sendMessage(chatId, { text: '❌ Failed to get bot status.' });
+        await sock.sendMessage(chatId, { text: '❌ বটের অবস্থা জানা যায়নি।' });
     }
 }
 
