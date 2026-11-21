@@ -298,12 +298,12 @@ async function handleChatbotCommand(sock, chatId, message, match) {
 
         if (!saveUserGroupData(data)) {
             return sock.sendMessage(chatId, {
-                text: '❌ Chatbot settings save করা যায়নি।'
+                text: '❌ চ্যাটবটের সেটিংস সংরক্ষণ করা যায়নি।'
             }, { quoted: message });
         }
 
         return sock.sendMessage(chatId, {
-            text: '✅ Chatbot এই গ্রুপে চালু হয়েছে।'
+            text: '✅ এই গ্রুপে চ্যাটবট চালু হয়েছে।'
         }, { quoted: message });
     }
 
@@ -312,12 +312,12 @@ async function handleChatbotCommand(sock, chatId, message, match) {
 
         if (!saveUserGroupData(data)) {
             return sock.sendMessage(chatId, {
-                text: '❌ Chatbot settings save করা যায়নি।'
+                text: '❌ চ্যাটবটের সেটিংস সংরক্ষণ করা যায়নি।'
             }, { quoted: message });
         }
 
         return sock.sendMessage(chatId, {
-            text: '❌ Chatbot এই গ্রুপে বন্ধ করা হয়েছে।'
+            text: '❌ এই গ্রুপে চ্যাটবট বন্ধ করা হয়েছে।'
         }, { quoted: message });
     }
 
