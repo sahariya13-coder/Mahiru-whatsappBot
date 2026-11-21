@@ -122,7 +122,7 @@ async function handleAntideleteCommand(sock, chatId, message, match) {
     const isOwner = await isOwnerOrSudo(senderId, sock, chatId);
 
     if (!message.key.fromMe && !isOwner) {
-        return sock.sendMessage(chatId, { text: '*Only the bot owner can use this command.*' }, { quoted: message });
+        return sock.sendMessage(chatId, { text: '*শুধু বটের মালিক এই কমান্ড ব্যবহার করতে পারবেন।*' }, { quoted: message });
     }
 
     const config = loadAntideleteConfig();
@@ -130,15 +130,15 @@ async function handleAntideleteCommand(sock, chatId, message, match) {
 
     if (!action) {
         return sock.sendMessage(chatId, {
-            text: '*ANTIDELETE SETUP*\n\nCurrent Status: ' +
-                (config.enabled ? '✅ Enabled' : '❌ Disabled') +
+            text: '*ডিলিট হওয়া মেসেজ সংরক্ষণ*\n\nবর্তমান অবস্থা: ' +
+                (config.enabled ? '✅ চালু' : '❌ বন্ধ') +
                 '\n\n*.antidelete on* - Enable\n*.antidelete off* - Disable'
         }, { quoted: message });
     }
 
     if (action !== 'on' && action !== 'off') {
         return sock.sendMessage(chatId, {
-            text: '*Invalid command. Use .antidelete on or .antidelete off.*'
+            text: '*ভুল কমান্ড। .antidelete on অথবা .antidelete off ব্যবহার করুন।*'
         }, { quoted: message });
     }
 
@@ -147,8 +147,8 @@ async function handleAntideleteCommand(sock, chatId, message, match) {
 
     return sock.sendMessage(chatId, {
         text: config.enabled
-            ? '*Antidelete enabled. New incoming messages will now be saved.*'
-            : '*Antidelete disabled.*'
+            ? '*ডিলিট হওয়া মেসেজ সংরক্ষণ চালু হয়েছে। এখন থেকে নতুন মেসেজ সংরক্ষণ করা হবে।*'
+            : '*ডিলিট হওয়া মেসেজ সংরক্ষণ বন্ধ করা হয়েছে।*'
     }, { quoted: message });
 }
 
@@ -236,7 +236,7 @@ async function handleMessageRevocation(sock, revocationMessage) {
         const deletedBy = revocationMessage.key?.participant ||
             revocationMessage.participant ||
             revocationMessage.key?.remoteJid ||
-            'Unknown';
+            'অজানা';
 
         const botJid = (sock.user?.id || '').split(':')[0].split('@')[0] + '@s.whatsapp.net';
         if (revocationMessage.key?.fromMe || deletedBy === botJid) return;
@@ -273,17 +273,17 @@ async function handleMessageRevocation(sock, revocationMessage) {
             } catch {}
         }
 
-        const time = new Date(original.timestamp).toLocaleString('en-GB', {
+        const time = new Date(original.timestamp).toLocaleString('bn-BD', {
             timeZone: 'Asia/Dhaka',
             hour12: true
         });
 
         let report = '*🔰 ANTIDELETE REPORT 🔰*\n\n' +
-            '*🗑️ Deleted By:* @' + deletedByNumber + '\n' +
-            '*👤 Sender:* @' + senderNumber + '\n' +
-            '*🕒 Message Time:* ' + time + '\n';
+            '*🗑️ যিনি ডিলিট করেছেন:* @' + deletedByNumber + '\n' +
+            '*👤 প্রেরক:* @' + senderNumber + '\n' +
+            '*🕒 মেসেজের সময়:* ' + time + '\n';
 
-        if (groupName) report += '*👥 Group:* ' + groupName + '\n';
+        if (groupName) report += '*👥 গ্রুপ:* ' + groupName + '\n';
         if (original.content) report += '\n*💬 Deleted Message:*\n' + original.content;
 
         await sock.sendMessage(botJid, {
@@ -308,7 +308,7 @@ async function handleMessageRevocation(sock, revocationMessage) {
                     await sock.sendMessage(botJid, { sticker: { url: original.mediaPath } });
                 }
             } catch (error) {
-                await sock.sendMessage(botJid, { text: '⚠️ Antidelete media send error: ' + error.message });
+                await sock.sendMessage(botJid, { text: '⚠️ ডিলিট হওয়া মিডিয়া পাঠাতে সমস্যা: ' + error.message });
             }
         }
 
