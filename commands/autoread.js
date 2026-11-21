@@ -33,7 +33,7 @@ async function autoreadCommand(sock, chatId, message) {
 
         if (!message.key.fromMe && !isOwner) {
             await sock.sendMessage(chatId, {
-                text: '❌ This command is only available for the owner!'
+                text: '❌ এই কমান্ডটি শুধু বটের মালিক ব্যবহার করতে পারবেন।'
             });
             return;
         }
@@ -57,7 +57,7 @@ async function autoreadCommand(sock, chatId, message) {
                 config.enabled = false;
             } else {
                 await sock.sendMessage(chatId, {
-                    text: '❌ Invalid option! Use: .autoread on/off'
+                    text: '❌ ভুল অপশন! .autoread on/off ব্যবহার করুন।'
                 });
                 return;
             }
@@ -70,14 +70,14 @@ async function autoreadCommand(sock, chatId, message) {
 
         // Send confirmation message
         await sock.sendMessage(chatId, {
-            text: `✅ Auto-read has been ${config.enabled ? 'enabled' : 'disabled'}!`
+            text: `✅ স্বয়ংক্রিয় মেসেজ পড়া ${config.enabled ? 'চালু' : 'বন্ধ'} করা হয়েছে!`
         });
 
     } catch (error) {
         console.error('Error in autoread command:', error);
 
         await sock.sendMessage(chatId, {
-            text: '❌ Error processing command!'
+            text: '❌ কমান্ডটি চালাতে সমস্যা হয়েছে!'
         });
     }
 }
