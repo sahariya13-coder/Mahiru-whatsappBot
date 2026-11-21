@@ -11,7 +11,7 @@ async function blurCommand(sock, chatId, message, quotedMessage) {
             // If replying to a message
             if (!quotedMessage.imageMessage) {
                 await sock.sendMessage(chatId, { 
-                    text: '❌ Please reply to an image message' 
+                    text: '❌ কোনো ছবির মেসেজে রিপ্লাই দিন।' 
                 }, { quoted: message });
                 return;
             }
@@ -38,7 +38,7 @@ async function blurCommand(sock, chatId, message, quotedMessage) {
             );
         } else {
             await sock.sendMessage(chatId, { 
-                text: '❌ Please reply to an image or send an image with caption .blur' 
+                text: '❌ কোনো ছবিতে রিপ্লাই দিন অথবা .blur ক্যাপশন দিয়ে ছবি পাঠান।' 
             }, { quoted: message });
             return;
         }
@@ -60,7 +60,7 @@ async function blurCommand(sock, chatId, message, quotedMessage) {
         // Send the blurred image
         await sock.sendMessage(chatId, {
             image: blurredImage,
-            caption: '*[ ✔ ] Image Blurred Successfully*',
+            caption: '*[ ✔ ] ছবিটি সফলভাবে ঝাপসা করা হয়েছে*',
             contextInfo: {
                 forwardingScore: 1,
                 isForwarded: true,}
@@ -69,7 +69,7 @@ async function blurCommand(sock, chatId, message, quotedMessage) {
     } catch (error) {
         console.error('Error in blur command:', error);
         await sock.sendMessage(chatId, { 
-            text: '❌ Failed to blur image. Please try again later.' 
+            text: '❌ ছবি ঝাপসা করা যায়নি। পরে আবার চেষ্টা করুন।' 
         }, { quoted: message });
     }
 }
