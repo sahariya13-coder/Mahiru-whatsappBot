@@ -46,7 +46,14 @@ function saveJSON(file, value) {
 }
 
 function loadAntideleteConfig() {
-    return loadJSON(CONFIG_PATH, { enabled: false });
+    // Antidelete starts enabled on a fresh installation.
+    return loadJSON(CONFIG_PATH, { enabled: true });
+}
+
+// Migrate older installations that were created with antidelete disabled.
+// This makes the feature ready immediately after the bot restarts.
+if (!fs.existsSync(CONFIG_PATH)) {
+    saveAntideleteConfig({ enabled: true });
 }
 
 function saveAntideleteConfig(config) {
@@ -162,6 +169,7 @@ async function storeMessage(sock, message) {
             content.listResponseMessage?.title ||
             '';
 
+        const storeKey = messageKey(key.remoteJid, key.id);
         const record = {
             id: key.id,
             remoteJid: key.remoteJid,
@@ -172,21 +180,10 @@ async function storeMessage(sock, message) {
             timestamp: Date.now()
         };
 
-        if (media) {
-            try {
-                const buffer = await streamToBuffer(
-                    await downloadContentFromMessage(media.message, media.type)
-                );
-                const filename = Buffer.from(key.id).toString('hex') + '.' + media.extension;
-                const absolutePath = path.join(MEDIA_DIR, filename);
-                fs.writeFileSync(absolutePath, buffer);
-                record.mediaPath = absolutePath;
-            } catch (error) {
-                console.error('Antidelete media download error:', error.message);
-            }
-        }
-
-        messageStore.set(messageKey(key.remoteJid, key.id), record);
+        // Save text and message metadata immediately. Do not wait for media
+        // downloads, otherwise a quick delete can arrive before the message
+        // has been added to the antidelete store.
+        messageStore.set(storeKey, record);
 
         while (messageStore.size > MAX_STORED_MESSAGES) {
             const oldestKey = messageStore.keys().next().value;
@@ -196,8 +193,31 @@ async function storeMessage(sock, message) {
             }
             messageStore.delete(oldestKey);
         }
-
         persistMessageStore();
+
+        // Download media in the background and update the saved record later.
+        if (media) {
+            (async () => {
+                try {
+                    const buffer = await streamToBuffer(
+                        await downloadContentFromMessage(media.message, media.type)
+                    );
+                    const filename = Buffer.from(key.id).toString('hex') + '.' + media.extension;
+                    const absolutePath = path.join(MEDIA_DIR, filename);
+                    fs.writeFileSync(absolutePath, buffer);
+
+                    const latest = messageStore.get(storeKey);
+                    if (latest) {
+                        latest.mediaPath = absolutePath;
+                        persistMessageStore();
+                    } else {
+                        try { fs.unlinkSync(absolutePath); } catch {}
+                    }
+                } catch (error) {
+                    console.error('Antidelete media download error:', error.message);
+                }
+            })();
+        }
     } catch (error) {
         console.error('Antidelete storeMessage error:', error);
     }
