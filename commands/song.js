@@ -1,7 +1,7 @@
 const yts = require('yt-search');
 const api = require('../lib/api');
 
-let songBusy = false;
+const songBusyChats = new Set();
 
 function extractYouTubeId(input) {
   const text = String(input || '').trim();
@@ -104,14 +104,15 @@ async function getAudioDownload(videoUrl) {
 }
 
 async function songCommand(sock, chatId, message) {
-  if (songBusy) {
+  const chatKey = String(chatId);
+  if (songBusyChats.has(chatKey)) {
     await sock.sendMessage(chatId, {
       text: '⏳ অন্য একটি গান প্রসেস হচ্ছে। একটু পরে আবার চেষ্টা করুন।'
     }, { quoted: message });
     return;
   }
 
-  songBusy = true;
+  songBusyChats.add(chatKey);
   try {
     const raw =
       message.message?.conversation ||
@@ -177,7 +178,7 @@ async function songCommand(sock, chatId, message) {
         : '❌ গান প্রসেস করা যায়নি: ' + String(error.message || 'Unknown error').slice(0, 180)
     }, { quoted: message });
   } finally {
-    songBusy = false;
+    songBusyChats.delete(chatKey);
   }
 }
 
