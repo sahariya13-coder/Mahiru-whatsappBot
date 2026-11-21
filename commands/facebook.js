@@ -95,14 +95,14 @@ async function facebookCommand(sock, chatId, message) {
     if (!url) {
       return sock.sendMessage(
         chatId,
-        { text: 'Please provide a Facebook link.\nExample: `.fb https://facebook.com/reel/...`' },
+        { text: 'Facebook লিংক দিন।\nউদাহরণ: `.fb https://facebook.com/reel/...`' },
         { quoted: message }
       );
     }
     if (!FB_PATTERNS.some((p) => p.test(url))) {
       return sock.sendMessage(
         chatId,
-        { text: 'That is not a valid Facebook link.' },
+        { text: 'এটি সঠিক Facebook লিংক নয়।' },
         { quoted: message }
       );
     }
@@ -119,7 +119,7 @@ async function facebookCommand(sock, chatId, message) {
     console.error('[facebook]', err?.message || err);
     await sock.sendMessage(
       chatId,
-      { text: '❌ Failed to download Facebook video. Try another link.' },
+      { text: '❌ Facebook ভিডিও ডাউনলোড করা যায়নি। অন্য লিংক দিয়ে চেষ্টা করুন।' },
       { quoted: message }
     );
   }
