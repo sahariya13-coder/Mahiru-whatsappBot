@@ -161,8 +161,15 @@ function writeRestoreFiles(payload) {
     }
     fs.rmSync(stageRoot, { recursive: true, force: true });
 
-    try { require('../lib/persistent_data').backup(); }
-    catch (error) { console.warn('[BACKUP] Runtime snapshot refresh warning:', error.message); }
+    try {
+        // Remove stale runtime-snapshot entries first; otherwise deleted files
+        // from an older snapshot could be copied back on the next startup.
+        fs.rmSync(path.join(BACKUP_DIR, 'data'), { recursive: true, force: true });
+        fs.rmSync(path.join(BACKUP_DIR, 'baileys_store.json'), { force: true });
+        require('../lib/persistent_data').backup();
+    } catch (error) {
+        console.warn('[BACKUP] Runtime snapshot refresh warning:', error.message);
+    }
 }
 
 async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
