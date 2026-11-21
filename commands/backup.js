@@ -36,17 +36,20 @@ async function isOwnerMessage(senderId, message, sock, chatId) {
 function collectFiles(dir, relative = 'data') {
     const output = {};
     if (!fs.existsSync(dir)) return output;
+
+    // Include every regular file recursively: hidden files, nested folders,
+    // temporary files and files larger than 50 MB are all included.
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
         const rel = path.posix.join(relative, entry.name);
-        if (entry.isDirectory()) Object.assign(output, collectFiles(full, rel));
-        else if (entry.isFile() && !/\.tmp-|\.restore-/.test(entry.name)) {
-            const stat = fs.statSync(full);
-            if (stat.size > 50 * 1024 * 1024) {
-                console.warn('[BACKUP] Skipping oversized file:', rel);
-                continue;
-            }
+
+        if (entry.isDirectory()) {
+            Object.assign(output, collectFiles(full, rel));
+        } else if (entry.isFile()) {
             output[rel] = fs.readFileSync(full).toString('base64');
+        } else if (entry.isSymbolicLink()) {
+            const stat = fs.statSync(full);
+            if (stat.isFile()) output[rel] = fs.readFileSync(full).toString('base64');
         }
     }
     return output;
@@ -112,7 +115,7 @@ function writeRestoreFiles(payload) {
     }
 
     const entries = Object.entries(payload.files);
-    if (!entries.length || entries.length > 10000) throw new Error('Backup is empty or contains too many files');
+    if (!entries.length) throw new Error('Backup is empty');
 
     const decoded = [];
     for (const [relative, encoded] of entries) {
@@ -217,7 +220,6 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
         await sock.sendMessage(chatId, { text: 'Backup ফাইল যাচাই করে Restore করা হচ্ছে...' }, { quoted: message });
         const compressed = await downloadDocument(document);
         const jsonBuffer = zlib.gunzipSync(compressed);
-        if (jsonBuffer.length > 100 * 1024 * 1024) throw new Error('Backup file is too large');
         const payload = JSON.parse(jsonBuffer.toString('utf8'));
         writeRestoreFiles(payload);
         await sock.sendMessage(chatId, {
