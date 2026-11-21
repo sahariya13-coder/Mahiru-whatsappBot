@@ -57,6 +57,12 @@ function createBackupBuffer() {
     catch (error) { console.warn('[BACKUP] Store flush warning:', error.message); }
 
     const files = collectFiles(DATA_DIR);
+    for (const configFile of ['settings.js', 'config.js', '.env']) {
+        const fullPath = path.join(ROOT, configFile);
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+            files[configFile] = fs.readFileSync(fullPath).toString('base64');
+        }
+    }
     if (fs.existsSync(STORE_FILE)) files['baileys_store.json'] = fs.readFileSync(STORE_FILE).toString('base64');
     const payload = {
         app: 'Mahiru WhatsApp Bot',
@@ -111,7 +117,8 @@ function writeRestoreFiles(payload) {
     const decoded = [];
     for (const [relative, encoded] of entries) {
         if (typeof relative !== 'string' ||
-            !(relative === 'baileys_store.json' || relative.startsWith('data/')) ||
+            !(relative === 'baileys_store.json' || relative === 'settings.js' ||
+              relative === 'config.js' || relative === '.env' || relative.startsWith('data/')) ||
             relative.includes('..') || path.isAbsolute(relative) || typeof encoded !== 'string') {
             throw new Error('Backup contains an unsafe file path');
         }
@@ -124,14 +131,35 @@ function writeRestoreFiles(payload) {
     const safetyName = 'pre-restore-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json.gz';
     fs.writeFileSync(path.join(BACKUP_DIR, safetyName), createBackupBuffer());
 
+    // Build the restored data directory separately, then swap it into place.
+    const stageRoot = path.join(BACKUP_DIR, 'restore-stage-' + process.pid);
+    const stageData = path.join(stageRoot, 'data');
+    fs.rmSync(stageRoot, { recursive: true, force: true });
+    fs.mkdirSync(stageData, { recursive: true });
     for (const item of decoded) {
+        const staged = path.resolve(stageRoot, item.relative);
+        if (!staged.startsWith(stageRoot + path.sep)) throw new Error('Unsafe restore destination');
+        fs.mkdirSync(path.dirname(staged), { recursive: true });
+        fs.writeFileSync(staged, item.bytes);
+    }
+
+    const oldData = path.join(BACKUP_DIR, 'pre-restore-data-' + process.pid);
+    fs.rmSync(oldData, { recursive: true, force: true });
+    if (fs.existsSync(DATA_DIR)) fs.renameSync(DATA_DIR, oldData);
+    try {
+        fs.renameSync(stageData, DATA_DIR);
+    } catch (error) {
+        if (fs.existsSync(oldData) && !fs.existsSync(DATA_DIR)) fs.renameSync(oldData, DATA_DIR);
+        throw error;
+    }
+
+    for (const item of decoded.filter(entry => entry.relative !== 'data/' && !entry.relative.startsWith('data/'))) {
         const target = path.resolve(ROOT, item.relative);
-        if (!target.startsWith(ROOT + path.sep)) throw new Error('Unsafe restore destination');
-        fs.mkdirSync(path.dirname(target), { recursive: true });
         const temp = target + '.restore-' + process.pid;
         fs.writeFileSync(temp, item.bytes);
         fs.renameSync(temp, target);
     }
+    fs.rmSync(stageRoot, { recursive: true, force: true });
 
     try { require('../lib/persistent_data').backup(); }
     catch (error) { console.warn('[BACKUP] Runtime snapshot refresh warning:', error.message); }
