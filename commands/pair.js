@@ -5,7 +5,7 @@ async function pairCommand(sock, chatId, message, q) {
     try {
         if (!q) {
             return await sock.sendMessage(chatId, {
-                text: "Please provide valid WhatsApp number\nExample: .pair 91702395XXXX",
+                text: "সঠিক WhatsApp নম্বর দিন।\nউদাহরণ: .pair 8801XXXXXXXXX",
                 contextInfo: {
                     forwardingScore: 1,
                     isForwarded: true,}
@@ -18,7 +18,7 @@ async function pairCommand(sock, chatId, message, q) {
 
         if (numbers.length === 0) {
             return await sock.sendMessage(chatId, {
-                text: "Invalid number❌️ Please use the correct format!",
+                text: "নম্বরটি সঠিক নয় ❌️ সঠিক ফরম্যাটে নম্বর দিন!",
                 contextInfo: {
                     forwardingScore: 1,
                     isForwarded: true,}
@@ -31,7 +31,7 @@ async function pairCommand(sock, chatId, message, q) {
 
             if (!result[0]?.exists) {
                 return await sock.sendMessage(chatId, {
-                    text: `That number is not registered on WhatsApp❗️`,
+                    text: `এই নম্বরটি WhatsApp-এ নিবন্ধিত নয়❗️`,
                     contextInfo: {
                         forwardingScore: 1,
                         isForwarded: true,}
@@ -39,7 +39,7 @@ async function pairCommand(sock, chatId, message, q) {
             }
 
             await sock.sendMessage(chatId, {
-                text: "Wait a moment for the code",
+                text: "কোড পাওয়ার জন্য একটু অপেক্ষা করুন",
                 contextInfo: {
                     forwardingScore: 1,
                     isForwarded: true,}
@@ -67,8 +67,8 @@ async function pairCommand(sock, chatId, message, q) {
             } catch (apiError) {
                 console.error('API Error:', apiError);
                 const errorMessage = apiError.message === 'Service Unavailable' 
-                    ? "Service is currently unavailable. Please try again later."
-                    : "Failed to generate pairing code. Please try again later.";
+                    ? "সেবাটি এখন পাওয়া যাচ্ছে না। পরে আবার চেষ্টা করুন।"
+                    : "পেয়ারিং কোড তৈরি করা যায়নি। পরে আবার চেষ্টা করুন।";
                 
                 await sock.sendMessage(chatId, {
                     text: errorMessage,
@@ -81,7 +81,7 @@ async function pairCommand(sock, chatId, message, q) {
     } catch (error) {
         console.error(error);
         await sock.sendMessage(chatId, {
-            text: "An error occurred. Please try again later.",
+            text: "একটি সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।",
             contextInfo: {
                 forwardingScore: 1,
                 isForwarded: true,}
