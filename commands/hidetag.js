@@ -18,12 +18,12 @@ async function hideTagCommand(sock, chatId, senderId, messageText, replyMessage,
     const { isSenderAdmin, isBotAdmin } = await isAdmin(sock, chatId, senderId);
 
     if (!isBotAdmin) {
-        await sock.sendMessage(chatId, { text: 'Please make the bot an admin first.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'আগে বটকে গ্রুপ অ্যাডমিন করুন।' }, { quoted: message });
         return;
     }
 
     if (!isSenderAdmin) {
-        await sock.sendMessage(chatId, { text: 'Only admins can use the .hidetag command.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'শুধু গ্রুপ অ্যাডমিনরা .hidetag কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
         return;
     }
 
@@ -50,7 +50,7 @@ async function hideTagCommand(sock, chatId, senderId, messageText, replyMessage,
             await sock.sendMessage(chatId, content);
         }
     } else {
-        await sock.sendMessage(chatId, { text: messageText || 'Tagged members (excluding admins).', mentions: nonAdmins });
+        await sock.sendMessage(chatId, { text: messageText || 'অ্যাডমিন ছাড়া অন্য সদস্যদের ট্যাগ করা হয়েছে।', mentions: nonAdmins });
     }
 }
 
