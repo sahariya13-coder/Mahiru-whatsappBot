@@ -63,16 +63,16 @@ async function antibotCommand(sock, chatId, message, senderId) {
   const reply = (text) => sock.sendMessage(chatId, { text }, { quoted: message });
 
   if (!chatId.endsWith('@g.us')) {
-    return reply('👥 This command can only be used in groups.');
+    return reply('👥 এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে।');
   }
 
   const owner = message.key.fromMe || (await isOwnerOrSudo(senderId, sock, chatId));
   const adminStatus = await isAdmin(sock, chatId, senderId);
   if (!adminStatus.isBotAdmin) {
-    return reply('❌ Please make the bot an admin first.');
+    return reply('❌ আগে বটকে গ্রুপ অ্যাডমিন করুন।');
   }
   if (!owner && !adminStatus.isSenderAdmin) {
-    return reply('❌ Only group admins can use this command.');
+    return reply('❌ শুধু গ্রুপ অ্যাডমিনরা এই কমান্ড ব্যবহার করতে পারবেন।');
   }
 
   const text =
@@ -84,11 +84,11 @@ async function antibotCommand(sock, chatId, message, senderId) {
   if (!opt) {
     return reply(
       `🤖 *Antibot Status*\n\n` +
-        `Status: *${cfg.enabled ? 'ON' : 'OFF'}*\n` +
-        `Action: *${cfg.action}*\n\n` +
-        `Admins, owner, and this bot are exempt.\n` +
-        `Detects other Baileys bots by message-ID pattern.\n\n` +
-        `Usage:\n` +
+        `অবস্থা: *${cfg.enabled ? 'চালু' : 'বন্ধ'}*\n` +
+        `কাজ: *${cfg.action === 'kick' ? 'গ্রুপ থেকে বের করা' : 'সতর্ক করা'}*\n\n` +
+        `অ্যাডমিন, মালিক এবং এই বটের ক্ষেত্রে এটি কার্যকর হবে না।\n` +
+        `মেসেজ আইডির ধরন দেখে অন্য Baileys বট শনাক্ত করে।\n\n` +
+        `ব্যবহার:\n` +
         `  \`.antibot on\`\n` +
         `  \`.antibot off\`\n` +
         `  \`.antibot set warn | kick\`\n` +
@@ -97,32 +97,32 @@ async function antibotCommand(sock, chatId, message, senderId) {
   }
 
   if (opt === 'on') {
-    if (cfg.enabled) return reply('*Antibot is already on*');
+    if (cfg.enabled) return reply('*অ্যান্টিবট আগে থেকেই চালু আছে*');
     setConfig(chatId, { enabled: true });
-    return reply('*Antibot has been turned ON*');
+    return reply('*অ্যান্টিবট চালু করা হয়েছে*');
   }
 
   if (opt === 'off') {
     setConfig(chatId, { enabled: false });
-    return reply('*Antibot has been turned OFF*');
+    return reply('*অ্যান্টিবট বন্ধ করা হয়েছে*');
   }
 
   if (opt === 'set') {
     const setAction = (args[1] || '').toLowerCase();
     if (!['warn', 'kick'].includes(setAction)) {
-      return reply('*Invalid action. Choose warn or kick.*\n`.antibot set warn | kick`');
+      return reply('*ভুল অপশন। warn অথবা kick বেছে নিন।*\n`.antibot set warn | kick`');
     }
     setConfig(chatId, { enabled: true, action: setAction });
-    return reply(`*Antibot action set to ${setAction}*`);
+    return reply(`*অ্যান্টিবটের কাজ নির্ধারণ করা হয়েছে: ${setAction === 'kick' ? 'বের করে দেওয়া' : 'সতর্ক করা'}*`);
   }
 
   if (opt === 'get') {
     return reply(
-      `*Antibot Configuration:*\nStatus: ${cfg.enabled ? 'ON' : 'OFF'}\nAction: ${cfg.action}`
+      `*অ্যান্টিবট সেটিংস:*\nঅবস্থা: ${cfg.enabled ? 'চালু' : 'বন্ধ'}\nকাজ: ${cfg.action === 'kick' ? 'বের করে দেওয়া' : 'সতর্ক করা'}`
     );
   }
 
-  return reply('*Use `.antibot` for usage.*');
+  return reply('*ব্যবহার জানতে `.antibot` লিখুন।*');
 }
 
 /**
@@ -195,13 +195,13 @@ async function handleAntibotDetection(sock, message) {
       try {
         await sock.groupParticipantsUpdate(chatId, [kickJid], 'remove');
         await sock.sendMessage(chatId, {
-          text: `🤖 *@${tag}* was kicked — other bots are not allowed here.`,
+          text: `🤖 *@${tag}*-কে গ্রুপ থেকে সরানো হয়েছে। এখানে অন্য বট অনুমোদিত নয়।`,
           mentions,
         });
       } catch (e) {
         console.error('[antibot] kick:', e?.message || e);
         await sock.sendMessage(chatId, {
-          text: `🤖 Bot activity detected from *@${tag}* (kick failed — check bot admin rights).`,
+          text: `🤖 *@${tag}*-এর বট কার্যক্রম শনাক্ত হয়েছে, তবে সরানো যায়নি। বটের অ্যাডমিন অনুমতি পরীক্ষা করুন।`,
           mentions,
         });
       }
@@ -215,7 +215,7 @@ async function handleAntibotDetection(sock, message) {
         await sock.groupParticipantsUpdate(chatId, [kickJid], 'remove');
         await resetWarningCount(chatId, kickJid);
         await sock.sendMessage(chatId, {
-          text: `🤖 *@${tag}* kicked after 3 antibot warnings.`,
+          text: `🤖 ৩ বার সতর্ক করার পর *@${tag}*-কে গ্রুপ থেকে সরানো হয়েছে।`,
           mentions,
         });
       } catch (e) {
@@ -223,7 +223,7 @@ async function handleAntibotDetection(sock, message) {
       }
     } else {
       await sock.sendMessage(chatId, {
-        text: `🤖 *@${tag}* warning ${warningCount}/3 — other bots are not allowed.`,
+        text: `🤖 *@${tag}*-কে সতর্ক করা হয়েছে (${warningCount}/৩)। গ্রুপে অন্য বট অনুমোদিত নয়।`,
         mentions,
       });
     }
