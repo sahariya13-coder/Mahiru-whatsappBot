@@ -214,7 +214,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             unwrappedMessage?.documentMessage?.caption?.trim() ||
             unwrappedMessage?.buttonsResponseMessage?.selectedButtonId?.trim() ||
             ''
-        ).toLowerCase().replace(/\\.\\s+/g, '.').trim();
+        ).toLowerCase().replace(/\.\s+/g, '.').trim();
 
         let rawText = unwrappedMessage?.conversation?.trim() ||
             unwrappedMessage?.extendedTextMessage?.text?.trim() ||
