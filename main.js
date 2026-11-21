@@ -241,13 +241,16 @@ async function handleMessages(sock, messageUpdate, printLog) {
             console.log(`📝 Command used in ${isGroup ? 'group' : 'private'}: ${userMessage}`);
         }
 
-        let isPublic = true;
+        let accessData = {};
         try {
-            const data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
-            if (typeof data.isPublic === 'boolean') isPublic = data.isPublic;
+            accessData = JSON.parse(fs.readFileSync('./data/messageCount.json'));
         } catch (error) {
             console.error('Error checking access mode:', error);
         }
+        const legacyMode = accessData.isPublic === false ? 'private' : 'public';
+        const groupMode = accessData.groupMode || legacyMode;
+        const inboxMode = accessData.inboxMode || legacyMode;
+        const isPublic = (isGroup ? groupMode : inboxMode) === 'public';
 
         const isOwnerOrSudoCheck = message.key.fromMe || senderIsOwnerOrSudo;
 
@@ -529,63 +532,69 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.mode'): {
                 if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, {
-                        text: 'Only bot owner can use this command!',
+                        text: 'শুধু Bot Owner/Sudo এই কমান্ড ব্যবহার করতে পারবে।',
                         ...channelInfo
                     }, { quoted: message });
                     return;
                 }
-
-                let data;
+                let data = {};
                 try {
                     data = JSON.parse(fs.readFileSync('./data/messageCount.json'));
-                } catch (error) {                    console.error('Error reading access mode:', error);
-                    await sock.sendMessage(chatId, {
-                        text: 'Failed to read bot mode status',
-                        ...channelInfo
-                    });
-                    return;
+                } catch (error) {
+                    console.error('Error reading access mode:', error);
                 }
-
-                const action = userMessage.split(' ')[1]?.toLowerCase();
-
-                if (!action) {
-                    const currentMode = data.isPublic ? 'public' : 'private';
+                const args = userMessage.trim().split(/\s+/);
+                const target = args[1]?.toLowerCase();
+                const action = args[2]?.toLowerCase();
+                const fallback = data.isPublic === false ? 'private' : 'public';
+                data.groupMode = data.groupMode || fallback;
+                data.inboxMode = data.inboxMode || fallback;
+                if (!target) {
                     await sock.sendMessage(chatId, {
-                        text: `Current bot mode: *${currentMode}*\n\nUsage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only`,
-                        ...channelInfo
-                    }, { quoted: message });
-                    return;
-                }
-
-                if (action !== 'public' && action !== 'private') {
-                    await sock.sendMessage(chatId, {
-                        text: 'Usage: .mode public/private\n\nExample:\n.mode public - Allow everyone to use bot\n.mode private - Restrict to owner only',
+                        text: '*MAHIRU ACCESS MODES*\n\n' +
+                            'Group: *' + data.groupMode + '*\nInbox: *' + data.inboxMode + '*\n\n' +
+                            '.mode group public/private — Group mode\n' +
+                            '.mode inbox public/private — Inbox mode\n' +
+                            '.mode public/private — দুটো একসাথে',
                         ...channelInfo
                     }, { quoted: message });
                     return;
                 }
-
+                if (target === 'public' || target === 'private') {
+                    data.isPublic = target === 'public';
+                    data.groupMode = target;
+                    data.inboxMode = target;
+                } else if ((target === 'group' || target === 'inbox') &&
+                    (action === 'public' || action === 'private')) {
+                    data[target === 'group' ? 'groupMode' : 'inboxMode'] = action;
+                } else {
+                    await sock.sendMessage(chatId, {
+                        text: 'ব্যবহার:\n.mode group public/private\n.mode inbox public/private\n.mode public/private',
+                        ...channelInfo
+                    }, { quoted: message });
+                    return;
+                }
                 try {
-                    data.isPublic = action === 'public';
                     const modeFile = './data/messageCount.json';
                     const modeTempFile = modeFile + '.tmp-' + process.pid;
                     fs.mkdirSync('./data', { recursive: true });
                     fs.writeFileSync(modeTempFile, JSON.stringify(data, null, 2), 'utf8');
                     fs.renameSync(modeTempFile, modeFile);
+                    const changedMode = (target === 'group' || target === 'inbox') ? action : target;
+                    const label = target === 'group' ? 'Group' : target === 'inbox' ? 'Inbox' : 'Group ও Inbox';
                     await sock.sendMessage(chatId, {
-                        text: `Bot is now in *${action}* mode`,
+                        text: '✅ ' + label + ' mode এখন *' + changedMode + '* করা হয়েছে।',
                         ...channelInfo
-                    });
+                    }, { quoted: message });
                 } catch (error) {
                     console.error('Error updating access mode:', error);
                     await sock.sendMessage(chatId, {
-                        text: 'Failed to update bot access mode',
+                        text: 'Mode update করা যায়নি।',
                         ...channelInfo
                     });
                 }
                 break;
             }
-
             case userMessage.startsWith('.anticall'):
                 if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, { text: 'Only owner/sudo can use anticall.' }, { quoted: message });
