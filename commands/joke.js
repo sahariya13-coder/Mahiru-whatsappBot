@@ -9,6 +9,6 @@ module.exports = async function (sock, chatId) {
         await sock.sendMessage(chatId, { text: joke });
     } catch (error) {
         console.error('Error fetching joke:', error);
-        await sock.sendMessage(chatId, { text: 'Sorry, I could not fetch a joke right now.' });
+        await sock.sendMessage(chatId, { text: 'দুঃখিত, এই মুহূর্তে কোনো কৌতুক পাওয়া যাচ্ছে না।' });
     }
 };
