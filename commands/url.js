@@ -54,7 +54,7 @@ async function urlCommand(sock, chatId, message) {
         if (!media) media = await getQuotedMediaBufferAndExt(message);
 
         if (!media) {
-            await sock.sendMessage(chatId, { text: 'Send or reply to a media (image, video, audio, sticker, document) to get a URL.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'মিডিয়ার লিংক পেতে ছবি, ভিডিও, অডিও, স্টিকার অথবা ডকুমেন্ট পাঠান বা তাতে রিপ্লাই দিন।' }, { quoted: message });
             return;
         }
 
@@ -85,14 +85,14 @@ async function urlCommand(sock, chatId, message) {
         }
 
         if (!url) {
-            await sock.sendMessage(chatId, { text: 'Failed to upload media.' }, { quoted: message });
+            await sock.sendMessage(chatId, { text: 'মিডিয়া আপলোড করা যায়নি।' }, { quoted: message });
             return;
         }
 
-        await sock.sendMessage(chatId, { text: `URL: ${url}` }, { quoted: message });
+        await sock.sendMessage(chatId, { text: `লিংক: ${url}` }, { quoted: message });
     } catch (error) {
         console.error('[URL] error:', error?.message || error);
-        await sock.sendMessage(chatId, { text: 'Failed to convert media to URL.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: 'মিডিয়াকে লিংকে রূপান্তর করা যায়নি।' }, { quoted: message });
     }
 }
 
