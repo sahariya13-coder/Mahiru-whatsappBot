@@ -42,7 +42,7 @@ module.exports = {
                     imageUrl = url;
                 } else {
                     return sock.sendMessage(chatId, { 
-                        text: '❌ Invalid URL provided.\n\nUsage: `.removebg https://example.com/image.jpg`' 
+                        text: '❌ ভুল URL দেওয়া হয়েছে।\n\nব্যবহার: `.removebg <ছবির লিংক>`' 
                     }, { quoted: message });
                 }
             } else {
@@ -51,7 +51,7 @@ module.exports = {
                 
                 if (!imageUrl) {
                     return sock.sendMessage(chatId, { 
-                        text: '📸 *Remove Background Command*\n\nUsage:\n• `.removebg <image_url>`\n• Reply to an image with `.removebg`\n• Send image with `.removebg`\n\nExample: `.removebg https://example.com/image.jpg`' 
+                        text: '📸 *ছবির ব্যাকগ্রাউন্ড সরান*\n\nব্যবহার:\n• `.removebg <ছবির লিংক>`\n• কোনো ছবিতে রিপ্লাই দিয়ে `.removebg` লিখুন\n• `.removebg` ক্যাপশন দিয়ে ছবি পাঠান' 
                     }, { quoted: message });
                 }
             }
@@ -72,7 +72,7 @@ module.exports = {
                 // Send the processed image
                 await sock.sendMessage(chatId, {
                     image: response.data,
-                    caption: '✨ *Background removed successfully!*\n\n𝗣𝗥𝗢𝗖𝗘𝗦𝗦𝗘𝗗 𝗕𝗬 *Mahiru*'
+                    caption: '✨ *ছবির ব্যাকগ্রাউন্ড সফলভাবে সরানো হয়েছে!*\n\n𝗣𝗥𝗢𝗖𝗘𝗦𝗦𝗘𝗗 𝗕𝗬 *Mahiru*'
                 }, { quoted: message });
             } else {
                 throw new Error('Failed to process image');
@@ -81,18 +81,18 @@ module.exports = {
         } catch (error) {
             console.error('RemoveBG Error:', error.message);
             
-            let errorMessage = '❌ Failed to remove background.';
+            let errorMessage = '❌ ছবির ব্যাকগ্রাউন্ড সরানো যায়নি।';
             
             if (error.response?.status === 429) {
-                errorMessage = '⏰ Rate limit exceeded. Please try again later.';
+                errorMessage = '⏰ অনুরোধের সীমা শেষ হয়েছে। পরে আবার চেষ্টা করুন।';
             } else if (error.response?.status === 400) {
                 errorMessage = '❌ Invalid image URL or format.';
             } else if (error.response?.status === 500) {
-                errorMessage = '🔧 Server error. Please try again later.';
+                errorMessage = '🔧 সার্ভারে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।';
             } else if (error.code === 'ECONNABORTED') {
-                errorMessage = '⏰ Request timeout. Please try again.';
+                errorMessage = '⏰ অনুরোধের সময় শেষ হয়েছে। আবার চেষ্টা করুন।';
             } else if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
-                errorMessage = '🌐 Network error. Please check your connection.';
+                errorMessage = '🌐 নেটওয়ার্কে সমস্যা হয়েছে। ইন্টারনেট সংযোগ পরীক্ষা করুন।';
             }
             
             await sock.sendMessage(chatId, { 
