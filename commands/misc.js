@@ -49,7 +49,7 @@ async function handleHeart(sock, chatId, message) {
         await sock.sendMessage(chatId, { image: Buffer.from(response.data) }, { quoted: message });
     } catch (error) {
         console.error('Error in misc heart:', error);
-        await sock.sendMessage(chatId, { text: '❌ Failed to create heart image. Try again later.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '❌ হার্টের ছবি তৈরি করা যায়নি। পরে আবার চেষ্টা করুন।' }, { quoted: message });
     }
 }
 
@@ -95,7 +95,7 @@ async function miscCommand(sock, chatId, message, args) {
             case 'its-so-stupid': {
                 const dog = rest.join(' ').trim();
                 if (!dog) {
-                    await sock.sendMessage(chatId, { text: 'Usage: .misc its-so-stupid <text>' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .misc its-so-stupid <লেখা>' }, { quoted: message });
                     return;
                 }
                 const avatarUrl = await getQuotedOrOwnImageUrl(sock, message);
@@ -110,7 +110,7 @@ async function miscCommand(sock, chatId, message, args) {
                 const joined = rest.join(' ');
                 const [username, birthday, description] = joined.split('|').map(s => (s || '').trim());
                 if (!username || !birthday) {
-                    await sock.sendMessage(chatId, { text: 'Usage: .misc namecard username|birthday|description(optional)' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .misc namecard <নাম>|<জন্মদিন>|<বিবরণ (ঐচ্ছিক)>' }, { quoted: message });
                     return;
                 }
                 const avatarUrl = await getQuotedOrOwnImageUrl(sock, message);
@@ -127,7 +127,7 @@ async function miscCommand(sock, chatId, message, args) {
             case 'oogway2': {
                 const quote = rest.join(' ').trim();
                 if (!quote) {
-                    await sock.sendMessage(chatId, { text: `Usage: .misc ${sub} <quote>` }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: `ব্যবহার: .misc ${sub} <উক্তি>` }, { quoted: message });
                     return;
                 }
                 const avatarUrl = await getQuotedOrOwnImageUrl(sock, message);
@@ -142,7 +142,7 @@ async function miscCommand(sock, chatId, message, args) {
                 const joined = rest.join(' ');
                 const [displayname, username, comment, theme] = joined.split('|').map(s => (s || '').trim());
                 if (!displayname || !username || !comment) {
-                    await sock.sendMessage(chatId, { text: 'Usage: .misc tweet displayname|username|comment|theme(optional light/dark)' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .misc tweet <নাম>|<ইউজারনেম>|<মন্তব্য>|<থিম (light/dark)>' }, { quoted: message });
                     return;
                 }
                 const avatarUrl = await getQuotedOrOwnImageUrl(sock, message);
@@ -159,7 +159,7 @@ async function miscCommand(sock, chatId, message, args) {
                 const joined = rest.join(' ');
                 const [username, comment] = joined.split('|').map(s => (s || '').trim());
                 if (!username || !comment) {
-                    await sock.sendMessage(chatId, { text: 'Usage: .misc youtube-comment username|comment' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .misc youtube-comment <ইউজারনেম>|<মন্তব্য>' }, { quoted: message });
                     return;
                 }
                 const avatarUrl = await getQuotedOrOwnImageUrl(sock, message);
@@ -190,7 +190,7 @@ async function miscCommand(sock, chatId, message, args) {
         }
     } catch (error) {
         console.error('Error in misc command:', error);
-        await sock.sendMessage(chatId, { text: '❌ Failed to generate image. Check your parameters and try again.' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '❌ ছবি তৈরি করা যায়নি। দেওয়া তথ্যগুলো পরীক্ষা করে আবার চেষ্টা করুন।' }, { quoted: message });
     }
 }
 
