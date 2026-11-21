@@ -31,7 +31,7 @@ async function stickerCommand(sock, chatId, message) {
 
     if (!mediaMessage) {
         await sock.sendMessage(chatId, { 
-            text: 'Please reply to an image/video with .sticker, or send an image/video with .sticker as the caption.',
+            text: 'কোনো ছবি/ভিডিওতে রিপ্লাই দিয়ে .sticker লিখুন অথবা .sticker ক্যাপশন দিয়ে ছবি/ভিডিও পাঠান।',
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,}
@@ -47,7 +47,7 @@ async function stickerCommand(sock, chatId, message) {
 
         if (!mediaBuffer) {
             await sock.sendMessage(chatId, { 
-                text: 'Failed to download media. Please try again.',
+                text: 'মিডিয়া ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।',
                 contextInfo: {
                     forwardingScore: 999,
                     isForwarded: true,}
@@ -199,7 +199,7 @@ async function stickerCommand(sock, chatId, message) {
     } catch (error) {
         console.error('Error in sticker command:', error);
         await sock.sendMessage(chatId, { 
-            text: 'Failed to create sticker! Try again later.',
+            text: 'স্টিকার তৈরি করা যায়নি! পরে আবার চেষ্টা করুন।',
             contextInfo: {
                 forwardingScore: 999,
                 isForwarded: true,}
