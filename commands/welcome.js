@@ -4,7 +4,7 @@ const { isWelcomeOn, getWelcome } = require('../lib/index');
 async function welcomeCommand(sock, chatId, message, match) {
     if (!chatId.endsWith('@g.us')) {
         return sock.sendMessage(chatId, {
-            text: '❌ This command can only be used in groups.',
+            text: '❌ এই কমান্ডটি শুধু গ্রুপে ব্যবহার করা যাবে।',
             quoted: message
         });
     }
