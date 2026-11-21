@@ -11,14 +11,14 @@ async function banCommand(sock, chatId, message) {
 
         if (!isBotAdmin) {
             await sock.sendMessage(chatId, {
-                text: 'Please make the bot an admin to use .ban'
+                text: ' .ban ব্যবহার করতে আগে বটকে গ্রুপ অ্যাডমিন করুন।'
             }, { quoted: message });
             return;
         }
 
         if (!isSenderAdmin && !message.key.fromMe) {
             await sock.sendMessage(chatId, {
-                text: 'Only group admins can use .ban'
+                text: 'শুধু গ্রুপ অ্যাডমিনরা .ban ব্যবহার করতে পারবেন।'
             }, { quoted: message });
             return;
         }
@@ -28,7 +28,7 @@ async function banCommand(sock, chatId, message) {
 
         if (!message.key.fromMe && !senderIsSudo) {
             await sock.sendMessage(chatId, {
-                text: 'Only owner/sudo can use .ban in private chat'
+                text: 'শুধু Owner/Sudo ব্যক্তিগত চ্যাটে .ban ব্যবহার করতে পারবেন।'
             }, { quoted: message });
             return;
         }
@@ -44,7 +44,7 @@ async function banCommand(sock, chatId, message) {
 
     if (!userToBan) {
         await sock.sendMessage(chatId, {
-            text: 'Please mention the user or reply to their message to ban!'
+            text: 'যাকে নিষিদ্ধ করতে চান তাকে মেনশন করুন অথবা তার মেসেজে রিপ্লাই দিন!'
         }, { quoted: message });
         return;
     }
@@ -57,7 +57,7 @@ async function banCommand(sock, chatId, message) {
             userToBan === botId.replace('@s.whatsapp.net', '@lid')
         ) {
             await sock.sendMessage(chatId, {
-                text: 'You cannot ban the bot account.'
+                text: 'বট অ্যাকাউন্টকে নিষিদ্ধ করা যাবে না।'
             }, { quoted: message });
             return;
         }
@@ -75,12 +75,12 @@ async function banCommand(sock, chatId, message) {
             );
 
             await sock.sendMessage(chatId, {
-                text: `Successfully banned @${userToBan.split('@')[0]}!`,
+                text: `@${userToBan.split('@')[0]}-কে সফলভাবে নিষিদ্ধ করা হয়েছে!`,
                 mentions: [userToBan]
             }, { quoted: message });
         } else {
             await sock.sendMessage(chatId, {
-                text: `${userToBan.split('@')[0]} is already banned!`,
+                text: `${userToBan.split('@')[0]} আগে থেকেই নিষিদ্ধ!`,
                 mentions: [userToBan]
             }, { quoted: message });
         }
@@ -88,7 +88,7 @@ async function banCommand(sock, chatId, message) {
         console.error('Error in ban command:', error);
 
         await sock.sendMessage(chatId, {
-            text: 'Failed to ban user!'
+            text: 'ব্যবহারকারীকে নিষিদ্ধ করা যায়নি!'
         }, { quoted: message });
     }
 }
