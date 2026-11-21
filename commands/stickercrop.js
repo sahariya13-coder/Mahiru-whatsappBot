@@ -269,7 +269,7 @@ async function stickercropCommand(sock, chatId, message) {
       return sock.sendMessage(
         chatId,
         {
-          text: '✂️ Reply to a *sticker*, *image*, or *video* that you want to crop.',
+          text: '✂️ যে *স্টিকার*, *ছবি* অথবা *ভিডিও* কাটতে চান, সেটিতে রিপ্লাই দিন।',
         },
         { quoted: messageToQuote }
       );
@@ -286,7 +286,7 @@ async function stickercropCommand(sock, chatId, message) {
     if (!mediaBuffer) {
       return sock.sendMessage(
         chatId,
-        { text: '❌ Failed to download media. Please try again.' },
+        { text: '❌ মিডিয়া ডাউনলোড করা যায়নি। আবার চেষ্টা করুন।' },
         { quoted: messageToQuote }
       );
     }
@@ -297,7 +297,7 @@ async function stickercropCommand(sock, chatId, message) {
     console.error('[crop]', error?.message || error);
     await sock.sendMessage(
       chatId,
-      { text: '❌ Failed to crop sticker! Try with an image or video.' },
+      { text: '❌ স্টিকার কাটতে ব্যর্থ! ছবি অথবা ভিডিও দিয়ে চেষ্টা করুন।' },
       { quoted: message }
     );
   }
