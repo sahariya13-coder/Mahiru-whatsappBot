@@ -67,6 +67,39 @@ setInterval(() => {
 
 let phoneNumber = settings.ownerNumber || ''
 let owner
+let reconnectTimer = null
+
+function scheduleReconnect(reason = 'connection closed') {
+    if (reconnectTimer) {
+        console.log(chalk.yellow('[CONNECTION] Reconnect already scheduled; ignoring duplicate request.'))
+        return
+    }
+
+    console.log(chalk.yellow('[CONNECTION] ' + reason + '; reconnecting in 5 seconds.'))
+    reconnectTimer = setTimeout(() => {
+        reconnectTimer = null
+        startXeonBotInc().catch(error => {
+            console.error('[CONNECTION] Reconnect attempt failed:', error?.message || error)
+            scheduleReconnect('reconnect attempt failed')
+        })
+    }, 5000)
+
+    if (typeof reconnectTimer.unref === 'function') reconnectTimer.unref()
+}
+
+function backupLoggedOutSession() {
+    const sessionDir = path.resolve('./session')
+    if (!fs.existsSync(sessionDir)) return null
+
+    const backupRoot = path.resolve('./.mahiru-session-backups')
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const backupDir = path.join(backupRoot, 'session-' + stamp)
+
+    fs.mkdirSync(backupRoot, { recursive: true })
+    // Rename is atomic on the same filesystem and preserves the complete auth folder.
+    fs.renameSync(sessionDir, backupDir)
+    return backupDir
+}
 
 global.botname = "Mahiru"
 global.themeemoji = "•"
@@ -277,22 +310,25 @@ async function startXeonBotInc() {
                 `Connection closed | statusCode=${statusCode ?? 'unknown'} | message=${disconnectError?.message || 'unknown'} | details=${JSON.stringify(disconnectError?.data || disconnectError?.output?.payload || {})} | reconnecting=${shouldReconnect}`
             ))
 
-            // Never erase an unregistered/fresh auth folder because of a generic connection failure.
-            // Only remove credentials when WhatsApp explicitly reports logout for a registered session.
+            // Only archive credentials when WhatsApp explicitly reports logout.
+            // A device_removed session is no longer valid, but keeping an archive
+            // helps diagnose the issue without leaving invalid credentials active.
             if (isLoggedOut && state.creds.registered) {
                 try {
-                    rmSync('./session', { recursive: true, force: true })
-                    console.log(chalk.yellow('Registered session was logged out by WhatsApp; session folder deleted.'))
+                    const archivedSession = backupLoggedOutSession()
+                    if (archivedSession) {
+                        console.log(chalk.yellow('[SESSION] Logged-out session archived at: ' + archivedSession))
+                    }
                 } catch (error) {
-                    console.error('Error deleting session:', error)
+                    console.error('[SESSION] Could not archive logged-out session:', error?.message || error)
+                    console.error('[SESSION] The existing session folder was left untouched for manual recovery.')
+                    return
                 }
-                console.log(chalk.red('Session logged out. Please re-authenticate.'))
+                console.log(chalk.red('[SESSION] WhatsApp logged this device out. The old session was archived; pair again on the next start.'))
             }
-            
+
             if (shouldReconnect) {
-                console.log(chalk.yellow('Reconnecting...'))
-                await delay(5000)
-                startXeonBotInc()
+                scheduleReconnect('WhatsApp connection closed')
             }
         }
     })
@@ -395,8 +431,7 @@ async function startXeonBotInc() {
     return XeonBotInc
     } catch (error) {
         console.error('Error in startXeonBotInc:', error)
-        await delay(5000)
-        startXeonBotInc()
+        scheduleReconnect('bot startup failed')
     }
 }
 
