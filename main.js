@@ -1763,7 +1763,7 @@ async function handleGroupParticipantUpdate(sock, update) {
         // Notify the owner if the bot itself is removed from a group.
         if (action === 'remove') {
             const normalizeJid = value => typeof value === 'string'
-                ? value.replace(/:\\d+@/, '@').trim()
+                ? value.replace(/:\d+@/, '@').trim()
                 : '';
             const botJids = new Set([
                 sock.user?.id,
