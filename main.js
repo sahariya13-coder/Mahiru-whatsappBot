@@ -1601,7 +1601,7 @@ async function handleGroupParticipantUpdate(sock, update) {
         // Notify the configured owner when the bot account itself is added to a group.
         if (action === 'add') {
             const normalizeJid = value => typeof value === 'string'
-                ? value.replace(/:\\d+@/, '@').trim()
+                ? value.replace(/:\d+@/, '@').trim()
                 : '';
             const botJids = new Set([
                 sock.user?.id,
@@ -1628,7 +1628,17 @@ async function handleGroupParticipantUpdate(sock, update) {
 
                     try {
                         await sock.sendMessage(ownerJid, {
-                            text: `🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*\n\n📛 Group: ${groupName}\n🆔 Group ID: ${id}\n📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}\n\n✅ চালু করতে: `.gact ${id}\n🗑️ বটকে গ্রুপ থেকে সরাতে: `.gdelete ${id}\n⏸️ শুধু বন্ধ রাখতে: `.gdeact ${id}`,
+                            text: [
+                                '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
+                                '',
+                                `📛 Group: ${groupName}`,
+                                `🆔 Group ID: ${id}`,
+                                `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                '',
+                                `✅ চালু করতে: .gact ${id}`,
+                                `🗑️ বটকে গ্রুপ থেকে সরাতে: .gdelete ${id}`,
+                                `⏸️ শুধু বন্ধ রাখতে: .gdeact ${id}`
+                            ].join('\n'),
                             linkPreview: null
                         });
                         console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
