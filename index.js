@@ -2,7 +2,84 @@
  * Mahiru Shiina WhatsApp Bot
  * Credits: MSK
  */
-require('./settings')
+const settings = require('./settings');
+const { notifyOwner } = require('./lib/ownerNotify');
+
+let activeSocket = null;
+const ownerErrorNoticeTimes = new Map();
+const originalConsoleError = console.error.bind(console);
+
+function getErrorInfo(args) {
+    const parts = [];
+    let errorObject = null;
+    for (const value of args) {
+        if (value instanceof Error) {
+            errorObject = errorObject || value;
+            parts.push(value.stack || value.message || value.name);
+        } else if (typeof value === 'string') {
+            parts.push(value);
+        } else {
+            try { parts.push(JSON.stringify(value)); }
+            catch { parts.push(String(value)); }
+        }
+    }
+    const detail = parts.join(' ').slice(0, 1800) || 'Unknown error';
+    const name = errorObject?.name || (detail.match(/\b(TypeError|ReferenceError|SyntaxError|RangeError|Error|FetchError|AxiosError)\b/) || [])[0] || 'Error';
+    const message = errorObject?.message || detail.replace(/^.*?(?:Error|ERROR)[:\s-]*/i, '').slice(0, 500);
+    const stack = errorObject?.stack || detail;
+    const location = (stack.match(/(?:at .*?\()?((?:[A-Za-z]:)?[^\s()]+\.js:\d+:\d+)/) || [])[1] || 'লগে ফাইল/লাইন পাওয়া যায়নি';
+    return { name, message, stack, location, detail };
+}
+
+function explainError(info) {
+    const source = (info.name + ' ' + info.message + ' ' + info.detail).toLowerCase();
+    if (/syntaxerror|unexpected token|unexpected identifier|missing\)/.test(source)) return 'কোডের Syntax ভুল—কোথাও bracket, quote, comma বা JavaScript লেখার নিয়মে সমস্যা আছে।';
+    if (/referenceerror|is not defined/.test(source)) return 'কোনো variable/function ব্যবহার করা হয়েছে, কিন্তু সেটি declare বা import করা হয়নি।';
+    if (/typeerror|cannot read propert|undefined|null/.test(source)) return 'কোনো value null/undefined বা ভুল type হওয়ায় তার property/function ব্যবহার করা যাচ্ছে না।';
+    if (/enoent|no such file|not found/.test(source)) return 'প্রয়োজনীয় file বা folder পাওয়া যাচ্ছে না; path বা file name পরীক্ষা করতে হবে।';
+    if (/econnrefused|enotfound|etimedout|network|socket hang up|fetch failed/.test(source)) return 'API/server/network connection ব্যর্থ হয়েছে; URL, server status বা internet connection পরীক্ষা করতে হবে।';
+    if (/401|unauthorized|invalid api key|authentication/.test(source)) return 'API authentication ব্যর্থ—API key/token ভুল, expired বা অনুমতি নেই।';
+    if (/403|forbidden/.test(source)) return 'Server access অনুমতি দেয়নি; permission, token বা provider restriction পরীক্ষা করতে হবে।';
+    if (/enospc|no space left/.test(source)) return 'Hosting storage/temp space পূর্ণ হয়ে গেছে।';
+    if (/heap out of memory|out of memory|allocation failed/.test(source)) return 'বটের memory/RAM শেষ হয়ে গেছে।';
+    if (/rate.?limit|429|too many requests/.test(source)) return 'API rate limit অতিক্রম করেছে; কিছুক্ষণ অপেক্ষা বা request কমাতে হবে।';
+    if (/bad decrypt|invalid.*session|logged.?out/.test(source)) return 'WhatsApp session/authentication সমস্যা; session status ও pairing পরীক্ষা করতে হবে।';
+    return 'এই error-এর বিস্তারিত দেখে নির্দিষ্ট কারণ নির্ধারণ করতে হবে; নিচের message ও file/line দেখে সংশ্লিষ্ট অংশ পরীক্ষা করুন।';
+}
+
+async function notifyOwnerError(args, source = 'Console Error') {
+    const info = getErrorInfo(Array.isArray(args) ? args : [args]);
+    const fingerprint = (info.name + '|' + info.message + '|' + info.location).slice(0, 500);
+    const now = Date.now();
+    if (now - (ownerErrorNoticeTimes.get(fingerprint) || 0) < 3 * 60 * 1000) return false;
+    ownerErrorNoticeTimes.set(fingerprint, now);
+    if (!activeSocket?.user) return false;
+
+    const report = [
+        '🚨 *MAHIRU ERROR REPORT*',
+        '',
+        '🔴 Error Name: ' + info.name,
+        '📍 Source: ' + source,
+        '📂 File / Line: ' + info.location,
+        '🧾 Error: ' + info.message.slice(0, 700),
+        '💡 সম্ভাব্য সমস্যা: ' + explainError(info),
+        '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+    ].join('\\n');
+
+    try {
+        return await notifyOwner(activeSocket, report);
+    } catch (sendError) {
+        originalConsoleError('[ERROR REPORT] Could not notify owner:', sendError?.message || sendError);
+        return false;
+    }
+}
+
+// Capture errors written through console.error, including errors caught inside commands.
+console.error = (...args) => {
+    originalConsoleError(...args);
+    void notifyOwnerError(args, 'Console / Command Log');
+};
+
 const { Boom } = require('@hapi/boom')
 const fs = require('fs')
 const chalk = require('chalk')
@@ -46,8 +123,7 @@ const { join } = require('path')
 const store = require('./lib/lightweight_store')
 const { startDailyBackup } = require('./commands/backup');
 
-const settings = require('./settings')
-const { getOwnerInbox, notifyOwner } = require('./lib/ownerNotify');
+const { getOwnerInbox } = require('./lib/ownerNotify');
 
 // Memory optimization - Force garbage collection if available
 setInterval(() => {
@@ -458,7 +534,7 @@ async function startXeonBotInc() {
     return XeonBotInc
     } catch (error) {
         console.error('Error in startXeonBotInc:', error)
-        await notifyOwnerError(activeSocket, 'Startup / Reconnect Error', error?.stack || error?.message || error);
+        await notifyOwnerError([error], 'Startup / Reconnect Error');
         scheduleReconnect('bot startup failed')
     }
 }
@@ -478,12 +554,12 @@ persistentDataReady.then(() => {
 });
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err)
-    notifyOwnerError(activeSocket, 'Uncaught Exception', err?.stack || err?.message || err);
+    notifyOwnerError([err], 'Uncaught Exception');
 })
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err)
-    notifyOwnerError(activeSocket, 'Unhandled Promise Rejection', err?.stack || err?.message || err);
+    notifyOwnerError([err], 'Unhandled Promise Rejection');
 })
 
 let file = require.resolve(__filename)
