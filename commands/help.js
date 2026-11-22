@@ -157,6 +157,8 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .antitag <on/off>
 │ .welcome <on/off>
 │ .goodbye <on/off>
+│ .chatbot <on/off> (এই গ্রুপের AI)
+│ .gai / .iai <on/off>
 │ .tag <text> / .tagall
 │ .tagnotadmin / .hidetag <text>
 │ .clear / .delete
