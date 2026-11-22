@@ -8,6 +8,7 @@ const path = require('path');
 const zlib = require('zlib');
 const settings = require('../settings');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const { sendToBotInboxAndOwner, notifyOwner } = require('../lib/ownerNotify');
 
 const ROOT = path.resolve(__dirname, '..');
 const DATA_DIR = path.join(ROOT, 'data');
@@ -92,7 +93,7 @@ function createBackupBuffer() {
     return zlib.gzipSync(Buffer.from(JSON.stringify(payload)), { level: 6 });
 }
 
-async function sendBackup(sock, destination = ownerJid(), label = 'ম্যানুয়াল') {
+async function sendBackup(sock, destination = null, label = 'ম্যানুয়াল') {
     // Push the latest persistent data to Redis before producing the WhatsApp archive.
     try { await require('../lib/persistent_data').syncActiveToRedis(); }
     catch (error) { console.warn('[BACKUP] Redis sync warning:', error.message); }
@@ -101,15 +102,22 @@ async function sendBackup(sock, destination = ownerJid(), label = 'ম্যা�
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const fileName = 'Mahiru-Backup-' + stamp + '.json.gz';
     fs.writeFileSync(path.join(BACKUP_DIR, fileName), buffer);
-    await sock.sendMessage(destination, {
+    const backupDocument = {
         document: buffer,
         mimetype: 'application/gzip',
         fileName,
-        caption: 'Mahiru ' + label + ' ব্যাকআপ\nতৈরির সময়: ' +
+        caption: 'Mahiru ' + label + ' ব্যাকআপ\\nতৈরির সময়: ' +
             new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) +
-            '\nযা রয়েছে: ব্যবহারকারী, গ্রুপ, ইনবক্স ও বটের তথ্য'
-    });
-    return { fileName, size: buffer.length };
+            '\\nযা রয়েছে: ব্যবহারকারী, গ্রুপ, ইনবক্স ও বটের তথ্য'
+    };
+    let delivery;
+    if (destination) {
+        delivery = await sock.sendMessage(destination, backupDocument);
+    } else {
+        delivery = await sendToBotInboxAndOwner(sock, backupDocument);
+        if (!delivery.sent.length) throw new Error('Backup could not be delivered to either inbox.');
+    }
+    return { fileName, size: buffer.length, delivery };
 }
 
 function readDocument(message) {
@@ -220,7 +228,7 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
         }
         try {
             await sock.sendMessage(chatId, { text: 'ব্যাকআপ তৈরি হচ্ছে...' }, { quoted: message });
-            const result = await sendBackup(sock, ownerJid(), 'ম্যানুয়াল');
+            const result = await sendBackup(sock, null, 'ম্যানুয়াল');
             await sock.sendMessage(chatId, {
                 text: 'Backup Owner-এর WhatsApp-এ পাঠানো হয়েছে।\nFile: ' + result.fileName +
                     '\nSize: ' + (result.size / 1024 / 1024).toFixed(2) + ' MB'
@@ -266,11 +274,11 @@ function startDailyBackup(sock) {
         const delay = Math.max(1000, nextMidnight.valueOf() - Date.now());
         const timer = setTimeout(async () => {
             try {
-                const result = await sendBackup(activeSock, ownerJid(), 'দৈনিক');
+                const result = await sendBackup(activeSock, null, 'দৈনিক');
                 console.log('[BACKUP] Daily backup sent:', result.fileName);
             } catch (error) {
                 console.error('[BACKUP] Daily backup failed:', error.message);
-                try { await activeSock.sendMessage(ownerJid(), { text: 'Mahiru-র দৈনিক ব্যাকআপ ব্যর্থ হয়েছে: ' + error.message }); }
+                try { await notifyOwner(activeSock, 'Mahiru-র দৈনিক ব্যাকআপ ব্যর্থ হয়েছে: ' + error.message); }
                 catch (_) {}
             }
             scheduleNext();
