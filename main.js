@@ -1771,7 +1771,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                             ].join('\n'),
                             linkPreview: null
                         });
-                        if (notice?.key?.id && !groupAccess.isActive(id)) {
+                        if (notice?.key?.id) {
                             groupAccess.setPendingReply(notice.key.id, id);
                         }
                         console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
