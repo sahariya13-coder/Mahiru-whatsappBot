@@ -1206,7 +1206,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
 
             case userMessage.startsWith('.play') || userMessage.startsWith('.mp3') || userMessage.startsWith('.ytmp3') || userMessage.startsWith('.song'):
-                await songCommand(sock, chatId, message);
+                await songCommand(sock, chatId, message, rawText);
                 break;
 
             case userMessage.startsWith('.video') || userMessage.startsWith('.ytmp4'):
