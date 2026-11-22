@@ -40,6 +40,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const { isSudo } = require('./lib/index');
 const isOwnerOrSudo = require('./lib/isOwner');
 const groupAccess = require('./lib/groupAccess');
+const { setGroupFeature, FEATURES: REMOTE_GROUP_FEATURES } = require('./lib/groupFeatureControl');
 const { autotypingCommand, isAutotypingEnabled, handleAutotypingForMessage, handleAutotypingForCommand, showTypingAfterCommand } = require('./commands/autotyping');
 const { autoreadCommand, isAutoreadEnabled, handleAutoread } = require('./commands/autoread');
 
@@ -415,6 +416,60 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case !isGroup && /^\\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye|gset)\\s+/i.test(rawText || ''): {
+                const configuredOwner = message.key.fromMe ||
+                    await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!configuredOwner) {
+                    await sock.sendMessage(chatId, { text: '❌ শুধু Bot Owner Inbox থেকে অন্য গ্রুপের সেটিংস পরিবর্তন করতে পারবেন।' }, { quoted: message });
+                    break;
+                }
+
+                const parts = String(rawText || '').trim().split(/\\s+/);
+                let featureName = parts[0].slice(1).toLowerCase();
+                let targetId = '';
+                let action = '';
+
+                if (featureName === 'gset') {
+                    targetId = parts[1] || '';
+                    featureName = parts[2] || '';
+                    action = (parts[3] || '').toLowerCase();
+                } else {
+                    targetId = parts[1] || '';
+                    action = (parts[2] || '').toLowerCase();
+                }
+
+                if (!targetId.endsWith('@g.us') || !['on', 'off'].includes(action) || !REMOTE_GROUP_FEATURES[featureName]) {
+                    await sock.sendMessage(chatId, {
+                        text: 'ব্যবহার:\n.chatbot <Group ID> on/off\n.antilink <Group ID> on/off\n.antitag <Group ID> on/off\n.antibadword <Group ID> on/off\n.welcome <Group ID> on/off\n.goodbye <Group ID> on/off\n\nঅথবা: .gset <Group ID> <feature> <on/off>'
+                    }, { quoted: message });
+                    break;
+                }
+
+                try {
+                    const result = setGroupFeature(targetId, featureName, action === 'on');
+                    if (!result.ok) {
+                        await sock.sendMessage(chatId, { text: '❌ এই Feature remote ON/OFF সমর্থন করে না।' }, { quoted: message });
+                        break;
+                    }
+                    const featureLabels = {
+                        chatbot: 'Chatbot',
+                        gai: 'Chatbot',
+                        iai: 'Chatbot',
+                        antilink: 'AntiLink',
+                        antitag: 'AntiTag',
+                        antibadword: 'AntiBadword',
+                        welcome: 'Welcome',
+                        goodbye: 'Goodbye'
+                    };
+                    await sock.sendMessage(chatId, {
+                        text: `✅ *Remote Group Setting Updated*\\n\\n📛 Feature: ${featureLabels[featureName] || featureName}\\n🆔 Group ID: ${targetId}\\n📌 Status: ${action.toUpperCase()}`
+                    }, { quoted: message });
+                } catch (error) {
+                    console.error('[REMOTE GROUP SETTING] Update failed:', error);
+                    await sock.sendMessage(chatId, { text: '❌ সেটিংস পরিবর্তন করা যায়নি: ' + error.message }, { quoted: message });
+                }
+                break;
+            }
             case userMessage === '.human' || userMessage.startsWith('.human '): {
                 const humanAction = rawText.trim().split(' ').slice(1).join(' ');
                 await handleHumanCommand(
