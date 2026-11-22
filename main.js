@@ -1787,10 +1787,10 @@ async function handleGroupParticipantUpdate(sock, update) {
                     console.error('[GROUP ACCESS] Could not read removed group name:', metadataError?.message || metadataError);
                 }
                 await notifyOwner(sock,
-                    '🚪 *MAHIRU BOT GROUP থেকে REMOVE হয়েছে*\\n\\n' +
-                    '📛 Group: ' + groupName + '\\n' +
-                    '🆔 Group ID: ' + id + '\\n' +
-                    '👤 যিনি Remove করেছেন: ' + (author || 'Unknown') + '\\n' +
+                    '🚪 *MAHIRU BOT GROUP থেকে REMOVE হয়েছে*\n\n' +
+                    '📛 Group: ' + groupName + '\n' +
+                    '🆔 Group ID: ' + id + '\n' +
+                    '👤 যিনি Remove করেছেন: ' + (author || 'Unknown') + '\n' +
                     '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
                 );
             }
