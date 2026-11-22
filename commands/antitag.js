@@ -140,12 +140,12 @@ async function handleTagDetection(sock, chatId, message, senderId) {
                     const metadata = await sock.groupMetadata(chatId);
                     const groupName = metadata?.subject || chatId;
                     await notifyOwner(sock,
-                        '*🔰 ANTITAG REPORT 🔰*\\n\\n' +
-                        '*👤 Tagall করেছেন:* @' + senderId.split('@')[0] + '\\n' +
-                        '*👥 গ্রুপ:* ' + groupName + '\\n' +
-                        '*⚙️ Action:* ' + (antitagSetting.action || 'delete') + '\\n' +
-                        '*🕒 সময়:* ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) + '\\n\\n' +
-                        '*📝 Message:*\\n' + messageText,
+                        '*🔰 ANTITAG REPORT 🔰*\n\n' +
+                        '*👤 Tagall করেছেন:* @' + senderId.split('@')[0] + '\n' +
+                        '*👥 গ্রুপ:* ' + groupName + '\n' +
+                        '*⚙️ Action:* ' + (antitagSetting.action || 'delete') + '\n' +
+                        '*🕒 সময়:* ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) + '\n\n' +
+                        '*📝 Message:*\n' + messageText,
                         { mentions: [senderId] }
                     );
                 } catch (noticeError) {
