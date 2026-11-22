@@ -375,7 +375,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let isSenderAdmin = false;
         let isBotAdmin = false;
 
-        if (isGroup && isAdminCommand) {
+        if (isGroup && isAdminCommand && !isLocalGroupFeatureCommand) {
             const adminStatus = await isAdmin(sock, chatId, senderId);
             isSenderAdmin = adminStatus.isSenderAdmin;
             isBotAdmin = adminStatus.isBotAdmin;
