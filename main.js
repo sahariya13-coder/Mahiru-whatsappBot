@@ -281,7 +281,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         // Unactivated groups can only inspect their ID and request activation.
         if (isGroup && !groupAccess.isActive(chatId) &&
-            !/^\.(gid|gact|gdeact|uid)(?:\s|$)/i.test(rawText || '')) {
+            !/^\.(gid|gact|gdeact|gdelete|uid)(?:\s|$)/i.test(rawText || '')) {
             await sock.sendMessage(chatId, {
                 text: `এই গ্রুপে Mahiru এখনো Active করা হয়নি।\nBot Owner-এর কাছে Group ID পাঠিয়ে Active করিয়ে নিন।\n\nOwner: ${settings.ownerUsername ? 'https://wa.me//' + settings.ownerUsername.replace(/^@/, '') : (settings.botOwner || 'Bot Owner')}\nGroup ID: ${chatId}`,
                 linkPreview: null
@@ -366,7 +366,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact'];
+        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -438,7 +438,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
 
-            case userMessage.startsWith('.gact') || userMessage.startsWith('.gdeact'): {
+            case userMessage.startsWith('.gact') || userMessage.startsWith('.gdeact') || userMessage.startsWith('.gdelete'): {
                 if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, { text: 'শুধু Bot Owner এই কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
                     break;
@@ -446,12 +446,25 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const parts = rawText.trim().split(/\s+/);
                 const targetId = parts[1] || (isGroup ? chatId : '');
                 if (!targetId || !targetId.endsWith('@g.us')) {
-                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .gact <Group ID> অথবা .gdeact <Group ID>' }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার: .gact <Group ID> / .gdeact <Group ID> / .gdelete <Group ID>' }, { quoted: message });
                     break;
                 }
+
+                if (userMessage.startsWith('.gdelete')) {
+                    groupAccess.setActive(targetId, false);
+                    try {
+                        await sock.sendMessage(chatId, { text: `🗑️ Group থেকে Mahiru-কে Leave করানো হচ্ছে।\nGroup ID: ${targetId}` }, { quoted: message });
+                        await sock.groupLeave(targetId);
+                    } catch (leaveError) {
+                        console.error('[GROUP ACCESS] Could not leave group:', targetId, leaveError?.message || leaveError);
+                        await sock.sendMessage(chatId, { text: `❌ গ্রুপ থেকে Leave করা যায়নি। বটের group connection পরীক্ষা করুন।\n${targetId}` });
+                    }
+                    break;
+                }
+
                 const activate = userMessage.startsWith('.gact');
                 groupAccess.setActive(targetId, activate);
-                await sock.sendMessage(chatId, { text: activate ? `✅ Group Active করা হয়েছে।\n${targetId}` : `❌ Group Deactivate করা হয়েছে।\n${targetId}` }, { quoted: message });
+                await sock.sendMessage(chatId, { text: activate ? `✅ Group Active করা হয়েছে।\n${targetId}` : `⏸️ Group Deactivate করা হয়েছে।\n${targetId}` }, { quoted: message });
                 break;
             }
 
@@ -1584,6 +1597,49 @@ async function handleGroupParticipantUpdate(sock, update) {
         const { id, participants, action, author } = update;
 
         if (!id.endsWith('@g.us')) return;
+
+        // Notify the configured owner when the bot account itself is added to a group.
+        if (action === 'add') {
+            const normalizeJid = value => typeof value === 'string'
+                ? value.replace(/:\\d+@/, '@').trim()
+                : '';
+            const botJids = new Set([
+                sock.user?.id,
+                sock.user?.lid,
+                sock.decodeJid?.(sock.user?.id),
+                sock.decodeJid?.(sock.user?.lid)
+            ].map(normalizeJid).filter(Boolean));
+            const botWasAdded = (participants || []).some(participant =>
+                botJids.has(normalizeJid(participant))
+            );
+
+            if (botWasAdded) {
+                const ownerJid = settings.ownerNumber
+                    ? settings.ownerNumber.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
+                    : settings.ownerLid;
+                if (ownerJid) {
+                    let groupName = 'Unknown group';
+                    try {
+                        const metadata = await sock.groupMetadata(id);
+                        groupName = metadata?.subject || groupName;
+                    } catch (metadataError) {
+                        console.error('[GROUP ACCESS] Could not read new group name:', metadataError?.message || metadataError);
+                    }
+
+                    try {
+                        await sock.sendMessage(ownerJid, {
+                            text: `🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*\n\n📛 Group: ${groupName}\n🆔 Group ID: ${id}\n📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}\n\n✅ চালু করতে: `.gact ${id}\n🗑️ বটকে গ্রুপ থেকে সরাতে: `.gdelete ${id}\n⏸️ শুধু বন্ধ রাখতে: `.gdeact ${id}`,
+                            linkPreview: null
+                        });
+                        console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
+                    } catch (notifyError) {
+                        console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
+                    }
+                } else {
+                    console.error('[GROUP ACCESS] Owner number/LID is not configured; cannot send new-group notification.');
+                }
+            }
+        }
 
         let isPublic = true;
         try {
