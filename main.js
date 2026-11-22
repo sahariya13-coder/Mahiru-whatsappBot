@@ -360,7 +360,9 @@ async function handleMessages(sock, messageUpdate, printLog) {
         }
 
         // Private mode access restriction
-        if (!isPublic && !isOwnerOrSudoCheck) {
+        const isLocalGroupFeatureCommand = isGroup &&
+            /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye)\s+(?:on|off)\s*$/i.test(rawText || '');
+        if (!isPublic && !isOwnerOrSudoCheck && !isLocalGroupFeatureCommand) {
             return;
         }
 
