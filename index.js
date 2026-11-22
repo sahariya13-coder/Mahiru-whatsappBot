@@ -47,6 +47,7 @@ const store = require('./lib/lightweight_store')
 const { startDailyBackup } = require('./commands/backup');
 
 const settings = require('./settings')
+const { getOwnerInbox, notifyOwner } = require('./lib/ownerNotify');
 
 // Memory optimization - Force garbage collection if available
 setInterval(() => {
@@ -279,13 +280,9 @@ async function startXeonBotInc() {
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
             try {
-                const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
-                await XeonBotInc.sendMessage(botNumber, {
-                    text: `🤖 Bot Connected Successfully!\n\n⏰ Time: ${new Date().toLocaleString()}\n✅ Status: Online and Ready!`,
-                    contextInfo: {
-                        forwardingScore: 1,
-                        isForwarded: true,}
-                });
+                await notifyOwner(XeonBotInc,
+                    `🤖 *MAHIRU BOT CONNECTED*\n\n⏰ Time: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}\n✅ Status: Online and Ready!`
+                );
             } catch (error) {
                 console.error('Error sending connection message:', error.message)
             }
@@ -326,6 +323,14 @@ async function startXeonBotInc() {
                 }
                 console.log(chalk.red('[SESSION] WhatsApp logged this device out. The old session was archived; pair again on the next start.'))
             }
+
+            await notifyOwner(XeonBotInc,
+                '⚠️ *MAHIRU BOT DISCONNECTED*\n\n' +
+                '📌 কারণ: ' + (disconnectError?.message || 'Unknown') + '\n' +
+                '🔢 Status Code: ' + (statusCode ?? 'unknown') + '\n' +
+                '🔄 Reconnect: ' + (shouldReconnect ? 'চেষ্টা করা হবে' : 'Session expired / পুনরায় pair প্রয়োজন') + '\n' +
+                '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+            ).catch(error => console.error('[OWNER NOTICE] Disconnect notice failed:', error?.message || error));
 
             if (shouldReconnect) {
                 scheduleReconnect('WhatsApp connection closed')
