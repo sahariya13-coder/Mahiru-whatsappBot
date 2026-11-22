@@ -26,6 +26,7 @@ setInterval(() => {
 }, 3 * 60 * 60 * 1000);
 
 const settings = require('./settings');
+const { notifyOwner } = require('./lib/ownerNotify');
 const lightweightStore = require('./lib/lightweight_store');
 require('./config.js');
 const { isBanned } = require('./lib/isBanned');
@@ -1759,6 +1760,41 @@ async function handleGroupParticipantUpdate(sock, update) {
             }
         }
 
+        // Notify the owner if the bot itself is removed from a group.
+        if (action === 'remove') {
+            const normalizeJid = value => typeof value === 'string'
+                ? value.replace(/:\\d+@/, '@').trim()
+                : '';
+            const botJids = new Set([
+                sock.user?.id,
+                sock.user?.lid,
+                sock.decodeJid?.(sock.user?.id),
+                sock.decodeJid?.(sock.user?.lid)
+            ].map(normalizeJid).filter(Boolean));
+            const botWasRemoved = (participants || []).some(participant => {
+                const ids = typeof participant === 'string'
+                    ? [participant]
+                    : [participant?.id, participant?.jid, participant?.lid, participant?.phoneNumber];
+                return ids.some(value => botJids.has(normalizeJid(value)));
+            });
+
+            if (botWasRemoved) {
+                let groupName = 'Unknown group';
+                try {
+                    const metadata = await sock.groupMetadata(id);
+                    groupName = metadata?.subject || groupName;
+                } catch (metadataError) {
+                    console.error('[GROUP ACCESS] Could not read removed group name:', metadataError?.message || metadataError);
+                }
+                await notifyOwner(sock,
+                    '🚪 *MAHIRU BOT GROUP থেকে REMOVE হয়েছে*\\n\\n' +
+                    '📛 Group: ' + groupName + '\\n' +
+                    '🆔 Group ID: ' + id + '\\n' +
+                    '👤 যিনি Remove করেছেন: ' + (author || 'Unknown') + '\\n' +
+                    '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+                );
+            }
+        }
         let isPublic = true;
         try {
             const modeData = JSON.parse(fs.readFileSync('./data/messageCount.json'));
