@@ -1,7 +1,7 @@
 const yts = require('yt-search');
 const settings = require('../settings');
 const APIs = require('../lib/api');
-const youtubeApi = require('../lib/xrahatYoutube');
+const youtubeApi = require('../lib/mahiruYoutube');
 const { fetchWhatsAppVideo } = require('../lib/waVideo');
 
 function isYouTubeUrl(text) {
