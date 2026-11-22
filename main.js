@@ -156,6 +156,36 @@ global.ytch = "MSK";
 // Channel promotion metadata removed.
 const channelInfo = {};
 
+function convertSpokenCommandToBotCommand(text) {
+    const value = String(text || '').toLowerCase()
+        .replace(/[।!?.,]/g, ' ')
+        .replace(/\\s+/g, ' ')
+        .trim()
+        .replace(/^(mahiru|মাহিরু)\\s+/, '');
+
+    const commands = [
+        { phrases: ['মেনু দেখাও', 'মেনু দাও', 'কমান্ড দেখাও', 'help দেখাও', 'menu দেখাও'], command: '.menu' },
+        { phrases: ['পিং করো', 'পিং দাও', 'ping করো', 'ping দাও'], command: '.ping' },
+        { phrases: ['বটের অবস্থা দেখাও', 'বটের স্ট্যাটাস দেখাও', 'বট স্ট্যাটাস', 'বট কেমন চলছে', 'alive দেখাও'], command: '.alive' },
+        { phrases: ['ওনার কে', 'বটের মালিক কে', 'মালিকের তথ্য দেখাও', 'owner দেখাও'], command: '.owner' },
+        { phrases: ['গ্রুপের তথ্য দেখাও', 'গ্রুপ ইনফো দেখাও', 'group info দেখাও'], command: '.groupinfo' },
+        { phrases: ['সবাইকে মেনশন করো', 'সবাইকে ট্যাগ করো', 'tag all করো'], command: '.tagall' },
+        { phrases: ['অ্যান্টি লিংক চালু করো', 'anti link চালু করো'], command: '.antilink on' },
+        { phrases: ['অ্যান্টি লিংক বন্ধ করো', 'anti link বন্ধ করো'], command: '.antilink off' },
+        { phrases: ['অটো রিড চালু করো', 'autoread চালু করো'], command: '.autoread on' },
+        { phrases: ['অটো রিড বন্ধ করো', 'autoread বন্ধ করো'], command: '.autoread off' },
+        { phrases: ['অটো টাইপিং চালু করো', 'autotyping চালু করো'], command: '.autotyping on' },
+        { phrases: ['অটো টাইপিং বন্ধ করো', 'autotyping বন্ধ করো'], command: '.autotyping off' }
+    ];
+
+    for (const item of commands) {
+        if (item.phrases.some(phrase => value === phrase || value.startsWith(phrase + ' '))) {
+            return item.command;
+        }
+    }
+    return null;
+}
+
 async function handleMessages(sock, messageUpdate, printLog) {
     let chatId = null;
 
@@ -237,6 +267,12 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 rawText = transcript;
                 userMessage = transcript.toLowerCase().replace(/\.\s+/g, '.').trim();
                 console.log('🎙️ Voice transcribed:', transcript.slice(0, 160));
+                const spokenCommand = convertSpokenCommandToBotCommand(transcript);
+                if (spokenCommand) {
+                    rawText = spokenCommand;
+                    userMessage = spokenCommand.toLowerCase();
+                    console.log('🎙️ Spoken command recognized:', spokenCommand);
+                }
             } catch (voiceError) {
                 console.error('Voice transcription failed:', voiceError.message);
                 await sock.sendMessage(chatId, {
