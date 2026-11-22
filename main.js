@@ -26,7 +26,7 @@ setInterval(() => {
 }, 3 * 60 * 60 * 1000);
 
 const settings = require('./settings');
-const { notifyOwner } = require('./lib/ownerNotify');
+const { notifyOwner, sendToBotInboxAndOwner } = require('./lib/ownerNotify');
 const lightweightStore = require('./lib/lightweight_store');
 require('./config.js');
 const { isBanned } = require('./lib/isBanned');
@@ -1736,7 +1736,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                     }
 
                     try {
-                        await sock.sendMessage(ownerJid, {
+                        await sendToBotInboxAndOwner(sock, {
                             text: [
                                 '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
                                 '',
