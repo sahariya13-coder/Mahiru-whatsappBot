@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const isOwnerOrSudo = require('../lib/isOwner');
+const { getOwnerInbox } = require('../lib/ownerNotify');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const CONFIG_PATH = path.join(DATA_DIR, 'antidelete.json');
@@ -238,7 +239,8 @@ async function handleMessageRevocation(sock, revocationMessage) {
             revocationMessage.key?.remoteJid ||
             'অজানা';
 
-        const botJid = (sock.user?.id || '').split(':')[0].split('@')[0] + '@s.whatsapp.net';
+        const botJid = getOwnerInbox(sock);
+        if (!botJid) return;
         if (revocationMessage.key?.fromMe || deletedBy === botJid) return;
 
         const storeKey = messageKey(originalKey.remoteJid, originalKey.id);
