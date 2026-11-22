@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const isOwnerOrSudo = require('../lib/isOwner');
-const { getOwnerInbox } = require('../lib/ownerNotify');
+const { getBotInbox, sendToBotInboxAndOwner } = require('../lib/ownerNotify');
 
 const DATA_DIR = path.join(__dirname, '../data');
 const CONFIG_PATH = path.join(DATA_DIR, 'antidelete.json');
@@ -239,7 +239,7 @@ async function handleMessageRevocation(sock, revocationMessage) {
             revocationMessage.key?.remoteJid ||
             'অজানা';
 
-        const botJid = getOwnerInbox(sock);
+        const botJid = getBotInbox(sock);
         if (!botJid) return;
         if (revocationMessage.key?.fromMe || deletedBy === botJid) return;
 
@@ -288,29 +288,30 @@ async function handleMessageRevocation(sock, revocationMessage) {
         if (groupName) report += '*👥 গ্রুপ:* ' + groupName + '\n';
         if (original.content) report += '\n*💬 Deleted Message:*\n' + original.content;
 
-        await sock.sendMessage(botJid, {
+        // Mirror the same report to the bot's own inbox and the owner's personal inbox.
+        await sendToBotInboxAndOwner(sock, {
             text: report,
             mentions: [deletedBy, sender]
         });
 
         if (original.mediaType && original.mediaPath && fs.existsSync(original.mediaPath)) {
-            const caption = '*Deleted ' + original.mediaType + '*\nFrom: @' + senderNumber;
+            const caption = '*Deleted ' + original.mediaType + '*\\nFrom: @' + senderNumber;
             try {
                 if (original.mediaType === 'image') {
-                    await sock.sendMessage(botJid, { image: { url: original.mediaPath }, caption, mentions: [sender] });
+                    await sendToBotInboxAndOwner(sock, { image: { url: original.mediaPath }, caption, mentions: [sender] });
                 } else if (original.mediaType === 'video') {
-                    await sock.sendMessage(botJid, { video: { url: original.mediaPath }, caption, mentions: [sender] });
+                    await sendToBotInboxAndOwner(sock, { video: { url: original.mediaPath }, caption, mentions: [sender] });
                 } else if (original.mediaType === 'audio') {
-                    await sock.sendMessage(botJid, {
+                    await sendToBotInboxAndOwner(sock, {
                         audio: { url: original.mediaPath },
                         mimetype: original.mediaPath.endsWith('.ogg') ? 'audio/ogg; codecs=opus' : 'audio/mpeg',
                         ptt: false
                     });
                 } else if (original.mediaType === 'sticker') {
-                    await sock.sendMessage(botJid, { sticker: { url: original.mediaPath } });
+                    await sendToBotInboxAndOwner(sock, { sticker: { url: original.mediaPath } });
                 }
             } catch (error) {
-                await sock.sendMessage(botJid, { text: '⚠️ ডিলিট হওয়া মিডিয়া পাঠাতে সমস্যা: ' + error.message });
+                await sendToBotInboxAndOwner(sock, { text: '⚠️ ডিলিট হওয়া মিডিয়া পাঠাতে সমস্যা: ' + error.message });
             }
         }
 
