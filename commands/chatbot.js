@@ -683,8 +683,8 @@ async function handleChatbotResponse(
         await sleep(getRandomDelay());
 
         // Voice input gets a voice-only reply. Text can explicitly request voice/text output.
-        const asksForVoice = /(?:ভয়েস|ভয়েস|অডিও|voice|audio)(?:\s*(?:এ|e|এতে|তে|এ\s*করে))?.{0,24}(?:বলো|বল|দাও|দেবে|পাঠাও|reply|রিপ্লাই|say|send)|(?:বলো|বল|দাও|পাঠাও|reply|রিপ্লাই|say|send).{0,24}(?:ভয়েস|ভয়েস|অডিও|voice|audio)/i.test(cleanedMessage);
-        const asksForText = /(?:টেক্সট|লেখা|text|written)(?:\s*(?:এ|e|এতে|তে))?.{0,24}(?:বলো|দাও|পাঠাও|reply|রিপ্লাই|লিখে|লেখো|send)|(?:বলো|দাও|পাঠাও|reply|রিপ্লাই|লিখে|লেখো|send).{0,24}(?:টেক্সট|লেখা|text|written)/i.test(cleanedMessage);
+        const asksForVoice = /(?:ভয়েসে|ভয়েসে|ভয়েস|ভয়েস|অডিওতে|অডিও|voice\\s*(?:e|এ)?|audio\\s*(?:তে|e)?).{0,40}(?:বলো|বল|দাও|দেবে|পাঠাও|রিপ্লাই|reply|say|send|উত্তর)|(?:বলো|বল|দাও|পাঠাও|রিপ্লাই|reply|say|send|উত্তর).{0,40}(?:ভয়েসে|ভয়েসে|ভয়েস|ভয়েস|অডিওতে|অডিও|voice|audio)/i.test(cleanedMessage);
+        const asksForText = /(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written).{0,40}(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর)|(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর).{0,40}(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written)/i.test(cleanedMessage);
         const responseMode = asksForText
             ? 'text'
             : (asksForVoice ? 'voice' : inputResponseMode);
