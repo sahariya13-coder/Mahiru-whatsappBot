@@ -1,6 +1,6 @@
 const yts = require('yt-search');
 const api = require('../lib/api');
-const youtubeApi = require('../lib/xrahatYoutube');
+const youtubeApi = require('../lib/mahiruYoutube');
 
 const songBusyChats = new Set();
 
