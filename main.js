@@ -309,7 +309,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 unwrappedMessage?.videoMessage?.contextInfo || {};
             const mentionedJids = Array.isArray(contextInfo.mentionedJid) ? contextInfo.mentionedJid : [];
             const normalizeMentionJid = value => typeof value === 'string'
-                ? value.replace(/:\\d+@/, '@').trim()
+                ? value.replace(/:\d+@/, '@').trim()
                 : '';
             const botMentionIds = [
                 sock.user?.id,
@@ -318,7 +318,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 sock.decodeJid?.(sock.user?.lid)
             ].map(normalizeMentionJid).filter(Boolean);
             const isBotMentioned = mentionedJids.some(jid => botMentionIds.includes(normalizeMentionJid(jid)));
-            const isCommand = /^\\./.test(userMessage);
+            const isCommand = /^\./.test(userMessage);
 
             if (isCommand || isBotMentioned) {
                 await sock.sendMessage(chatId, {
