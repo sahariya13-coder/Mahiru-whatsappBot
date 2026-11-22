@@ -302,13 +302,30 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         const isOwnerOrSudoCheck = message.key.fromMe || senderIsOwnerOrSudo;
 
-        // Unactivated groups can only inspect their ID and request activation.
-        if (isGroup && !groupAccess.isActive(chatId) &&
-            !/^\.(gid|gact|gdeact|gdelete|uid)(?:\s|$)/i.test(rawText || '')) {
-            await sock.sendMessage(chatId, {
-                text: `এই গ্রুপে Mahiru এখনো Active করা হয়নি।\nBot Owner-এর কাছে Group ID পাঠিয়ে Active করিয়ে নিন।\n\nOwner: ${settings.ownerUsername ? 'https://wa.me//' + settings.ownerUsername.replace(/^@/, '') : (settings.botOwner || 'Bot Owner')}\nGroup ID: ${chatId}`,
-                linkPreview: null
-            }, { quoted: message });
+        // Inactive groups stay silent until a command or a direct bot mention is received.
+        if (isGroup && !groupAccess.isActive(chatId)) {
+            const contextInfo = unwrappedMessage?.extendedTextMessage?.contextInfo ||
+                unwrappedMessage?.imageMessage?.contextInfo ||
+                unwrappedMessage?.videoMessage?.contextInfo || {};
+            const mentionedJids = Array.isArray(contextInfo.mentionedJid) ? contextInfo.mentionedJid : [];
+            const normalizeMentionJid = value => typeof value === 'string'
+                ? value.replace(/:\\d+@/, '@').trim()
+                : '';
+            const botMentionIds = [
+                sock.user?.id,
+                sock.user?.lid,
+                sock.decodeJid?.(sock.user?.id),
+                sock.decodeJid?.(sock.user?.lid)
+            ].map(normalizeMentionJid).filter(Boolean);
+            const isBotMentioned = mentionedJids.some(jid => botMentionIds.includes(normalizeMentionJid(jid)));
+            const isCommand = /^\\./.test(userMessage);
+
+            if (isCommand || isBotMentioned) {
+                await sock.sendMessage(chatId, {
+                    text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}`,
+                    linkPreview: null
+                }, { quoted: message });
+            }
             return;
         }
 
@@ -1743,7 +1760,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                 botJids.has(normalizeJid(participant))
             );
 
-            if (botWasAdded) {
+            if (botWasAdded && !groupAccess.hasNoticeSent(id)) {
                 const ownerJid = getOwnerInbox(sock);
                 if (ownerJid) {
                     let groupName = 'Unknown group';
@@ -1774,6 +1791,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                         if (notice?.key?.id) {
                             groupAccess.setPendingReply(notice.key.id, id);
                         }
+                        groupAccess.markNoticeSent(id);
                         console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
                     } catch (notifyError) {
                         console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
