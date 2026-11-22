@@ -51,7 +51,8 @@ async function notifyOwnerError(args, source = 'Console Error') {
     const info = getErrorInfo(Array.isArray(args) ? args : [args]);
     const fingerprint = (info.name + '|' + info.message + '|' + info.location).slice(0, 500);
     const now = Date.now();
-    if (now - (ownerErrorNoticeTimes.get(fingerprint) || 0) < 3 * 60 * 1000) return false;
+    // একই error সর্বোচ্চ প্রতি ৪ ঘণ্টায় একবার Owner-কে পাঠানো হবে।
+    if (now - (ownerErrorNoticeTimes.get(fingerprint) || 0) < 4 * 60 * 60 * 1000) return false;
     ownerErrorNoticeTimes.set(fingerprint, now);
     if (!activeSocket?.user) return false;
 
