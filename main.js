@@ -1760,44 +1760,67 @@ async function handleGroupParticipantUpdate(sock, update) {
                 botJids.has(normalizeJid(participant))
             );
 
-            if (botWasAdded && !groupAccess.hasNoticeSent(id)) {
-                const ownerJid = getOwnerInbox(sock);
-                if (ownerJid) {
-                    let groupName = 'Unknown group';
-                    try {
-                        const metadata = await sock.groupMetadata(id);
-                        groupName = metadata?.subject || groupName;
-                    } catch (metadataError) {
-                        console.error('[GROUP ACCESS] Could not read new group name:', metadataError?.message || metadataError);
-                    }
+            if (botWasAdded) {
+                let groupName = 'Unknown group';
+                try {
+                    const metadata = await sock.groupMetadata(id);
+                    groupName = metadata?.subject || groupName;
+                } catch (metadataError) {
+                    console.error('[GROUP ACCESS] Could not read new group name:', metadataError?.message || metadataError);
+                }
 
+                // Send the activation notice in the group only once.
+                if (!groupAccess.hasGroupNoticeSent(id)) {
                     try {
-                        const notice = await sock.sendMessage(ownerJid, {
+                        await sock.sendMessage(id, {
                             text: [
-                                '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
+                                '⏸️ *Mahiru এখনো এই গ্রুপে Active নয়*',
+                                '',
+                                'বট ব্যবহার করতে হলে Owner-কে এই গ্রুপটি Active করতে হবে।',
+                                'কেউ বটকে Mention করলে বা কোনো Command দিলে Activation নির্দেশনা আবার দেখানো হবে।',
                                 '',
                                 `📛 Group: ${groupName}`,
-                                `🆔 Group ID: ${id}`,
-                                `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
-                                '',
-                                '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
-                                '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
-                                '',
-                                `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
-                                `🗑️ বটকে সরাতে: .gdelete ${id}`
+                                `🆔 Group ID: ${id}`
                             ].join('\n'),
                             linkPreview: null
                         });
-                        if (notice?.key?.id) {
-                            groupAccess.setPendingReply(notice.key.id, id);
-                        }
-                        groupAccess.markNoticeSent(id);
-                        console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
-                    } catch (notifyError) {
-                        console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
+                        groupAccess.markGroupNoticeSent(id);
+                        console.log('[GROUP ACCESS] Initial activation notice sent in group:', id);
+                    } catch (groupNoticeError) {
+                        console.error('[GROUP ACCESS] Could not send initial group notice:', groupNoticeError?.message || groupNoticeError);
                     }
-                } else {
-                    console.error('[GROUP ACCESS] Owner number/LID is not configured; cannot send new-group notification.');
+                }
+
+                // Notify the configured owner only once, separately from the group notice.
+                if (!groupAccess.hasNoticeSent(id)) {
+                    const ownerJid = getOwnerInbox(sock);
+                    if (ownerJid) {
+                        try {
+                            const notice = await sock.sendMessage(ownerJid, {
+                                text: [
+                                    '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
+                                    '',
+                                    `📛 Group: ${groupName}`,
+                                    `🆔 Group ID: ${id}`,
+                                    `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                    '',
+                                    '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
+                                    '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
+                                    '',
+                                    `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
+                                    `🗑️ বটকে সরাতে: .gdelete ${id}`
+                                ].join('\n'),
+                                linkPreview: null
+                            });
+                            if (notice?.key?.id) groupAccess.setPendingReply(notice.key.id, id);
+                            groupAccess.markNoticeSent(id);
+                            console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
+                        } catch (notifyError) {
+                            console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
+                        }
+                    } else {
+                        console.error('[GROUP ACCESS] Owner number/LID is not configured; cannot send new-group notification.');
+                    }
                 }
             }
         }
