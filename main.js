@@ -26,7 +26,7 @@ setInterval(() => {
 }, 3 * 60 * 60 * 1000);
 
 const settings = require('./settings');
-const { notifyOwner, sendToBotInboxAndOwner } = require('./lib/ownerNotify');
+const { notifyOwner, sendToBotInboxAndOwner, getOwnerInbox } = require('./lib/ownerNotify');
 const lightweightStore = require('./lib/lightweight_store');
 require('./config.js');
 const { isBanned } = require('./lib/isBanned');
@@ -226,6 +226,27 @@ async function handleMessages(sock, messageUpdate, printLog) {
             unwrappedMessage?.videoMessage?.caption?.trim() ||
             unwrappedMessage?.documentMessage?.caption?.trim() ||
             '';
+
+        // Owner can activate/deactivate a group by replying to that group's add-notice.
+        if (!isGroup && /^(active|activate|deactivate|inactive|অ্যাক্টিভ|ডিঅ্যাক্টিভ)$/i.test(rawText.trim())) {
+            const replyContext = unwrappedMessage?.extendedTextMessage?.contextInfo || {};
+            const quotedNoticeId = replyContext.stanzaId || '';
+            if (quotedNoticeId) {
+                const configuredOwner = await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const pendingGroupId = groupAccess.getPendingReply(quotedNoticeId);
+                if (configuredOwner && pendingGroupId) {
+                    const action = /^(deactivate|inactive|ডিঅ্যাক্টিভ)$/i.test(rawText.trim()) ? 'deactivate' : 'activate';
+                    groupAccess.setActive(pendingGroupId, action === 'activate');
+                    groupAccess.clearPendingReply(quotedNoticeId);
+                    await sock.sendMessage(chatId, {
+                        text: action === 'activate'
+                            ? '✅ *Group Active করা হয়েছে!*\n\n🆔 Group ID: ' + pendingGroupId
+                            : '⏸️ *Group Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + pendingGroupId
+                    }, { quoted: message });
+                    return;
+                }
+            }
+        }
 
         // Owner-only backup and restore flow (also intercepts the requested backup document).
         if (await handleBackupMessage(sock, message, chatId, senderId, rawText)) return;
@@ -1723,9 +1744,7 @@ async function handleGroupParticipantUpdate(sock, update) {
             );
 
             if (botWasAdded) {
-                const ownerJid = settings.ownerNumber
-                    ? settings.ownerNumber.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
-                    : settings.ownerLid;
+                const ownerJid = getOwnerInbox(sock);
                 if (ownerJid) {
                     let groupName = 'Unknown group';
                     try {
@@ -1736,7 +1755,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                     }
 
                     try {
-                        await sendToBotInboxAndOwner(sock, {
+                        const notice = await sock.sendMessage(ownerJid, {
                             text: [
                                 '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
                                 '',
@@ -1744,12 +1763,17 @@ async function handleGroupParticipantUpdate(sock, update) {
                                 `🆔 Group ID: ${id}`,
                                 `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
                                 '',
-                                `✅ চালু করতে: .gact ${id}`,
-                                `🗑️ বটকে গ্রুপ থেকে সরাতে: .gdelete ${id}`,
-                                `⏸️ শুধু বন্ধ রাখতে: .gdeact ${id}`
+                                '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
+                                '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
+                                '',
+                                `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
+                                `🗑️ বটকে সরাতে: .gdelete ${id}`
                             ].join('\n'),
                             linkPreview: null
                         });
+                        if (notice?.key?.id && !groupAccess.isActive(id)) {
+                            groupAccess.setPendingReply(notice.key.id, id);
+                        }
                         console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
                     } catch (notifyError) {
                         console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
