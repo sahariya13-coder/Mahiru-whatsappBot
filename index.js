@@ -124,7 +124,7 @@ const { join } = require('path')
 const store = require('./lib/lightweight_store')
 const { startDailyBackup } = require('./commands/backup');
 
-const { getOwnerInbox, sendToBotInboxAndOwner } = require('./lib/ownerNotify');
+const { getOwnerInbox } = require('./lib/ownerNotify');
 
 // Memory optimization - Force garbage collection if available
 setInterval(() => {
@@ -355,27 +355,6 @@ async function startXeonBotInc() {
         }
         
         if (connection == "open") {
-            // Deliver a saved disconnect report now that WhatsApp is online again.
-            const pendingDisconnectPath = path.resolve('./data/pendingDisconnectNotice.json');
-            try {
-                if (fs.existsSync(pendingDisconnectPath)) {
-                    const pendingDisconnect = JSON.parse(fs.readFileSync(pendingDisconnectPath, 'utf8'));
-                    if (pendingDisconnect?.text) {
-                        const delivery = await sendToBotInboxAndOwner(XeonBotInc, { text: pendingDisconnect.text });
-                        if (delivery.failed.length === 0 && delivery.sent.length > 0) {
-                            fs.unlinkSync(pendingDisconnectPath);
-                            console.log('[CONNECTION] Previous disconnect report delivered to both inboxes.');
-                        } else {
-                            console.error('[CONNECTION] Previous disconnect report could not reach every inbox; it remains queued.');
-                        }
-                    } else {
-                        fs.unlinkSync(pendingDisconnectPath);
-                    }
-                }
-            } catch (pendingError) {
-                console.error('[CONNECTION] Could not deliver saved disconnect report:', pendingError?.message || pendingError);
-            }
-
             startDailyBackup(XeonBotInc);
             const connectionLabel = hasConnectedOnce ? 'RECONNECTED' : 'CONNECTED / LOGIN';
             hasConnectedOnce = true;
@@ -427,41 +406,14 @@ async function startXeonBotInc() {
                 console.log(chalk.red('[SESSION] WhatsApp logged this device out. The old session was archived; pair again on the next start.'))
             }
 
-            const disconnectNotice = [
-                '⚠️ *MAHIRU BOT DISCONNECTED*',
-                '',
-                '📌 কারণ: ' + (disconnectError?.message || 'Unknown'),
-                '🔢 Status Code: ' + (statusCode ?? 'unknown'),
-                '🔐 Session: ' + (isLoggedOut ? 'EXPIRED / Logged out — আবার Pair করতে হবে' : 'Session may still be valid'),
-                '🔄 Reconnect: ' + (shouldReconnect ? 'স্বয়ংক্রিয়ভাবে চেষ্টা করা হবে' : 'স্বয়ংক্রিয় Reconnect হবে না'),
+            await notifyOwner(XeonBotInc,
+                '⚠️ *MAHIRU BOT DISCONNECTED*\n\n' +
+                '📌 কারণ: ' + (disconnectError?.message || 'Unknown') + '\n' +
+                '🔢 Status Code: ' + (statusCode ?? 'unknown') + '\n' +
+                '🔐 Session: ' + (isLoggedOut ? 'EXPIRED / Logged out — আবার Pair করতে হবে' : 'Session may still be valid') + '\n' +
+                '🔄 Reconnect: ' + (shouldReconnect ? 'স্বয়ংক্রিয়ভাবে চেষ্টা করা হবে' : 'স্বয়ংক্রিয় Reconnect হবে না') + '\n' +
                 '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
-            ].join('\n');
-
-            // A closed WhatsApp socket may no longer send messages. Save the report
-            // first so it can be delivered to both inboxes after the next connection.
-            const pendingDisconnectPath = path.resolve('./data/pendingDisconnectNotice.json');
-            try {
-                fs.mkdirSync(path.dirname(pendingDisconnectPath), { recursive: true });
-                fs.writeFileSync(pendingDisconnectPath, JSON.stringify({
-                    text: disconnectNotice,
-                    statusCode: statusCode ?? null,
-                    reason: disconnectError?.message || 'Unknown',
-                    createdAt: new Date().toISOString()
-                }, null, 2));
-            } catch (saveError) {
-                console.error('[CONNECTION] Could not save pending disconnect report:', saveError?.message || saveError);
-            }
-
-            try {
-                const delivery = await sendToBotInboxAndOwner(XeonBotInc, { text: disconnectNotice });
-                if (delivery.failed.length === 0 && delivery.sent.length > 0) {
-                    if (fs.existsSync(pendingDisconnectPath)) fs.unlinkSync(pendingDisconnectPath);
-                } else {
-                    console.log('[CONNECTION] Disconnect report queued for delivery after reconnect.');
-                }
-            } catch (error) {
-                console.error('[OWNER NOTICE] Disconnect notice failed; report queued for next connection:', error?.message || error);
-            }
+            ).catch(error => console.error('[OWNER NOTICE] Disconnect notice failed:', error?.message || error));
 
             if (shouldReconnect) {
                 scheduleReconnect('WhatsApp connection closed')
