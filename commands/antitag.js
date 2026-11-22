@@ -1,5 +1,6 @@
 const { setAntitag, getAntitag, removeAntitag } = require('../lib/index');
 const isAdmin = require('../lib/isAdmin');
+const { notifyOwner } = require('../lib/ownerNotify');
 
 async function handleAntitagCommand(sock, chatId, userMessage, senderId, isSenderAdmin, message) {
     try {
@@ -135,6 +136,22 @@ async function handleTagDetection(sock, chatId, message, senderId) {
             if (totalMentions >= mentionThreshold || hasManyNumericMentions) {
                 
                 const action = antitagSetting.action || 'delete';
+                try {
+                    const metadata = await sock.groupMetadata(chatId);
+                    const groupName = metadata?.subject || chatId;
+                    await notifyOwner(sock,
+                        '*🔰 ANTITAG REPORT 🔰*\\n\\n' +
+                        '*👤 Tagall করেছেন:* @' + senderId.split('@')[0] + '\\n' +
+                        '*👥 গ্রুপ:* ' + groupName + '\\n' +
+                        '*⚙️ Action:* ' + (antitagSetting.action || 'delete') + '\\n' +
+                        '*🕒 সময়:* ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' }) + '\\n\\n' +
+                        '*📝 Message:*\\n' + messageText,
+                        { mentions: [senderId] }
+                    );
+                } catch (noticeError) {
+                    console.error('[ANTITAG] Owner notice failed:', noticeError.message);
+                }
+
                 
                 if (action === 'delete') {
                     // Delete the message
