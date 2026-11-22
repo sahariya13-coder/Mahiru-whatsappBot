@@ -686,6 +686,7 @@ async function handleChatbotResponse(
         const voiceRequestText = String(cleanedMessage || '').toLowerCase();
         const asksForVoice = /(?:ভয়েস|ভয়েস|অডিও|voice|audio)/i.test(voiceRequestText) &&
             /(?:বলো|বল|দাও|দেবে|পাঠাও|রিপ্লাই|reply|say|send|উত্তর|bolo|bol|koro)/i.test(voiceRequestText);
+        const asksForText = /(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written).{0,40}(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর)|(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর).{0,40}(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written)/i.test(cleanedMessage);
         console.log('[MAHIRU VOICE MODE]', JSON.stringify({
             cleanedMessage: voiceRequestText.slice(0, 160),
             inputResponseMode,
@@ -693,7 +694,6 @@ async function handleChatbotResponse(
             asksForText,
             responseMode: asksForText ? 'text' : (asksForVoice ? 'voice' : inputResponseMode)
         }));
-        const asksForText = /(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written).{0,40}(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর)|(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর).{0,40}(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written)/i.test(cleanedMessage);
         const responseMode = asksForText
             ? 'text'
             : (asksForVoice ? 'voice' : inputResponseMode);
