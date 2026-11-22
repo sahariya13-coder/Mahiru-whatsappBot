@@ -152,8 +152,8 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .kick @user
 │ .mute <minutes> / .unmute
 │ .warn @user / .warnings @user
-│ .antilink
-│ .antibadword
+│ .antilink <on/off>
+│ .antibadword <on/off>
 │ .antitag <on/off>
 │ .welcome <on/off>
 │ .goodbye <on/off>
