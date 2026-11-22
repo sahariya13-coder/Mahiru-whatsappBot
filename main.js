@@ -439,8 +439,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
 
             case userMessage.startsWith('.gact') || userMessage.startsWith('.gdeact') || userMessage.startsWith('.gdelete'): {
-                if (!message.key.fromMe && !senderIsOwnerOrSudo) {
-                    await sock.sendMessage(chatId, { text: 'শুধু Bot Owner এই কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
+                const configuredOwner = message.key.fromMe ||
+                    await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!configuredOwner) {
+                    await sock.sendMessage(chatId, { text: '❌ শুধু Bot Owner এই কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
                     break;
                 }
                 const parts = rawText.trim().split(/\s+/);
