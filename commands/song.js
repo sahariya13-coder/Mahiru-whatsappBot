@@ -103,7 +103,7 @@ async function getAudioDownload(videoUrl) {
   throw new Error('সব Audio API ব্যর্থ হয়েছে।');
 }
 
-async function songCommand(sock, chatId, message) {
+async function songCommand(sock, chatId, message, commandText = '') {
   const chatKey = String(chatId);
   if (songBusyChats.has(chatKey)) {
     await sock.sendMessage(chatId, {
@@ -114,10 +114,13 @@ async function songCommand(sock, chatId, message) {
 
   songBusyChats.add(chatKey);
   try {
-    const raw =
+    // commandText is supplied by main.js so transcribed voice commands are not lost.
+    const raw = String(commandText ||
       message.message?.conversation ||
       message.message?.extendedTextMessage?.text ||
-      '';
+      message.message?.imageMessage?.caption ||
+      message.message?.videoMessage?.caption ||
+      '').trim();
     const query = raw.replace(/^\.(?:play|song|mp3|ytmp3)\s*/i, '').trim();
 
     if (!query) {
