@@ -416,6 +416,55 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            // Group-local feature switches: .chatbot off, .antilink on, etc.
+            case isGroup && /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye)\s+(?:on|off)\s*$/i.test(rawText || ''): {
+                const parts = String(rawText || '').trim().split(/\s+/);
+                const featureName = parts[0].slice(1).toLowerCase();
+                const action = (parts[1] || '').toLowerCase();
+
+                let allowed = Boolean(message.key.fromMe || senderIsOwnerOrSudo);
+                if (!allowed) {
+                    try {
+                        const adminStatus = await isAdmin(sock, chatId, senderId);
+                        allowed = Boolean(adminStatus.isSenderAdmin);
+                    } catch (adminError) {
+                        console.error('[GROUP FEATURE] Admin check failed:', adminError.message);
+                    }
+                }
+
+                if (!allowed) {
+                    await sock.sendMessage(chatId, {
+                        text: '❌ এই সেটিং ON/OFF করতে শুধু গ্রুপ Admin বা Bot Owner পারবে।'
+                    }, { quoted: message });
+                    commandExecuted = true;
+                    break;
+                }
+
+                try {
+                    const result = setGroupFeature(chatId, featureName, action === 'on');
+                    if (!result.ok) throw new Error('এই Feature সমর্থিত নয়।');
+                    const labels = {
+                        chatbot: 'Chatbot',
+                        gai: 'Chatbot',
+                        iai: 'Chatbot',
+                        antilink: 'AntiLink',
+                        antitag: 'AntiTag',
+                        antibadword: 'AntiBadword',
+                        welcome: 'Welcome',
+                        goodbye: 'Goodbye'
+                    };
+                    await sock.sendMessage(chatId, {
+                        text: '✅ *' + (labels[featureName] || featureName) + ' ' + action.toUpperCase() + ' করা হয়েছে।*\n📛 Group: ' + chatId
+                    }, { quoted: message });
+                } catch (featureError) {
+                    console.error('[GROUP FEATURE] Update failed:', featureError);
+                    await sock.sendMessage(chatId, {
+                        text: '❌ সেটিং পরিবর্তন করা যায়নি: ' + featureError.message
+                    }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
             case !isGroup && /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye|gset)\s+/i.test(rawText || ''): {
                 const configuredOwner = message.key.fromMe ||
                     await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
