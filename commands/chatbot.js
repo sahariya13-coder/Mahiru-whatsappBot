@@ -194,16 +194,22 @@ function getMessageText(message) {
 }
 
 function getContextInfo(message) {
-    const msg = message?.message || {};
+    // Unwrap ephemeral, view-once and other supported message wrappers first.
+    // This keeps mention/reply detection working for image-only messages too.
+    const msg = unwrapMessageContent(message?.message);
 
     return (
-        msg.extendedTextMessage?.contextInfo ||
-        msg.imageMessage?.contextInfo ||
-        msg.videoMessage?.contextInfo ||
-        msg.documentMessage?.contextInfo ||
-        msg.stickerMessage?.contextInfo ||
-        msg.audioMessage?.contextInfo ||
-        msg.ephemeralMessage?.message?.extendedTextMessage?.contextInfo ||
+        msg?.extendedTextMessage?.contextInfo ||
+        msg?.imageMessage?.contextInfo ||
+        msg?.videoMessage?.contextInfo ||
+        msg?.documentMessage?.contextInfo ||
+        msg?.stickerMessage?.contextInfo ||
+        msg?.audioMessage?.contextInfo ||
+        msg?.documentWithCaptionMessage?.message?.documentMessage?.contextInfo ||
+        msg?.buttonsResponseMessage?.contextInfo ||
+        msg?.listResponseMessage?.contextInfo ||
+        msg?.templateButtonReplyMessage?.contextInfo ||
+        msg?.interactiveResponseMessage?.contextInfo ||
         {}
     );
 }
