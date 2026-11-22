@@ -79,9 +79,9 @@ async function notifyOwnerError(sock, category, detail) {
     if (now - (ownerErrorNoticeTimes.get(key) || 0) < 5 * 60 * 1000) return false
     ownerErrorNoticeTimes.set(key, now)
     return notifyOwner(sock,
-        '🚨 *MAHIRU SYSTEM ERROR*\\n\\n' +
-        '📍 ধরন: ' + key + '\\n' +
-        '🧾 বিস্তারিত: ' + String(detail || 'Unknown error').slice(0, 1200) + '\\n' +
+        '🚨 *MAHIRU SYSTEM ERROR*\n\n' +
+        '📍 ধরন: ' + key + '\n' +
+        '🧾 বিস্তারিত: ' + String(detail || 'Unknown error').slice(0, 1200) + '\n' +
         '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
     )
 }
