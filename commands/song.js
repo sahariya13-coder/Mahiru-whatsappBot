@@ -1,25 +1,35 @@
 const yts = require('yt-search');
 const api = require('../lib/api');
+const youtubeApi = require('../lib/xrahatYoutube');
 
 const songBusyChats = new Set();
 
 function extractYouTubeId(input) {
-  const text = String(input || '').trim();
-  const match =
-    text.match(/(?:youtube\.com\/(?:watch\?.*?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i) ||
-    text.match(/^([a-zA-Z0-9_-]{11})$/);
-  return match?.[1] || null;
+  return youtubeApi.extractYouTubeId(input);
 }
 
 async function resolveVideoInfo(query) {
-  if (/youtube\.com|youtu\.be/i.test(query)) {
+  if (/youtube\.com|youtu\.be/i.test(query) || extractYouTubeId(query)) {
     const id = extractYouTubeId(query);
     if (!id) throw new Error('Invalid YouTube URL');
-    return {
-      url: 'https://www.youtube.com/watch?v=' + id,
-      title: 'YouTube Audio',
-      timestamp: '—'
-    };
+    try {
+      return await youtubeApi.videoDetails(id);
+    } catch {
+      return {
+        id,
+        url: 'https://www.youtube.com/watch?v=' + id,
+        title: 'YouTube Audio',
+        timestamp: '—',
+        thumbnail: 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg'
+      };
+    }
+  }
+
+  try {
+    const videos = await youtubeApi.search(query, 'video');
+    if (videos.length) return videos[0];
+  } catch (error) {
+    console.log('[song] Mahiru YouTube search failed:', error.message);
   }
 
   const result = await yts(query);
@@ -41,31 +51,27 @@ async function samplecutSongDownload(videoUrl) {
 
   const raw = await response.text();
   let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    throw new Error('Samplecut invalid response (' + response.status + ')');
-  }
+  try { data = JSON.parse(raw); }
+  catch { throw new Error('Samplecut invalid response (' + response.status + ')'); }
 
   if (!response.ok) {
-    const code = data?.error?.code || response.status;
-    const message = data?.error?.message || 'Request failed';
-    throw new Error('Samplecut ' + code + ': ' + message);
+    throw new Error(data?.error?.message || 'Samplecut request failed (' + response.status + ')');
   }
-
   const url = data?.download_url;
-  if (!url || !/^https?:\/\//i.test(url)) {
-    throw new Error('Samplecut returned no valid download URL');
-  }
-
+  if (!url || !/^https?:\/\//i.test(url)) throw new Error('Samplecut returned no valid download URL');
   return { url, title: data.title || null, filename: data.filename || null };
 }
 
 async function getAudioDownload(videoUrl) {
   const providers = [
+    ['Mahiru YouTube API', async () => {
+      const result = await youtubeApi.getFormats(videoUrl);
+      if (!result.audio?.url) throw new Error('No audio format available');
+      return { url: result.audio.url, title: result.title };
+    }],
     ['Samplecut', () => samplecutSongDownload(videoUrl)],
     ['VidFetch', () => api.vidFetchSongDownload(videoUrl)],
-    ['mahiru shiina', () => api.knightSongDownload(videoUrl, 1)],
+    ['Mahiru legacy', () => api.knightSongDownload(videoUrl, 1)],
     ['Hector', () => api.hectorSongDownload(videoUrl, 1)],
     ['Prince', () => api.princeSongDownload(videoUrl, 1)],
     ['Prexzy', () => api.prexzySongDownload(videoUrl)],
@@ -76,17 +82,12 @@ async function getAudioDownload(videoUrl) {
     ['SaveDock', () => api.saveDockSongDownload(videoUrl)]
   ];
 
-  const errors = [];
   for (const [name, download] of providers) {
     try {
       const result = await download();
       const url = result?.download_url || result?.download || result?.dl_url || result?.url;
-      if (!url || !/^https?:\/\//i.test(url)) {
-        throw new Error('API returned no valid audio URL');
-      }
-      if (api.isIpLockedCdn?.(url)) {
-        throw new Error('API returned an IP-locked YouTube URL');
-      }
+      if (!url || !/^https?:\/\//i.test(url)) throw new Error('API returned no valid audio URL');
+      if (api.isIpLockedCdn?.(url)) throw new Error('API returned an IP-locked YouTube URL');
       console.log('[song] Provider selected:', name);
       return {
         url,
@@ -96,7 +97,6 @@ async function getAudioDownload(videoUrl) {
       };
     } catch (error) {
       console.log('[song] ' + name + ' failed:', error.message);
-      errors.push(name + ': ' + error.message);
     }
   }
 
@@ -128,7 +128,6 @@ async function songCommand(sock, chatId, message) {
     }
 
     const video = await resolveVideoInfo(query);
-
     const videoId = extractYouTubeId(video.url);
     const thumbnail =
       video.thumbnail ||
@@ -152,20 +151,15 @@ async function songCommand(sock, chatId, message) {
         caption: songCaption
       }, { quoted: message });
     } else {
-      await sock.sendMessage(chatId, {
-        text: songCaption
-      }, { quoted: message });
+      await sock.sendMessage(chatId, { text: songCaption }, { quoted: message });
     }
 
     const audio = await getAudioDownload(video.url);
-
     await sock.sendMessage(chatId, {
       audio: { url: audio.url },
       mimetype: 'audio/mpeg',
       fileName: (String(audio.title || video.title || 'Mahiru-Song')
-        .replace(/[^\w\s-]/g, '')
-        .trim()
-        .slice(0, 80) || 'Mahiru-Song') + '.mp3',
+        .replace(/[^\w\s-]/g, '').trim().slice(0, 80) || 'Mahiru-Song') + '.mp3',
       ptt: false
     }, { quoted: message });
 
