@@ -33,6 +33,7 @@ const yts = require('yt-search');
 const { fetchBuffer } = require('./lib/myfunc');
 const fetch = require('node-fetch');
 const { transcribeAudio } = require('./lib/voice');
+const { convertSpokenCommandToBotCommand } = require('./lib/voiceCommandAI');
 const ytdl = require('ytdl-core');
 const axios = require('axios');
 const ffmpeg = require('fluent-ffmpeg');
@@ -156,31 +157,6 @@ global.ytch = "MSK";
 // Channel promotion metadata removed.
 const channelInfo = {};
 
-function convertSpokenCommandToBotCommand(text) {
-    const value = String(text || '').toLowerCase().replace(/[।!?.,]/g, ' ').replace(/\s+/g, ' ').trim().replace(/^(mahiru|মাহিরু)\s+/, '');
-    const aliases = [
-        [/^(মেনু|কমান্ড|হেল্প)( দেখাও| দাও)?$/, '.menu'],
-        [/^(পিং)( করো| দাও)?$/, '.ping'],
-        [/^(বটের অবস্থা|বটের স্ট্যাটাস|বট কেমন চলছে)( দেখাও)?$/, '.alive'],
-        [/^(ওনার কে|বটের মালিক কে|মালিকের তথ্য)( দেখাও)?$/, '.owner'],
-        [/^(গ্রুপের তথ্য|গ্রুপ ইনফো)( দেখাও)?$/, '.groupinfo'],
-        [/^(সবাইকে মেনশন|সবাইকে ট্যাগ)( করো)?$/, '.tagall'],
-        [/^(অ্যান্টি লিংক|anti link) চালু করো$/, '.antilink on'],
-        [/^(অ্যান্টি লিংক|anti link) বন্ধ করো$/, '.antilink off'],
-        [/^(অটো রিড|autoread) চালু করো$/, '.autoread on'],
-        [/^(অটো রিড|autoread) বন্ধ করো$/, '.autoread off'],
-        [/^(অটো টাইপিং|autotyping) চালু করো$/, '.autotyping on'],
-        [/^(অটো টাইপিং|autotyping) বন্ধ করো$/, '.autotyping off']
-    ];
-    for (const [pattern, command] of aliases) if (pattern.test(value)) return command;
-    const supported = 'human gid gact gdeact simage kick mute unmute ban unban menu help bot list sticker s warnings warn tts delete del attp settings mode anticall pmblocker owner tagall tagnotadmin hidetag tag antilink antitag meme joke quote fact weather news ttt move topmembers hangman guess trivia answer compliment insult 8ball lyrics dare truth clear promote demote ping alive mention setmention blur welcome goodbye antibadword rule chatbot take flirt character waste ship groupinfo resetlink staff tourl emojimix tg vv clearsession autostatus metallic ice snow impressive matrix light neon devil purple thunder leaves 1917 arena hacker sand blackpink glitch fire antidelete surrender cleartmp setpp setgdesc setgname setgpp instagram igsc igs fb music spotify play video tiktok gpt translate ss areact sudo goodnight shayari roseday imagine uid jid autotyping autoread heart horny circle lgbt lolice simpcard tonikawa its-so-stupid namecard oogway2 oogway tweet ytcomment comrade gay glass jail passed triggered animu nom poke cry kiss pat hug wink facepalm face-palm animuquote loli crop pies china indonesia japan korea india malaysia thailand update removebg remini sora'.split(' ');
-    const words = value.split(' ');
-    const index = words.findIndex(word => supported.includes(word));
-    if (index < 0) return null;
-    const command = words[index];
-    const args = words.slice(index + 1).join(' ').trim();
-    return '.' + command + (args ? ' ' + args : '');
-}
 
 async function handleMessages(sock, messageUpdate, printLog) {
     let chatId = null;
@@ -263,7 +239,15 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 rawText = transcript;
                 userMessage = transcript.toLowerCase().replace(/\.\s+/g, '.').trim();
                 console.log('🎙️ Voice transcribed:', transcript.slice(0, 160));
-                const spokenCommand = convertSpokenCommandToBotCommand(transcript);
+                const spokenCommand = await convertSpokenCommandToBotCommand(transcript, {
+                    chatId,
+                    senderId,
+                    isGroup,
+                    hasQuotedMessage: Boolean(unwrappedMessage?.extendedTextMessage?.contextInfo?.quotedMessage),
+                    hasImage: Boolean(unwrappedMessage?.imageMessage),
+                    hasVideo: Boolean(unwrappedMessage?.videoMessage),
+                    hasMention: Boolean(unwrappedMessage?.extendedTextMessage?.contextInfo?.mentionedJid?.length)
+                });
                 if (spokenCommand) {
                     rawText = spokenCommand;
                     userMessage = spokenCommand.toLowerCase();
