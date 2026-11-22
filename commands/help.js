@@ -174,6 +174,13 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .gact <group ID> (activate)
 │ .gdeact <group ID> (deactivate)
 │ .gdelete <group ID> (bot leaves group)
+│ .chatbot <group ID> on/off
+│ .antilink <group ID> on/off
+│ .antitag <group ID> on/off
+│ .antibadword <group ID> on/off
+│ .welcome <group ID> on/off
+│ .goodbye <group ID> on/off
+│ .gset <group ID> <feature> <on/off>
 │ .rule add/list/on/off/edit/del
 │ .human on/off
 │ .sudo add/remove/list
