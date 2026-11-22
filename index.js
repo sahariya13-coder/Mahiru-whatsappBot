@@ -69,6 +69,22 @@ setInterval(() => {
 let phoneNumber = settings.ownerNumber || ''
 let owner
 let reconnectTimer = null
+let hasConnectedOnce = false
+let activeSocket = null
+const ownerErrorNoticeTimes = new Map()
+
+async function notifyOwnerError(sock, category, detail) {
+    const key = String(category || 'system-error')
+    const now = Date.now()
+    if (now - (ownerErrorNoticeTimes.get(key) || 0) < 5 * 60 * 1000) return false
+    ownerErrorNoticeTimes.set(key, now)
+    return notifyOwner(sock,
+        '🚨 *MAHIRU SYSTEM ERROR*\\n\\n' +
+        '📍 ধরন: ' + key + '\\n' +
+        '🧾 বিস্তারিত: ' + String(detail || 'Unknown error').slice(0, 1200) + '\\n' +
+        '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+    )
+}
 
 function scheduleReconnect(reason = 'connection closed') {
     if (reconnectTimer) {
@@ -149,6 +165,8 @@ async function startXeonBotInc() {
             connectTimeoutMs: 60000,
             keepAliveIntervalMs: 10000,
         })
+
+        activeSocket = XeonBotInc
 
         // Wait for the WhatsApp socket to begin connecting before requesting a pairing code.
         // This listener is attached immediately after socket creation so the event is not missed.
@@ -276,12 +294,14 @@ async function startXeonBotInc() {
         
         if (connection == "open") {
             startDailyBackup(XeonBotInc);
+            const connectionLabel = hasConnectedOnce ? 'RECONNECTED' : 'CONNECTED / LOGIN';
+            hasConnectedOnce = true;
             console.log(chalk.magenta(` `))
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
             try {
                 await notifyOwner(XeonBotInc,
-                    `🤖 *MAHIRU BOT CONNECTED*\n\n⏰ Time: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}\n✅ Status: Online and Ready!`
+                    `🤖 *MAHIRU BOT ${connectionLabel}*\n\n⏰ Time: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}\n✅ Status: Online and Ready!`
                 );
             } catch (error) {
                 console.error('Error sending connection message:', error.message)
@@ -328,7 +348,8 @@ async function startXeonBotInc() {
                 '⚠️ *MAHIRU BOT DISCONNECTED*\n\n' +
                 '📌 কারণ: ' + (disconnectError?.message || 'Unknown') + '\n' +
                 '🔢 Status Code: ' + (statusCode ?? 'unknown') + '\n' +
-                '🔄 Reconnect: ' + (shouldReconnect ? 'চেষ্টা করা হবে' : 'Session expired / পুনরায় pair প্রয়োজন') + '\n' +
+                '🔐 Session: ' + (isLoggedOut ? 'EXPIRED / Logged out — আবার Pair করতে হবে' : 'Session may still be valid') + '\n' +
+                '🔄 Reconnect: ' + (shouldReconnect ? 'স্বয়ংক্রিয়ভাবে চেষ্টা করা হবে' : 'স্বয়ংক্রিয় Reconnect হবে না') + '\n' +
                 '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
             ).catch(error => console.error('[OWNER NOTICE] Disconnect notice failed:', error?.message || error));
 
@@ -436,6 +457,7 @@ async function startXeonBotInc() {
     return XeonBotInc
     } catch (error) {
         console.error('Error in startXeonBotInc:', error)
+        await notifyOwnerError(activeSocket, 'Startup / Reconnect Error', error?.stack || error?.message || error);
         scheduleReconnect('bot startup failed')
     }
 }
@@ -455,10 +477,12 @@ persistentDataReady.then(() => {
 });
 process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err)
+    notifyOwnerError(activeSocket, 'Uncaught Exception', err?.stack || err?.message || err);
 })
 
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err)
+    notifyOwnerError(activeSocket, 'Unhandled Promise Rejection', err?.stack || err?.message || err);
 })
 
 let file = require.resolve(__filename)
