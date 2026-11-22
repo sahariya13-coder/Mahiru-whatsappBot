@@ -683,7 +683,16 @@ async function handleChatbotResponse(
         await sleep(getRandomDelay());
 
         // Voice input gets a voice-only reply. Text can explicitly request voice/text output.
-        const asksForVoice = /(?:ভয়েসে|ভয়েসে|ভয়েস|ভয়েস|অডিওতে|অডিও|voice\s*(?:e|a|এ|আ)?|audio\s*(?:তে|e|a)?).{0,50}(?:বলো|বল|দাও|দেবে|পাঠাও|রিপ্লাই|reply|say|send|উত্তর)|(?:বলো|বল|দাও|পাঠাও|রিপ্লাই|reply|say|send|উত্তর).{0,50}(?:ভয়েসে|ভয়েসে|ভয়েস|ভয়েস|অডিওতে|অডিও|voice|audio)/i.test(cleanedMessage);
+        const voiceRequestText = String(cleanedMessage || '').toLowerCase();
+        const asksForVoice = /(?:ভয়েস|ভয়েস|অডিও|voice|audio)/i.test(voiceRequestText) &&
+            /(?:বলো|বল|দাও|দেবে|পাঠাও|রিপ্লাই|reply|say|send|উত্তর|bolo|bol|koro)/i.test(voiceRequestText);
+        console.log('[MAHIRU VOICE MODE]', JSON.stringify({
+            cleanedMessage: voiceRequestText.slice(0, 160),
+            inputResponseMode,
+            asksForVoice,
+            asksForText,
+            responseMode: asksForText ? 'text' : (asksForVoice ? 'voice' : inputResponseMode)
+        }));
         const asksForText = /(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written).{0,40}(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর)|(?:বলো|দাও|পাঠাও|রিপ্লাই|reply|লিখে|লেখো|send|উত্তর).{0,40}(?:টেক্সটে|টেক্সট|লেখায়|লেখা|text|written)/i.test(cleanedMessage);
         const responseMode = asksForText
             ? 'text'
