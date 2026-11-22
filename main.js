@@ -416,7 +416,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
-            case !isGroup && /^\\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye|gset)\\s+/i.test(rawText || ''): {
+            case !isGroup && /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye|gset)\s+/i.test(rawText || ''): {
                 const configuredOwner = message.key.fromMe ||
                     await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
                 if (!configuredOwner) {
@@ -424,7 +424,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     break;
                 }
 
-                const parts = String(rawText || '').trim().split(/\\s+/);
+                const parts = String(rawText || '').trim().split(/\s+/);
                 let featureName = parts[0].slice(1).toLowerCase();
                 let targetId = '';
                 let action = '';
@@ -462,7 +462,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                         goodbye: 'Goodbye'
                     };
                     await sock.sendMessage(chatId, {
-                        text: `✅ *Remote Group Setting Updated*\\n\\n📛 Feature: ${featureLabels[featureName] || featureName}\\n🆔 Group ID: ${targetId}\\n📌 Status: ${action.toUpperCase()}`
+                        text: `✅ *Remote Group Setting Updated*\n\n📛 Feature: ${featureLabels[featureName] || featureName}\n🆔 Group ID: ${targetId}\n📌 Status: ${action.toUpperCase()}`
                     }, { quoted: message });
                 } catch (error) {
                     console.error('[REMOTE GROUP SETTING] Update failed:', error);
