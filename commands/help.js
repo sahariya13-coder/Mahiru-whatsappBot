@@ -171,7 +171,7 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .mode inbox public/private
 │ .mode public/private (both)
 │ .gid (show group ID)
-│ .gact <group ID> / .gdeact <group ID>
+│ .gact <group ID> (activate)\n│ .gdeact <group ID> (deactivate)\n│ .gdelete <group ID> (bot leaves group)
 │ .rule add/list/on/off/edit/del
 │ .human on/off
 │ .sudo add/remove/list
