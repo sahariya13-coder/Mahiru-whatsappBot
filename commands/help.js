@@ -37,18 +37,13 @@ const MENU_CATEGORIES = Object.freeze({
         id: 'shortcuts',
         icon: '⚡',
         title: 'PRO SHORTCUTS',
-        subtitle: '১-অক্ষরে সুপার ফাস্ট কন্ট্রোল',
+        subtitle: 'প্রতিদিনের কাজের সরাসরি শর্টকাট',
         commands: [
-            { cmd: 'm', desc: 'মেইন ইন্টারঅ্যাক্টিভ মেনু' },
-            { cmd: 'a', desc: 'সিস্টেম অ্যালাইভ কার্ড' },
-            { cmd: 'p', desc: 'রিয়েল-টাইম স্পিড ও পিং' },
-            { cmd: 'o', desc: 'ভেরিফায়েড ওনার প্রোফাইল' },
-            { cmd: 's', desc: 'মাস্টার সেটিংস ড্যাশবোর্ড' },
-            { cmd: 'g off / on / chat on', desc: 'গ্রুপ কিল-সুইচ ও চ্যাট কন্ট্রোল' },
-            { cmd: 'tk 2 / off', desc: 'স্মার্ট টেকওভার টাইমার (১–১০ মি.)' },
-            { cmd: 'adm add / del / ls / status / purge', desc: 'Owner-only Sudo ও Security Control' },
-            { cmd: 'v auto / on / off / test', desc: 'ক্রিস্টাল ভয়েস কন্ট্রোল' },
-            { cmd: 'cl / doc / rb', desc: 'ক্লিন • ডক্টর • রিস্টার্ট' }
+            { cmd: 'menu / help', desc: 'মেইন ইন্টারঅ্যাক্টিভ মেনু' },
+            { cmd: 'alive', desc: 'বটের লাইভ স্ট্যাটাস' },
+            { cmd: 'ping', desc: 'রেসপন্স টাইম ও স্পিড' },
+            { cmd: 'owner', desc: 'বট Owner-এর তথ্য' },
+            { cmd: 'settings', desc: 'বট সেটিংস' }
         ]
     },
     group: {
@@ -57,11 +52,9 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MASTER GROUP CONTROL',
         subtitle: 'গ্রুপ কিল-সুইচ, অ্যাডমিন ও শিল্ড',
         commands: [
-            { cmd: 'g off', desc: 'গ্রুপ টোটাল মিউট (কমান্ড+চ্যাট বন্ধ)' },
-            { cmd: 'g on', desc: 'শুধু কমান্ড চালু (AI চ্যাট বন্ধ)' },
-            { cmd: 'g chat on', desc: 'কমান্ড ও AI চ্যাট দুটোই চালু' },
-            { cmd: 'g all off / on', desc: 'সব গ্রুপ একসাথে বন্ধ বা চালু' },
-            { cmd: 'g <নাম> off / on', desc: 'ইনবক্স থেকে নির্দিষ্ট গ্রুপ কন্ট্রোল' },
+            { cmd: 'chatbot on / off', desc: 'এই গ্রুপের AI চালু বা বন্ধ' },
+            { cmd: 'gai on / off', desc: 'Group AI কন্ট্রোল' },
+            { cmd: 'iai on / off', desc: 'Inbox AI কন্ট্রোল' },
             { cmd: 'tagall / hidetag', desc: 'সবার কাছে মেনশন/মেসেজ' },
             { cmd: 'kick / ban / unban', desc: 'মেম্বার রিমুভ ও ব্যান' },
             { cmd: 'promote / demote', desc: 'অ্যাডমিন বানানো বা সরানো' },
@@ -76,11 +69,9 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MAHIRU AI & VOICE STUDIO',
         subtitle: 'এআই চ্যাট, রিসার্চ ও স্টুডিও ভয়েস',
         commands: [
-            { cmd: 'mahiru on / off / status', desc: 'মাহিরু AI কন্ট্রোল ও স্ট্যাটাস' },
-            { cmd: 'voice test <কথা>', desc: 'ক্রিস্টাল ভয়েস লাইভ টেস্ট' },
-            { cmd: 'v auto / on / off', desc: 'ভয়েস রিপ্লাই মোড' },
-            { cmd: 'lang bn|banglish|en|auto', desc: 'রিপ্লাই ভাষা লক' },
-            { cmd: 'research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ রিপোর্ট' },
+            { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
+            { cmd: 'human on / off', desc: 'Human persona কন্ট্রোল' },
+            { cmd: 'voice test <কথা>', desc: 'ভয়েস রিপ্লাই পরীক্ষা' },
             { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'ডাইরেক্ট AI উত্তর' },
             { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
             { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও ভয়েস' },
@@ -93,21 +84,23 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'ROOT OWNER & SECURITY',
         subtitle: 'সুপার-ওনার ফায়ারওয়াল ও পাওয়ার OS',
         commands: [
-            { cmd: 'adm status / ls / add / del', desc: 'Owner-only অ্যাডমিন ও সুডো কন্ট্রোল' },
-            { cmd: 'adm purge', desc: 'Blocked/invalid Sudo entries পরিষ্কার' },
-            { cmd: 'settings / settings reload', desc: 'মাস্টার ড্যাশবোর্ড ও লাইভ রিলোড' },
-            { cmd: 'settings safe on / off', desc: 'গ্রুপ অ্যান্টি-লিংক শিল্ড' },
-            { cmd: 'tk <1-10|off>', desc: 'প্রেজেন্স স্মার্ট টেকওভার সেট' },
-            { cmd: 'rb / rb off [2h] / rb on', desc: 'সেফ রিস্টার্ট ও স্লিপ মোড' },
-            { cmd: 'doc / health / cl', desc: '১০-পয়েন্ট ডক্টর ও RAM/সেশন ক্লিন' },
-            { cmd: 'bk / heal restore', desc: 'সুরক্ষিত Gzip ব্যাকআপ ও রিস্টোর' },
-            { cmd: 'mode public / private', desc: 'পাবলিক বা প্রাইভেট মোড' },
-            { cmd: 'sch / remind / tasks', desc: 'স্মার্ট শিডিউলার ও রিমাইন্ডার' },
-            { cmd: 'anticall / pmblocker / antidelete', desc: 'কল, ইনবক্স ও ডিলিট গার্ড' },
-            { cmd: 'summary', desc: 'সিস্টেম ও AI স্বাস্থ্য রিপোর্ট' },
-            { cmd: 'rules', desc: 'Owner-এর AI নিয়ম দেখা/যোগ/মুছা' },
-            { cmd: 'guard', desc: 'Privacy Firewall রিপোর্ট' },
-            { cmd: 'resetapi', desc: 'AI Provider ও API Key reload' }
+            { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
+            { cmd: 'role <নম্বর> gf|friend|family|client', desc: 'চ্যাটের AI রোল সেট' },
+            { cmd: 'style tui|tumi|apni|auto', desc: 'AI সম্বোধনের ধরন সেট' },
+            { cmd: 'cmd list / off / on', desc: 'কমান্ড চালু বা বন্ধ' },
+            { cmd: 'summary', desc: 'সিস্টেম ও AI রিপোর্ট' },
+            { cmd: 'rules', desc: 'AI-এর Owner-defined নিয়ম' },
+            { cmd: 'orule add / del / list', desc: 'স্থায়ী Owner নিয়ম' },
+            { cmd: 'guard on / off', desc: 'Anti-abuse সুরক্ষা' },
+            { cmd: 'resetapi', desc: 'AI API cooldown reset' },
+            { cmd: 'lang bn|banglish|en|auto', desc: 'AI ভাষা মোড সেট' },
+            { cmd: 'research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ' },
+            { cmd: 'mode public / private', desc: 'বটের Public/Private মোড' },
+            { cmd: 'settings / update', desc: 'সেটিংস ও আপডেট' },
+            { cmd: 'doc / bk / clearsession / cleartmp', desc: 'Health, Backup ও Cleanup' },
+            { cmd: 'sch / remind / tasks', desc: 'Scheduler ও Reminder' },
+            { cmd: 'anticall / pmblocker / antidelete', desc: 'কল ও ইনবক্স সুরক্ষা' },
+            { cmd: 'autoread / autotyping / autostatus', desc: 'অটোমেশন কন্ট্রোল' }
         ]
     },
     media: {
@@ -139,7 +132,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'news', desc: 'সর্বশেষ সংবাদ' },
             { cmd: 'url (ছবিতে রিপ্লাই)', desc: 'ছবি থেকে ডাইরেক্ট লিংক' },
             { cmd: 'jid / uid', desc: 'চ্যাট বা ইউজারের আইডি দেখা' },
-            { cmd: 'pair <WhatsApp নম্বর>', desc: 'Pairing Code API দিয়ে কোড তৈরি' }
+
         ]
     },
     sticker: {
@@ -154,7 +147,8 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'take <প্যাক নাম>', desc: 'স্টিকারের প্যাক নাম বদলানো' },
             { cmd: 'attp <টেক্সট>', desc: 'অ্যানিমেটেড টেক্সট স্টিকার' },
             { cmd: 'emojimix <ইমোজি১>+<ইমোজি২>', desc: 'দুটি ইমোজি মিক্স' },
-            { cmd: 'blur (ছবিতে রিপ্লাই)', desc: 'ছবি ব্লার ইফেক্ট' }
+            { cmd: 'blur (ছবিতে রিপ্লাই)', desc: 'ছবি ব্লার ইফেক্ট' },
+            { cmd: 'removebg / remini', desc: 'Background remove ও photo enhance' }
         ]
     },
     textmaker: {
@@ -163,12 +157,12 @@ const MENU_CATEGORIES = Object.freeze({
         title: '3D TEXTMAKER LOGOS',
         subtitle: 'স্টাইলিশ টেক্সট আর্ট ও লোগো',
         commands: [
-            { cmd: 'neon <টেক্সট>', desc: 'নিয়ন গ্লো লোগো' },
-            { cmd: 'glitch <টেক্সট>', desc: 'সাইবার গ্লিচ টেক্সট' },
-            { cmd: 'fire <টেক্সট> / thunder <টেক্সট>', desc: 'ফায়ার ও থান্ডার ইফেক্ট' },
-            { cmd: 'hacker <টেক্সট> / matrix <টেক্সট>', desc: 'হ্যাকার ও ম্যাট্রিক্স আর্ট' },
-            { cmd: 'metallic <টেক্সট> / ice <টেক্সট>', desc: 'মেটালিক ও আইস লোগো' },
-            { cmd: 'blackpink <টেক্সট> / purple <টেক্সট>', desc: 'স্টাইলিশ রঙিন ব্যানার' }
+            { cmd: 'metallic / ice / snow <টেক্সট>', desc: 'মেটালিক, বরফ ও স্নো ইফেক্ট' },
+            { cmd: 'impressive / matrix / light <টেক্সট>', desc: 'স্টাইলিশ টেক্সট ইফেক্ট' },
+            { cmd: 'neon / devil / purple <টেক্সট>', desc: 'নিয়ন ও কালার ইফেক্ট' },
+            { cmd: 'thunder / leaves / 1917 <টেক্সট>', desc: 'স্পেশাল টেক্সট ইফেক্ট' },
+            { cmd: 'arena / hacker / sand <টেক্সট>', desc: 'আর্ট ও লোগো ইফেক্ট' },
+            { cmd: 'blackpink / glitch / fire <টেক্সট>', desc: 'স্টাইলিশ ব্যানার ও গ্লিচ' }
         ]
     },
     games: {
@@ -227,10 +221,10 @@ function getRequestedCategory(message) {
     return CATEGORY_ALIASES[arg] || '';
 }
 
-function getTotalCommandCount() {
+function getTotalCommandCount(isPrivileged = true) {
     let count = 0;
     for (const [key, cat] of Object.entries(MENU_CATEGORIES)) {
-        if (key !== 'all' && Array.isArray(cat.commands)) count += cat.commands.length;
+        if (key !== 'all' && (key !== 'owner' || isPrivileged) && Array.isArray(cat.commands)) count += cat.commands.length;
     }
     return count;
 }
@@ -305,7 +299,7 @@ async function helpCommand(sock, chatId, message) {
             const headerFrame = buildInfoFrame('Mahiru v1.0 Command Index', [
                 { icon: '🤖', label: 'ASSISTANT', value: `মাহিরু v${verClean}` },
                 { icon: '👑', label: 'OWNER', value: ownerName },
-                { icon: '📦', label: 'MODULES', value: `${getTotalCommandCount()}+ Active Commands` },
+                { icon: '📦', label: 'MODULES', value: `${getTotalCommandCount(isPrivileged)}+ Active Commands` },
                 { icon: '☁️', label: 'RUNTIME', value: getRuntimeLabel() }
             ]);
 
