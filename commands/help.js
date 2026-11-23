@@ -119,6 +119,9 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'mode public / private', desc: 'বটের Public/Private মোড' },
             { cmd: 'settings / update', desc: 'সেটিংস ও আপডেট' },
             { cmd: 'doc / bk / clearsession / cleartmp', desc: 'Health, Backup ও Cleanup' },
+            { cmd: 'clean / deepclean', desc: 'Owner-only safe temporary-file cleanup' },
+            { cmd: 'cmdstats / topcmd', desc: 'কমান্ড ব্যবহারের পরিসংখ্যান' },
+            { cmd: 'block / unblock', desc: 'Owner-only WhatsApp user block control' },
             { cmd: 'sch / remind / tasks', desc: 'Scheduler ও Reminder' },
             { cmd: 'anticall / pmblocker / antidelete', desc: 'কল ও ইনবক্স সুরক্ষা' },
             { cmd: 'autoread / autotyping / autostatus', desc: 'অটোমেশন কন্ট্রোল' }
