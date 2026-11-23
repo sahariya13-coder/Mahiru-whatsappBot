@@ -31,4 +31,4 @@ jobs:
         run: npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
       - name: Smoke-load merged engines
         run: |
-          node -e "require('./lib/mayaCore'); require('./lib/ownerAgent'); require('./lib/scheduler'); require('./lib/callBlocker'); console.log('Mahiru 1.0.3 engines loaded successfully')"
+          node -e "require('./lib/mahiruCore'); require('./lib/ownerAgent'); require('./lib/scheduler'); require('./lib/callBlocker'); console.log('Mahiru 1.0.3 engines loaded successfully')"
