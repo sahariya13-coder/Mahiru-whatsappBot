@@ -132,7 +132,12 @@ async function sudoCommand(sock, chatId, message) {
             return;
         }
 
-        const target = extractTarget(message, chatId, args);
+        let target = extractTarget(message, chatId, args);
+        if (['del', 'remove', 'rm', '-'].includes(sub) && /^\\d{1,2}$/.test(args[1] || '')) {
+            const current = (await getSudoList()).filter(jid => !isProtectedTarget(jid));
+            const selected = current[Number(args[1]) - 1];
+            if (selected) target = selected;
+        }
         if (!target) {
             await reply(sock, chatId, message, 'টার্গেট মেনশন, রিপ্লাই অথবা নম্বর দিন।\nউদাহরণ: .sudo add 8801XXXXXXXXX');
             return;
