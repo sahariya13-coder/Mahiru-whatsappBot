@@ -164,6 +164,8 @@ const scheduler = require('./lib/scheduler');
 const { handleCallBlockCommand } = require('./lib/callBlocker');
 const { handleSelfHealerCommand } = require('./lib/selfHealer');
 const systemControl = require('./lib/systemControl');
+const dynamicOwners = require('./lib/dynamicOwners');
+const privacyFirewall = require('./lib/privacyFirewall');
 
 // Global settings
 global.packname = settings.packname;
@@ -464,7 +466,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.clean', '.deepclean', '.block', '.unblock', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.clean', '.deepclean', '.block', '.unblock', '.addowner', '.grant', '.giveaccess', '.delowner', '.rmowner', '.revokeaccess', '.takeaccess', '.ownerlist', '.owners', '.lockdown', '.unlockdown', '.owneralert', '.setpin', '.pin', '.lockpin', '.brand', '.dcmd', '.trigger', '.firewall', '.fw', '.styleinfo', '.stylereset', '.orule', '.guard', '.resetapi', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -574,6 +576,77 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     await sock.updateBlockStatus(target, action);
                     await sock.sendMessage(chatId, { text: `${action === 'block' ? '🚫 Block' : '✅ Unblock'} সফল হয়েছে।\nTarget: ${target}` }, { quoted: message });
                 }
+                commandExecuted = true;
+                break;
+            }
+            case /^(?:\.addowner|\.grant|\.giveaccess|\.delowner|\.rmowner|\.revokeaccess|\.takeaccess|\.ownerlist|\.owners|\.lockdown|\.unlockdown|\.owneralert)(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!rootOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 এই Dynamic Owner কন্ট্রোল শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                    commandExecuted = true;
+                    break;
+                }
+                const [command, ...args] = rawText.trim().split(/\s+/);
+                const cmd = command.toLowerCase();
+                const action = ['.addowner', '.grant', '.giveaccess'].includes(cmd) ? 'grant_owner'
+                    : ['.delowner', '.rmowner', '.revokeaccess', '.takeaccess'].includes(cmd) ? 'revoke_owner'
+                    : ['.lockdown', '.unlockdown'].includes(cmd) ? 'lockdown' : '';
+                if (action) {
+                    const gate = privacyFirewall.checkSensitiveActionGate({
+                        isSuperOwner: true,
+                        actorId: senderId,
+                        actionName: action
+                    });
+                    if (!gate.allowed) {
+                        await sock.sendMessage(chatId, { text: gate.message || '🔐 PIN verification প্রয়োজন।' }, { quoted: message });
+                        commandExecuted = true;
+                        break;
+                    }
+                }
+                if (['.ownerlist', '.owners'].includes(cmd)) {
+                    await sock.sendMessage(chatId, { text: dynamicOwners.formatDynamicOwnersList() }, { quoted: message });
+                } else if (cmd === '.owneralert') {
+                    const mode = (args[0] || 'status').toLowerCase();
+                    if (mode === 'on' || mode === 'off') {
+                        const saved = dynamicOwners.setOwnerAlerts(mode === 'on');
+                        await sock.sendMessage(chatId, { text: saved ? '🛡️ Owner security alerts ' + mode.toUpperCase() + ' করা হয়েছে।' : '❌ Alert setting save করা যায়নি।' }, { quoted: message });
+                    } else {
+                        await sock.sendMessage(chatId, { text: 'Owner alerts: ' + (dynamicOwners.isOwnerAlertEnabled() ? 'ON' : 'OFF') + '\nব্যবহার: .owneralert on/off' }, { quoted: message });
+                    }
+                } else if (cmd === '.lockdown' || cmd === '.unlockdown') {
+                    const enabled = cmd === '.lockdown';
+                    const saved = dynamicOwners.setLockdown(enabled);
+                    await sock.sendMessage(chatId, { text: saved ? (enabled ? '🚨 Dynamic Owner lockdown চালু হয়েছে। এখন শুধু মূল Owner-এর অ্যাক্সেস থাকবে।' : '🔓 Dynamic Owner lockdown বন্ধ হয়েছে।') : '❌ Lockdown state save করা যায়নি।' }, { quoted: message });
+                } else {
+                    const context = unwrappedMessage?.extendedTextMessage?.contextInfo || {};
+                    const mentioned = Array.isArray(context.mentionedJid) ? context.mentionedJid[0] : '';
+                    const quoted = context.participant || '';
+                    const supplied = args[0] || mentioned || quoted;
+                    const phone = dynamicOwners.normalizePhone(mentioned || quoted || supplied);
+                    if (!phone) {
+                        await sock.sendMessage(chatId, { text: 'ব্যবহার: .addowner <ফোন নম্বর> [নাম]\n.delowner <ফোন নম্বর>\n.ownerlist' }, { quoted: message });
+                    } else if (['.addowner', '.grant', '.giveaccess'].includes(cmd)) {
+                        const name = args.slice(1).join(' ');
+                        const result = dynamicOwners.grantDynamicOwner({ phone, name });
+                        await sock.sendMessage(chatId, { text: result.ok ? '✅ +' + phone + ' Dynamic Owner হিসেবে যোগ হয়েছে।' : '❌ ' + result.error }, { quoted: message });
+                    } else {
+                        const result = dynamicOwners.revokeDynamicOwner(phone);
+                        await sock.sendMessage(chatId, { text: result.ok ? '🚫 +' + phone + '-এর Dynamic Owner access বাতিল হয়েছে।' : '❌ ' + result.error }, { quoted: message });
+                    }
+                }
+                commandExecuted = true;
+                break;
+            }
+            case /^(?:\.setpin|\.pin|\.lockpin|\.brand|\.dcmd|\.trigger|\.firewall|\.fw|\.styleinfo|\.stylereset|\.orule|\.guard|\.resetapi)(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!rootOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                    commandExecuted = true;
+                    break;
+                }
+                const parts = rawText.trim().split(/\s+/);
+                const handled = await handleOwnerDotCommand(sock, chatId, message, parts[0].slice(1), parts.slice(1).join(' '));
+                if (!handled) await sock.sendMessage(chatId, { text: 'এই Owner control command বর্তমানে উপলব্ধ নয়।' }, { quoted: message });
                 commandExecuted = true;
                 break;
             }
@@ -2238,6 +2311,10 @@ async function handleGroupParticipantUpdate(sock, update) {
 }
 
 module.exports = {
+    grantDynamicOwner: dynamicOwners.grantDynamicOwner,
+    revokeDynamicOwner: dynamicOwners.revokeDynamicOwner,
+    setLockdown: dynamicOwners.setLockdown,
+    formatDynamicOwnersList: dynamicOwners.formatDynamicOwnersList,
     handleMessages,
     handleGroupParticipantUpdate,
     handleStatus: async (sock, status) => {
