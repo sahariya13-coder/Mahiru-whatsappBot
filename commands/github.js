@@ -1,33 +1,49 @@
-const moment = require('moment-timezone');
 const fetch = require('node-fetch');
-const fs = require('fs');
-const path = require('path');
+const moment = require('moment-timezone');
 
+const REPOSITORY_API = 'https://api.github.com/repos/sahariya13-coder/Mahiru-whatsappBot';
 
 async function githubCommand(sock, chatId, message) {
-  try {
-    const res = await fetch('https://api.github.com/repos/sahariya13-coder/Mahiru-whatsappBot');
-    if (!res.ok) throw new Error('Error fetching repository data');
-    const json = await res.json();
+    try {
+        const response = await fetch(REPOSITORY_API, {
+            headers: {
+                Accept: 'application/vnd.github+json',
+                'User-Agent': 'Mahiru-WhatsApp-Bot'
+            },
+            timeout: 15000
+        });
 
-    let txt = `*乂  Mahiru Shiina   乂*\n\n`;
-    txt += `✩  *Name* : ${json.name}\n`;
-    txt += `✩  *Watchers* : ${json.watchers_count}\n`;
-    txt += `✩  *Size* : ${(json.size / 1024).toFixed(2)} MB\n`;
-    txt += `✩  *Last Updated* : ${moment(json.updated_at).format('DD/MM/YY - HH:mm:ss')}\n`;
-    txt += `✩  *URL* : ${json.html_url}\n`;
-    txt += `✩  *Forks* : ${json.forks_count}\n`;
-    txt += `✩  *Stars* : ${json.stargazers_count}\n\n`;
-    txt += `💥 *Mahiru Shiina*`;
+        if (!response.ok) {
+            throw new Error('GitHub API returned HTTP ' + response.status);
+        }
 
-    // Use the local asset image
-    const imgPath = path.join(__dirname, '../assets/bot_image.jpg');
-    const imgBuffer = fs.readFileSync(imgPath);
+        const repository = await response.json();
+        const updatedAt = repository.updated_at
+            ? moment(repository.updated_at).tz('Asia/Dhaka').format('DD/MM/YY - hh:mm A')
+            : 'তথ্য পাওয়া যায়নি';
 
-    await sock.sendMessage(chatId, { image: imgBuffer, caption: txt }, { quoted: message });
-  } catch (error) {
-    await sock.sendMessage(chatId, { text: '❌ Error fetching repository information.' }, { quoted: message });
-  }
+        const text = [
+            '*乂 MAHIRU SHIINA 乂*',
+            '',
+            '✩ *Repository:* ' + (repository.full_name || 'Mahiru WhatsApp Bot'),
+            '✩ *Description:* ' + (repository.description || 'WhatsApp Bot'),
+            '✩ *Stars:* ' + Number(repository.stargazers_count || 0).toLocaleString('en-US'),
+            '✩ *Forks:* ' + Number(repository.forks_count || 0).toLocaleString('en-US'),
+            '✩ *Watchers:* ' + Number(repository.subscribers_count || 0).toLocaleString('en-US'),
+            '✩ *Size:* ' + (Number(repository.size || 0) / 1024).toFixed(2) + ' MB',
+            '✩ *Last Updated:* ' + updatedAt,
+            '✩ *URL:* ' + (repository.html_url || 'https://github.com/sahariya13-coder/Mahiru-whatsappBot'),
+            '',
+            'Powered by MSK'
+        ].join('\n');
+
+        await sock.sendMessage(chatId, { text }, { quoted: message });
+    } catch (error) {
+        console.error('[GITHUB COMMAND] Failed to fetch repository:', error.message);
+        await sock.sendMessage(chatId, {
+            text: '❌ GitHub Repository-এর তথ্য আনা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।'
+        }, { quoted: message });
+    }
 }
 
-module.exports = githubCommand; 
+module.exports = githubCommand;
