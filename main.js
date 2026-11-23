@@ -1249,7 +1249,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
 
             case userMessage.startsWith('.gif'):
-                await gifCommand(sock, chatId, rawText.trim().split(/\\s+/).slice(1).join(' '));
+                await gifCommand(sock, chatId, rawText.trim().split(/\s+/).slice(1).join(' '));
                 break;
 
             case userMessage.startsWith('.twitter') || userMessage.startsWith('.x '):
