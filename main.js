@@ -149,6 +149,7 @@ const { pmblockerCommand, readState: readPmBlockerState } = require('./commands/
 const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
 const { handleBackupMessage } = require('./commands/backup');
+const githubCommand = require('./commands/github');
 
 // Global settings
 global.packname = settings.packname;
@@ -457,6 +458,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage === '.github' || userMessage === '.git':
+                await githubCommand(sock, chatId, message);
+                commandExecuted = true;
+                break;
             // Group-local feature switches: .chatbot off, .antilink on, etc.
             case isGroup && /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye)\s+(?:on|off)\s*$/i.test(rawText || ''): {
                 const parts = String(rawText || '').trim().split(/\s+/);
