@@ -188,7 +188,7 @@ primemonir/wa-bot
 </details>
 
 <details>
-<summary><b>🧠 মায়া v1.0 AI, নিউরাল ভয়েস ও রিসার্চ</b></summary>
+<summary><b>🧠 মাহিরু v1.0 AI, নিউরাল ভয়েস ও রিসার্চ</b></summary>
 
 <br/>
 

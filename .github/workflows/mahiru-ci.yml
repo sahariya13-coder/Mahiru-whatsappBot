@@ -262,7 +262,7 @@ jobs:
           fi
 
   mahiru-v2-tests:
-    name: "🧪 ৩. মায়া v2.0 আল্ট্রা টেস্ট সুইট"
+    name: "🧪 ৩. মাহিরু v2.0 আল্ট্রা টেস্ট সুইট"
     needs: [syntax-integrity]
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -606,7 +606,7 @@ jobs:
               `| :--- | :--- |`,
               `| 🔍 সিনট্যাক্স ও JSON ইন্টিগ্রিটি | ${icon(resSyntax)} |`,
               `| 🛡️ সিকিউরিটি ও সিক্রেট ফায়ারওয়াল | ${icon(resSecurity)} |`,
-              `| 🧪 মায়া v2.0 আল্ট্রা টেস্ট সুইট | ${icon(resTests)} |`,
+              `| 🧪 মাহিরু v2.0 আল্ট্রা টেস্ট সুইট | ${icon(resTests)} |`,
               `| 🚀 অটো-ডিপ্লয় / রিস্টার্ট | ${deployStatus} |`,
               '',
               `**বিস্তারিত:** \`${process.env.REF_NAME}\` • \`${shortSha}\` • *${commitTitle}* (${process.env.ACTOR})`
