@@ -116,6 +116,7 @@ const emojimixCommand = require('./commands/emojimix');
 const { handlePromotionEvent } = require('./commands/promote');
 const { handleDemotionEvent } = require('./commands/demote');
 const viewOnceCommand = require('./commands/viewonce');
+const vv2Command = require('./commands/vv2');
 const clearSessionCommand = require('./commands/clearsession');
 const { autoStatusCommand, handleStatusUpdate } = require('./commands/autostatus');
 const { simpCommand } = require('./commands/simp');
@@ -1364,6 +1365,12 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 } else {
                     await handleChatbotCommand(sock, chatId, message, match);
                 }
+                break;
+            }
+
+            case userMessage === '.vv2': {
+                await vv2Command(sock, chatId, message, senderId);
+                commandExecuted = true;
                 break;
             }
 
