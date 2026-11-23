@@ -35,8 +35,12 @@ async function stickerTelegramCommand(sock, chatId, msg) {
         // Get pack name from URL
         const packName = args[0].replace("https://t.me/addstickers/", "");
 
-        // Using working bot token
-        const botToken = '7801479976:AAGuPL0a7kXXBYz6XUSR_ll2SR5V_W6oHl4';
+        // Telegram bot token must be supplied securely by the bot owner.
+        const botToken = settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN || '';
+        if (!botToken) {
+            await sock.sendMessage(chatId, { text: '❌ Telegram sticker downloader চালু করতে TELEGRAM_BOT_TOKEN সেট করতে হবে।' }, { quoted: msg });
+            return;
+        }
         
         try {
             // Fetch sticker pack info
