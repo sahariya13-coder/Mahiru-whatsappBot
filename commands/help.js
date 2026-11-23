@@ -132,7 +132,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'setpin / pin / lockpin', desc: 'Master PIN protection for sensitive controls' },
             { cmd: 'firewall / styleinfo / stylereset', desc: 'Privacy firewall and style-learning controls' },
             { cmd: 'dcmd / trigger / brand / orule', desc: 'Dynamic commands, triggers, branding and owner rules' },
-            { cmd: 'sch / remind / tasks', desc: 'Scheduler ও Reminder' },
+            { cmd: 'sch / remind / tasks', desc: 'শিডিউল তৈরি, তালিকা দেখা ও বাতিল' },
             { cmd: 'anticall / pmblocker / antidelete', desc: 'কল ও ইনবক্স সুরক্ষা' },
             { cmd: 'autoread / autotyping / autostatus', desc: 'অটোমেশন কন্ট্রোল' }
         ]
