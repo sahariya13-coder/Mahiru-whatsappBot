@@ -287,6 +287,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node24-
 
+      - name: Apply compatible dependency security updates
+        run: |
+          if [ -f package-lock.json ]; then
+            npm audit fix --package-lock-only --no-fund || true
+            npm audit --omit=dev --audit-level=high || true
+          fi
+
       - name: Install Dependencies (Lockfile-Safe)
         run: |
           if [ -f package-lock.json ]; then
@@ -513,6 +520,15 @@ jobs:
             process.exit(failed > 0 ? 1 : 0);
           })();
           EOF
+
+      - name: Upload compatible security-updated lockfile for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mahiru-audit-updated-lockfile
+          path: package-lock.json
+          if-no-files-found: ignore
+          retention-days: 1
 
   deploy-and-notify:
     name: "🚀 ৪. রিপোর্ট, অটো-ডিপ্লয় ও অ্যালার্ট"
