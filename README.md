@@ -354,8 +354,13 @@ node index.js
 
 | Variable | কাজ |
 |---|---|
-| `TENOR_API_KEY` | Emoji Mix API |
+| `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` | AI provider / fallback keys |
+| `TAVILY_API_KEY`, `BRAVE_API_KEY` | Optional faster web research providers (public search fallback works without them) |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` | Optional cloud vector-memory sync |
+| `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | Optional cloned neural voice |
+| `BACKUP_TG_BOT_TOKEN`, `BACKUP_TG_CHAT_ID` | Optional Telegram backup destination |
 | `TELEGRAM_BOT_TOKEN` | Telegram sticker pack downloader |
+| `TENOR_API_KEY` | Emoji Mix API |
 | `GIPHY_API_KEY` | GIF search command (`.gif`) |
 
 এই মানগুলো source code-এ রাখা হয় না। Telegram bot token আগে public repository-তে প্রকাশিত হয়ে থাকলে BotFather থেকে token revoke করে নতুন token ব্যবহার করুন।
