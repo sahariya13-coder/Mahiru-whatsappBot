@@ -26,15 +26,38 @@ async function hasGitRepo() {
 }
 
 async function updateViaGit() {
-    const oldRev = (await run('git rev-parse HEAD').catch(() => 'unknown')).trim();
-    await run('git fetch --all --prune');
-    const newRev = (await run('git rev-parse origin/main')).trim();
+    const oldRev = (await run('git rev-parse HEAD')).trim();
+    const branch = (await run('git branch --show-current')).trim();
+
+    if (!branch) {
+        throw new Error('বর্তমান Git branch শনাক্ত হয়নি। Hosting Panel থেকে সঠিক branch deploy করুন; updater কোনো branch অনুমান করে নেবে না।');
+    }
+    if (!/^[A-Za-z0-9._/-]+$/.test(branch) || branch.startsWith('-') || branch.includes('..')) {
+        throw new Error('নিরাপত্তার জন্য Git branch name যাচাই করা যায়নি।');
+    }
+
+    // Never discard local edits or untracked runtime data during an update.
+    const localChanges = (await run('git status --porcelain --untracked-files=no')).trim();
+    if (localChanges) {
+        throw new Error('Local tracked file পরিবর্তিত আছে। আগে পরিবর্তন commit/backup করুন; updater কোনো local change মুছবে না।');
+    }
+
+    await run(`git fetch origin +refs/heads/${branch}:refs/remotes/origin/${branch}`);
+    const newRev = (await run(`git rev-parse refs/remotes/origin/${branch}`)).trim();
     const alreadyUpToDate = oldRev === newRev;
-    const commits = alreadyUpToDate ? '' : await run(`git log --pretty=format:"%h %s (%an)" ${oldRev}..${newRev}`).catch(() => '');
-    const files = alreadyUpToDate ? '' : await run(`git diff --name-status ${oldRev} ${newRev}`).catch(() => '');
-    await run(`git reset --hard ${newRev}`);
-    await run('git clean -fd');
-    return { oldRev, newRev, alreadyUpToDate, commits, files };
+    if (alreadyUpToDate) {
+        return { oldRev, newRev, alreadyUpToDate: true, commits: '', files: '', branch };
+    }
+
+    const mergeBase = (await run(`git merge-base ${oldRev} ${newRev}`)).trim();
+    if (mergeBase !== oldRev) {
+        throw new Error('Local branch ও remote branch সরাসরি fast-forward করা যাচ্ছে না। নিরাপদে আপডেট করতে Hosting Panel থেকে branch sync করুন।');
+    }
+
+    const commits = await run(`git log --pretty=format:"%h %s (%an)" ${oldRev}..${newRev}`).catch(() => '');
+    const files = await run(`git diff --name-status ${oldRev} ${newRev}`).catch(() => '');
+    await run(`git merge --ff-only ${newRev}`);
+    return { oldRev, newRev, alreadyUpToDate: false, commits, files, branch };
 }
 
 function downloadFile(url, dest, visited = new Set()) {
