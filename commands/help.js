@@ -60,6 +60,8 @@ ${menuTitle}
 │ .topmembers
 │ .weather <city>
 │ .news
+│ .gif <search>
+│ .twitter <X/Twitter link>
 │ .joke
 │ .quote
 │ .fact
@@ -158,6 +160,7 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .welcome <on/off>
 │ .goodbye <on/off>
 │ .chatbot <on/off> (এই গ্রুপের AI)
+│ .antibot <on/off/set warn|kick>
 │ .gai / .iai <on/off>
 │ .tag <text> / .tagall
 │ .tagnotadmin / .hidetag <text>
@@ -192,6 +195,8 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .setpp (reply to image)
 │ .clearsession / .cleartmp
 │ .antidelete
+│ .savestatus (reply to status)
+│ .savestatus on/off (auto-save)
 │ .autoreact <on/off>
 │ .autostatus <on/off>
 │ .autotyping <on/off>
