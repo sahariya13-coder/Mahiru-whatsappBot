@@ -452,7 +452,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.watch', '.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -568,6 +568,31 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 } else {
                     const rules = systemControl.getOwnerRules();
                     await sock.sendMessage(chatId, { text: rules.length ? rules.map((item, i) => `${i + 1}. [${item.id}] ${item.rule}`).join('\n') : 'কোনো Owner rule নেই।\nযোগ: .ownerrule add <rule>' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.voicestudio' || userMessage.startsWith('.voicestudio '): {
+                const args = rawText.trim().split(/\s+/).slice(1);
+                const action = (args[0] || 'stats').toLowerCase();
+                const voice = require('./lib/neuralVoice');
+                if (action === 'provider' && args[1]) {
+                    const config = voice.updateVoiceStudioConfig({ providerMode: args[1].toLowerCase() });
+                    await sock.sendMessage(chatId, { text: `🎙️ Voice provider: ${config.providerMode}` }, { quoted: message });
+                } else if (action === 'mastering' && ['on', 'off'].includes((args[1] || '').toLowerCase())) {
+                    const config = voice.updateVoiceStudioConfig({ studioMastering: args[1].toLowerCase() === 'on' });
+                    await sock.sendMessage(chatId, { text: `Studio mastering: ${config.studioMastering ? 'ON' : 'OFF'}` }, { quoted: message });
+                } else if (action === 'cache' && ['on', 'off'].includes((args[1] || '').toLowerCase())) {
+                    const config = voice.updateVoiceStudioConfig({ cacheEnabled: args[1].toLowerCase() === 'on' });
+                    await sock.sendMessage(chatId, { text: `Voice cache: ${config.cacheEnabled ? 'ON' : 'OFF'}` }, { quoted: message });
+                } else if (action === 'clearcache') {
+                    const removed = voice.clearVoiceCache();
+                    await sock.sendMessage(chatId, { text: `✅ Voice cache cleared. Files removed: ${removed ?? 'done'}` }, { quoted: message });
+                } else {
+                    const stats = voice.getVoiceStudioStats();
+                    await sock.sendMessage(chatId, {
+                        text: `🎙️ *MAHIRU NEURAL VOICE STUDIO*\nProvider: ${stats.config.providerMode}\nMastering: ${stats.config.studioMastering ? 'ON' : 'OFF'}\nCache: ${stats.config.cacheEnabled ? 'ON' : 'OFF'}\nElevenLabs: ${stats.clonedReady ? 'Ready' : 'Not configured'}\nEdge TTS: ${stats.edgeReady ? 'Ready' : 'Unavailable'}\nBackup TTS: ${stats.backupReady ? 'Ready' : 'Unavailable'}\nCached files: ${stats.cachedFiles}\nQueue: ${stats.ffmpegQueueDepth}\n\n.voicestudio provider auto|cloned|gemini|edge|backup|gtts\n.voicestudio mastering on|off\n.voicestudio cache on|off\n.voicestudio clearcache`
+                    }, { quoted: message });
                 }
                 commandExecuted = true;
                 break;
