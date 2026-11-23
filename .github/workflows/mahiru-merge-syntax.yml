@@ -26,3 +26,9 @@ jobs:
             echo "Checking $file"
             node --check "$file"
           done < <(find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*' -print0)
+
+      - name: Install runtime dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund
+      - name: Smoke-load merged engines
+        run: |
+          node -e "require('./lib/mayaCore'); require('./lib/ownerAgent'); require('./lib/scheduler'); require('./lib/callBlocker'); console.log('Mahiru 1.0.3 engines loaded successfully')"
