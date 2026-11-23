@@ -277,7 +277,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     console.log('🎙️ Spoken command recognized:', spokenCommand);
                 }
             } catch (voiceError) {
-                console.error('Voice transcription failed:', voiceError.message);
+                console.error('Voice transcription failed:', voiceError?.message || voiceError, voiceError?.stack || '');
                 await sock.sendMessage(chatId, {
                     text: 'দুঃখিত, Voice Message বুঝতে পারিনি। আবার পাঠাও।'
                 }, { quoted: message });
