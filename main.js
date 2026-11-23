@@ -567,7 +567,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const mentioned = Array.isArray(context.mentionedJid) ? context.mentionedJid[0] : '';
                 const quotedParticipant = context.participant || '';
                 const supplied = rawText.trim().split(/\s+/)[1] || '';
-                const target = mentioned || quotedParticipant || (supplied.includes('@') ? supplied : (supplied.replace(/\\D/g, '') ? supplied.replace(/\\D/g, '') + '@s.whatsapp.net' : ''));
+                const target = mentioned || quotedParticipant || (supplied.includes('@') ? supplied : (supplied.replace(/\D/g, '') ? supplied.replace(/\\D/g, '') + '@s.whatsapp.net' : ''));
                 if (!target || target.endsWith('@g.us') || target === sock.user?.id || target === senderId) {
                     await sock.sendMessage(chatId, { text: `ব্যবহার: .${action} <নম্বর/@mention> অথবা মেসেজে reply দিয়ে .${action}` }, { quoted: message });
                 } else {
