@@ -110,7 +110,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'style tui|tumi|apni|auto', desc: 'AI সম্বোধনের ধরন সেট' },
             { cmd: 'cmd list / off / on', desc: 'কমান্ড চালু বা বন্ধ' },
             { cmd: 'summary', desc: 'সিস্টেম ও AI রিপোর্ট' },
-            { cmd: 'rules', desc: 'AI-এর Owner-defined নিয়ম' },
+            { cmd: 'rule <নিয়ম> / rule clear', desc: 'এই চ্যাটের AI custom rule' },
             { cmd: 'orule add / del / list', desc: 'স্থায়ী Owner নিয়ম' },
             { cmd: 'guard on / off', desc: 'Anti-abuse সুরক্ষা' },
             { cmd: 'resetapi', desc: 'AI API cooldown reset' },
