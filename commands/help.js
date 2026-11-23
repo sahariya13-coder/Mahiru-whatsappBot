@@ -43,7 +43,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'alive', desc: 'বটের লাইভ স্ট্যাটাস' },
             { cmd: 'ping', desc: 'রেসপন্স টাইম ও স্পিড' },
             { cmd: 'owner', desc: 'বট Owner-এর তথ্য' },
-            { cmd: 'settings', desc: 'বট সেটিংস' }
+            { cmd: 'jid / uid', desc: 'চ্যাট বা ইউজারের আইডি' }
         ]
     },
     group: {
@@ -52,9 +52,7 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MASTER GROUP CONTROL',
         subtitle: 'গ্রুপ কিল-সুইচ, অ্যাডমিন ও শিল্ড',
         commands: [
-            { cmd: 'chatbot on / off', desc: 'এই গ্রুপের AI চালু বা বন্ধ' },
-            { cmd: 'gai on / off', desc: 'Group AI কন্ট্রোল' },
-            { cmd: 'iai on / off', desc: 'Inbox AI কন্ট্রোল' },
+            { cmd: 'gai on / off', desc: 'গ্রুপ AI চালু বা বন্ধ' },
             { cmd: 'tagall / hidetag', desc: 'সবার কাছে মেনশন/মেসেজ' },
             { cmd: 'kick / ban / unban', desc: 'মেম্বার রিমুভ ও ব্যান' },
             { cmd: 'promote / demote', desc: 'অ্যাডমিন বানানো বা সরানো' },
@@ -69,9 +67,10 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MAHIRU AI & VOICE STUDIO',
         subtitle: 'এআই চ্যাট, রিসার্চ ও স্টুডিও ভয়েস',
         commands: [
-            { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
-            { cmd: 'human on / off', desc: 'Human persona কন্ট্রোল' },
-            { cmd: 'voice test <কথা>', desc: 'ভয়েস রিপ্লাই পরীক্ষা' },
+            { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'AI প্রশ্নের উত্তর' },
+            { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
+            { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও' },
+            { cmd: 'remini / removebg', desc: 'ফটো Enhance ও Background remove' },
             { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'ডাইরেক্ট AI উত্তর' },
             { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
             { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও ভয়েস' },
@@ -85,6 +84,10 @@ const MENU_CATEGORIES = Object.freeze({
         subtitle: 'সুপার-ওনার ফায়ারওয়াল ও পাওয়ার OS',
         commands: [
             { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
+            { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
+            { cmd: 'iai on / off', desc: 'Inbox AI কন্ট্রোল' },
+            { cmd: 'human on / off', desc: 'Human persona কন্ট্রোল' },
+            { cmd: 'voice test <কথা>', desc: 'ভয়েস রিপ্লাই পরীক্ষা' },
             { cmd: 'role <নম্বর> gf|friend|family|client', desc: 'চ্যাটের AI রোল সেট' },
             { cmd: 'style tui|tumi|apni|auto', desc: 'AI সম্বোধনের ধরন সেট' },
             { cmd: 'cmd list / off / on', desc: 'কমান্ড চালু বা বন্ধ' },
