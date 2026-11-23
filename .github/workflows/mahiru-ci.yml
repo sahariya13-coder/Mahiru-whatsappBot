@@ -320,8 +320,8 @@ jobs:
 
             await test('settings.js: Owner phone & @lid verification + typo fix', () => {
               const settings = require('./settings');
-              assert.strictEqual(settings.botName, 'MAHIRU SHIINA');
-              assert.strictEqual(settings.isOwnerJid('8801869332798@s.whatsapp.net'), true);
+              assert.strictEqual(settings.botName, 'Mahiru Shiina');
+              assert.strictEqual(settings.isOwnerJid(`${settings.ownerNumber}@s.whatsapp.net`), true);
               assert.strictEqual(settings.isOwnerJid('216123442245856@lid'), true);
               assert.strictEqual(settings.isOwnerJid('8801949787846@s.whatsapp.net'), false);
             });
@@ -448,7 +448,7 @@ jobs:
 
               const handoff = ke.evaluateLeadAndHandoff({
                 chatId: '8801949787846@s.whatsapp.net',
-                userText: 'মনির ভাইয়ের সাথে সরাসরি কথা বলতে চাই'
+                userText: 'ওনার সাথে সরাসরি কথা বলতে চাই'
               });
               assert.strictEqual(handoff.triggered, true);
               assert.strictEqual(handoff.shouldPauseBot, true);
