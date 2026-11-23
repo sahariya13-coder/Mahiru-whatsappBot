@@ -255,7 +255,7 @@ jobs:
           EOF
 
       - name: NPM Dependency Vulnerability Audit (Advisory)
-        if: ${{ github.event_name == 'schedule' || github.event.inputs.deep_audit == 'true' || github.event_name == 'push' }}
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' || github.event.inputs.deep_audit == 'true' || github.event_name == 'push' }}
         continue-on-error: true
         run: |
           if [ -f package-lock.json ]; then
