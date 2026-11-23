@@ -103,7 +103,11 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'bk / heal restore', desc: 'সুরক্ষিত Gzip ব্যাকআপ ও রিস্টোর' },
             { cmd: 'mode public / private', desc: 'পাবলিক বা প্রাইভেট মোড' },
             { cmd: 'sch / remind / tasks', desc: 'স্মার্ট শিডিউলার ও রিমাইন্ডার' },
-            { cmd: 'anticall / pmblocker / antidelete', desc: 'কল, ইনবক্স ও ডিলিট গার্ড' }
+            { cmd: 'anticall / pmblocker / antidelete', desc: 'কল, ইনবক্স ও ডিলিট গার্ড' },
+            { cmd: 'summary', desc: 'সিস্টেম ও AI স্বাস্থ্য রিপোর্ট' },
+            { cmd: 'rules', desc: 'Owner-এর AI নিয়ম দেখা/যোগ/মুছা' },
+            { cmd: 'guard', desc: 'Privacy Firewall রিপোর্ট' },
+            { cmd: 'resetapi', desc: 'AI Provider ও API Key reload' }
         ]
     },
     media: {
