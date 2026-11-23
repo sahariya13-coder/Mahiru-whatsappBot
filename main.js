@@ -429,17 +429,13 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             // Mahiru AI access control remains the fallback for ordinary conversations.
             if (isPublic || isOwnerOrSudoCheck) {
-                await systemControl.enqueueChatTask(
+                await handleChatbotResponse(
+                    sock,
                     chatId,
-                    () => handleChatbotResponse(
-                        sock,
-                        chatId,
-                        message,
-                        rawText || userMessage,
-                        senderId,
-                        inputResponseMode
-                    ),
-                    { priority: Boolean(isOwnerOrSudoCheck), timeoutMs: 120000 }
+                    message,
+                    rawText || userMessage,
+                    senderId,
+                    inputResponseMode
                 );
             }
 
