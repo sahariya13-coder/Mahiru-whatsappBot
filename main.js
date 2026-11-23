@@ -1328,7 +1328,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             case userMessage === '.rule' || userMessage.startsWith('.rule ') ||
                  userMessage === '.rules' || userMessage.startsWith('.rules '): {
-                const ruleArgs = rawText.replace(/^\\.rules?\\s*/i, '').trim();
+                const ruleArgs = rawText.replace(/^\.\s*/i, '').trim();
                 await handleInboxRuleCommand(sock, chatId, message, ruleArgs);
                 break;
             }
