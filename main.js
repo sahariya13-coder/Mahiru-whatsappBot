@@ -160,6 +160,7 @@ const { handleOwnerCommand, handleOwnerDotCommand } = require('./lib/ownerAgent'
 const scheduler = require('./lib/scheduler');
 const { handleCallBlockCommand } = require('./lib/callBlocker');
 const { handleSelfHealerCommand } = require('./lib/selfHealer');
+const systemControl = require('./lib/systemControl');
 
 // Global settings
 global.packname = settings.packname;
@@ -424,13 +425,17 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             // Mahiru AI access control remains the fallback for ordinary conversations.
             if (isPublic || isOwnerOrSudoCheck) {
-                await handleChatbotResponse(
-                    sock,
+                await systemControl.enqueueChatTask(
                     chatId,
-                    message,
-                    rawText || userMessage,
-                    senderId,
-                    inputResponseMode
+                    () => handleChatbotResponse(
+                        sock,
+                        chatId,
+                        message,
+                        rawText || userMessage,
+                        senderId,
+                        inputResponseMode
+                    ),
+                    { priority: Boolean(isOwnerOrSudoCheck), timeoutMs: 120000 }
                 );
             }
 
@@ -488,6 +493,17 @@ async function handleMessages(sock, messageUpdate, printLog) {
             if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                 await sock.sendMessage(chatId, {
                     text: '❌ This command is only available for the owner or sudo!'
+                }, { quoted: message });
+                return;
+            }
+        }
+
+        if (userMessage.startsWith('.')) {
+            const commandName = userMessage.trim().split(/\\s+/)[0];
+            const blockState = systemControl.isCommandBlocked(commandName, isGroup);
+            if (blockState.blocked) {
+                await sock.sendMessage(chatId, {
+                    text: '⛔ এই কমান্ডটি Owner-এর System Control থেকে সাময়িকভাবে বন্ধ রাখা হয়েছে।'
                 }, { quoted: message });
                 return;
             }
