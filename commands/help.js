@@ -197,6 +197,7 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .ownerrule add/del/list/clear
 │ .syshealth
 │ .research <বিষয়/URL>
+│ .voicestudio stats/provider/mastering/cache/clearcache
 │ .watch add/del/list <URL/ID>
 │ .memory stats/search/clear
 │ .doc / .doctor
