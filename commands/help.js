@@ -191,6 +191,11 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .sudo add/remove/list
 │ .backup
 │ .heal [status/logs/verify]
+│ .cmd off/on <command> [scope]
+│ .cmd list
+│ .ownerpref <title> | <instruction>
+│ .ownerrule add/del/list/clear
+│ .syshealth
 │ .doc / .doctor
 │ .ram / .bk
 │ .settings
