@@ -12,7 +12,7 @@
     "start:fresh": "npm run reset-session && npm start",
     "install:panel": "npm install --legacy-peer-deps",
     "install:force": "npm install --force",
-    "test": "node scripts/validate.js",
+    "test": "node scripts/validate.js"
   },
   "keywords": [
     "whatsapp-bot"
