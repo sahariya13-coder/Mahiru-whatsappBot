@@ -487,7 +487,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         switch (true) {
             case userMessage.startsWith('.sch') || userMessage.startsWith('.schedule'):
-                await scheduler.handleScheduleCommand(sock, chatId, message, rawText.trim().split(/\\s+/).slice(1).join(' '));
+                await scheduler.handleScheduleCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
                 commandExecuted = true;
                 break;
             case userMessage === '.github' || userMessage === '.git':
@@ -1732,7 +1732,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                         const configuredOwner = message.key.fromMe ||
                             await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
                         if (configuredOwner) {
-                            const parts = rawText.trim().split(/\\s+/);
+                            const parts = rawText.trim().split(/\s+/);
                             const handled = await handleOwnerDotCommand(
                                 sock,
                                 chatId,
