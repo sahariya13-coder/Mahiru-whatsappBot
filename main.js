@@ -133,6 +133,7 @@ const spotifyCommand = require('./commands/spotify');
 const playCommand = require('./commands/play');
 const tiktokCommand = require('./commands/tiktok');
 const songCommand = require('./commands/song');
+const pairCommand = require('./commands/pair');
 const aiCommand = require('./commands/ai');
 const urlCommand = require('./commands/url');
 const { handleTranslateCommand } = require('./commands/translate');
@@ -1587,6 +1588,11 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             case userMessage.startsWith('.music'):
                 await playCommand(sock, chatId, message);
+                break;
+
+            case userMessage === '.pair' || userMessage.startsWith('.pair '):
+                await pairCommand(sock, chatId, message, rawText.slice(5).trim());
+                commandExecuted = true;
                 break;
 
             case userMessage.startsWith('.spotify'):
