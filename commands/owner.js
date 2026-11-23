@@ -214,7 +214,7 @@ async function ownerCommand(sock, chatId, message = null) {
     try {
         await sendInteractiveCard(sock, chatId, {
             body: bodyText,
-            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • মায়া v1.0`,
+            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • মাহিরু v1.0`,
             headerTitle: `${botTitle} • OWNER`,
             headerSubtitle: `👑 ${ownerDisplay}`,
             headerType: 'location',
