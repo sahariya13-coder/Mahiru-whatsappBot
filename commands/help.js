@@ -46,7 +46,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 's', desc: 'মাস্টার সেটিংস ড্যাশবোর্ড' },
             { cmd: 'g off / on / chat on', desc: 'গ্রুপ কিল-সুইচ ও চ্যাট কন্ট্রোল' },
             { cmd: 'tk 2 / off', desc: 'স্মার্ট টেকওভার টাইমার (১–১০ মি.)' },
-            { cmd: 'adm ls / del / nuke', desc: 'রুট অ্যাডমিন ফায়ারওয়াল' },
+            { cmd: 'adm add / del / ls / status / purge', desc: 'Owner-only Sudo ও Security Control' },
             { cmd: 'v auto / on / off / test', desc: 'ক্রিস্টাল ভয়েস কন্ট্রোল' },
             { cmd: 'cl / doc / rb', desc: 'ক্লিন • ডক্টর • রিস্টার্ট' }
         ]
@@ -93,8 +93,8 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'ROOT OWNER & SECURITY',
         subtitle: 'সুপার-ওনার ফায়ারওয়াল ও পাওয়ার OS',
         commands: [
-            { cmd: 'adm status / ls / add / del', desc: 'রুট অ্যাডমিন ও সুডো কন্ট্রোল' },
-            { cmd: 'adm nuke', desc: 'সব অজানা অ্যাডমিন ওয়াইপ (Root)' },
+            { cmd: 'adm status / ls / add / del', desc: 'Owner-only অ্যাডমিন ও সুডো কন্ট্রোল' },
+            { cmd: 'adm purge', desc: 'Blocked/invalid Sudo entries পরিষ্কার' },
             { cmd: 'settings / settings reload', desc: 'মাস্টার ড্যাশবোর্ড ও লাইভ রিলোড' },
             { cmd: 'settings safe on / off', desc: 'গ্রুপ অ্যান্টি-লিংক শিল্ড' },
             { cmd: 'tk <1-10|off>', desc: 'প্রেজেন্স স্মার্ট টেকওভার সেট' },
