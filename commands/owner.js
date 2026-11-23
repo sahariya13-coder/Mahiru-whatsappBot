@@ -1,6 +1,5 @@
 /**
- * MSK • Mahiru v1.0 ULTIMATE — Immutable Root Owner Profile & Pro vCard Engine
- * Fixes: Correct ../lib/systemOptimizer Path + Immutable +8801869332798 Root Lock + Memoized vCard
+ * MSK • Mahiru v1.0 ULTIMATE — Clean Bot Owner Profile
  * Features: Zero-Upload MAHIRU Banner Card + Group Anti-Link Shield + Daily 1-Link Guard
  * RAM Profile: Zero Disk I/O + Bounded Map (256MB Cloud Optimized)
  */
@@ -123,8 +122,8 @@ async function ownerCommand(sock, chatId, message = null) {
             footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • মাহিরু v1.0`,
             headerTitle: `${botTitle} • OWNER`,
             headerSubtitle: `👑 ${ownerDisplay}`,
-            headerType: 'location',
-            useVerifiedQuote: true,
+            headerType: 'none',
+            useVerifiedQuote: false,
             buttons,
             quoted: message
         });
