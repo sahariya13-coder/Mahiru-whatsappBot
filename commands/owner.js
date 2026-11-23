@@ -88,7 +88,7 @@ async function ownerCommand(sock, chatId, message = null) {
     const ownerDisplay = settings.ownerDisplayName || settings.botOwner || 'MSK';
     const ownerHandle = String(settings.ownerUsername || 'MSK').replace(/^@+/, '');
     const versionClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
-    const whatsappLink = `https://wa.me//${ownerHandle}`;
+    const whatsappLink = `https://wa.me/${ownerHandle}`;
     const timeInfo = getDhakaTimeInfo();
 
     // ১. বট ওনার প্রোফাইল কার্ড — ফোন নম্বর প্রকাশ করা হবে না
@@ -97,7 +97,7 @@ async function ownerCommand(sock, chatId, message = null) {
         { icon: '👤', label: 'NAME', value: ownerDisplay },
         { icon: '🏷️', label: 'BRAND', value: botTitle },
         { icon: '🆔', label: 'HANDLE', value: `@${ownerHandle}` },
-        { icon: '🔗', label: 'WHATSAPP', value: `wa.me//${ownerHandle}` },
+        { icon: '🔗', label: 'WHATSAPP', value: `wa.me/${ownerHandle}` },
         { icon: '🤖', label: 'SYSTEM', value: `Mahiru v${versionClean}` },
         { icon: '🛠️', label: 'SERVICES', value: 'Mahiru Shiina • WhatsApp Bot • AI' },
         { icon: '🕒', label: 'LOCAL TIME', value: `${timeInfo.time} (${timeInfo.date})` }
@@ -107,7 +107,7 @@ async function ownerCommand(sock, chatId, message = null) {
 
     // ২. যোগাযোগের বাটন — ফোন নম্বর প্রকাশ নয়
     const buttons = [
-        { text: 'WHATSAPP OWNER ↗', id: 'owner_whatsapp', type: 'cta_url', url: whatsappLink },
+        { text: 'CALL OWNER ☎', id: 'owner_whatsapp', type: 'cta_url', url: whatsappLink },
         { text: 'MENU 📚', id: `${prefix}menu`, type: 'quick_reply' },
         { text: 'ALIVE ⚡', id: `${prefix}alive`, type: 'quick_reply' }
     ];
@@ -130,7 +130,7 @@ async function ownerCommand(sock, chatId, message = null) {
     } catch (error) {
         console.error('❌ [owner] Error sending owner card:', error?.message || error);
         try {
-            await sock.sendMessage(chatId, { text: `👑 *Bot Owner:* ${ownerDisplay}\n🆔 *Username:* @${ownerHandle}\n🔗 *WhatsApp:* wa.me//${ownerHandle}` }, message ? { quoted: message } : {});
+            await sock.sendMessage(chatId, { text: `👑 *Bot Owner:* ${ownerDisplay}\n🆔 *Username:* @${ownerHandle}\n🔗 *WhatsApp:* wa.me/${ownerHandle}` }, message ? { quoted: message } : {});
         } catch {}
     }
 }
