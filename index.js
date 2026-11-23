@@ -469,6 +469,10 @@ async function startXeonBotInc() {
 
     XeonBotInc.ev.on('call', async (calls) => {
         try {
+            // Reference 1.0.3 smart call blocker runs first; legacy anticall remains as fallback.
+            const smartCallHandled = await require('./lib/callBlocker').handleIncomingCall(XeonBotInc, calls);
+            if (smartCallHandled) return;
+
             const { readState: readAnticallState } = require('./commands/anticall');
             if (!readAnticallState().enabled) return;
 

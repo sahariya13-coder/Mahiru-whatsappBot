@@ -152,6 +152,7 @@ const { handleBackupMessage } = require('./commands/backup');
 const githubCommand = require('./commands/github');
 const { handleOwnerCommand, handleOwnerDotCommand } = require('./lib/ownerAgent');
 const scheduler = require('./lib/scheduler');
+const { handleCallBlockCommand } = require('./lib/callBlocker');
 
 // Global settings
 global.packname = settings.packname;
@@ -437,7 +438,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -486,6 +487,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage.startsWith('.callblock'):
+                await handleCallBlockCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
+                commandExecuted = true;
+                break;
             case userMessage.startsWith('.sch') || userMessage.startsWith('.schedule'):
                 await scheduler.handleScheduleCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
                 commandExecuted = true;
