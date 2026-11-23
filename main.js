@@ -452,7 +452,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.watch', '.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -568,6 +568,52 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 } else {
                     const rules = systemControl.getOwnerRules();
                     await sock.sendMessage(chatId, { text: rules.length ? rules.map((item, i) => `${i + 1}. [${item.id}] ${item.rule}`).join('\n') : 'কোনো Owner rule নেই।\nযোগ: .ownerrule add <rule>' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.research' || userMessage.startsWith('.research '): {
+                const query = rawText.trim().slice('.research'.length).trim();
+                const browserAgent = require('./lib/browserAgent');
+                const report = await browserAgent.runDeepResearchReport(query);
+                await sock.sendMessage(chatId, { text: String(report).slice(0, 15000) }, { quoted: message });
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.watch' || userMessage.startsWith('.watch '): {
+                const args = rawText.trim().split(/\s+/);
+                const action = (args[1] || 'list').toLowerCase();
+                const browserAgent = require('./lib/browserAgent');
+                if (action === 'add' && args[2]) {
+                    const result = await browserAgent.addWatchUrl(args[2], args.slice(3).join(' '));
+                    await sock.sendMessage(chatId, { text: result.ok ? `✅ Website watch চালু হয়েছে।\nID: ${result.item.id}\n${result.item.url}` : result.error }, { quoted: message });
+                } else if (action === 'del' || action === 'remove') {
+                    const removed = browserAgent.removeWatchUrl(args[2] || '');
+                    await sock.sendMessage(chatId, { text: removed ? '✅ Watch list থেকে সরানো হয়েছে।' : '❌ ID/URL পাওয়া যায়নি।' }, { quoted: message });
+                } else {
+                    const items = browserAgent.listWatchUrls();
+                    await sock.sendMessage(chatId, { text: items.length ? items.map((item, i) => `${i + 1}. [${item.id}] ${item.label}\n${item.url}`).join('\n\n') : 'কোনো Website watch করা হচ্ছে না।\nযোগ: .watch add <URL> [নাম]' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.memory' || userMessage.startsWith('.memory '): {
+                const args = rawText.trim().split(/\s+/);
+                const action = (args[1] || 'stats').toLowerCase();
+                const vectorGraph = require('./lib/vectorGraph');
+                if (action === 'search' && args.length > 2) {
+                    const hits = await vectorGraph.searchGraph(chatId, args.slice(2).join(' '), 5);
+                    await sock.sendMessage(chatId, { text: hits.length ? hits.map((hit, i) => `${i + 1}. ${hit.text}\nScore: ${hit.score}`).join('\n\n') : 'এই চ্যাটে মিলে এমন কোনো স্মৃতি পাওয়া যায়নি।' }, { quoted: message });
+                } else if (action === 'clear') {
+                    if (isGroup && !senderIsOwnerOrSudoCheck) {
+                        await sock.sendMessage(chatId, { text: 'গ্রুপের shared memory মুছতে Owner/Sudo permission লাগবে।' }, { quoted: message });
+                    } else {
+                        vectorGraph.clearUserGraph(chatId);
+                        await sock.sendMessage(chatId, { text: '✅ এই চ্যাটের Mahiru memory clear করা হয়েছে।' }, { quoted: message });
+                    }
+                } else {
+                    const stats = vectorGraph.getGraphStats(chatId);
+                    await sock.sendMessage(chatId, { text: `🧠 *MAHIRU MEMORY*\nMemories: ${stats.currentUserMemories}\nEntities: ${Object.keys(stats.currentUserEntities || {}).length}\nTotal recalls: ${stats.totalRecalls}\nVectorized: ${stats.vectorizedCount}\nCloud sync: ${stats.cloudEnabled ? 'Enabled' : 'Disabled'}\n\n.memory search <text>\n.memory clear` }, { quoted: message });
                 }
                 commandExecuted = true;
                 break;
