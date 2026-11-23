@@ -77,10 +77,10 @@ const MENU_CATEGORIES = Object.freeze({
         subtitle: 'এআই চ্যাট, রিসার্চ ও স্টুডিও ভয়েস',
         commands: [
             { cmd: 'mahiru on / off / status', desc: 'মাহিরু AI কন্ট্রোল ও স্ট্যাটাস' },
-            { cmd: 'mahiru voice test <কথা>', desc: 'ক্রিস্টাল ভয়েস লাইভ টেস্ট' },
+            { cmd: 'voice test <কথা>', desc: 'ক্রিস্টাল ভয়েস লাইভ টেস্ট' },
             { cmd: 'v auto / on / off', desc: 'ভয়েস রিপ্লাই মোড' },
-            { cmd: 'mahiru lang bn|banglish|en|auto', desc: 'রিপ্লাই ভাষা লক' },
-            { cmd: 'mahiru research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ রিপোর্ট' },
+            { cmd: 'lang bn|banglish|en|auto', desc: 'রিপ্লাই ভাষা লক' },
+            { cmd: 'research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ রিপোর্ট' },
             { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'ডাইরেক্ট AI উত্তর' },
             { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
             { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও ভয়েস' },
