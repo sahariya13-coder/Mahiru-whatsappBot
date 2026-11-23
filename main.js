@@ -534,10 +534,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage === '.cmdstats' || userMessage === '.topcmd' || userMessage === '.botstats': {
                 const top = [...commandUsage.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
                 const report = top.length
-                    ? top.map(([name, count], index) => `${index + 1}. .${name} — ${count}`).join('\\n')
+                    ? top.map(([name, count], index) => `${index + 1}. .${name} — ${count}`).join('\n')
                     : 'এখনো কোনো কমান্ড ব্যবহারের তথ্য নেই।';
                 await sock.sendMessage(chatId, {
-                    text: `📊 *MAHIRU COMMAND STATS*\\n\\n${report}\\n\\nনোট: বট Restart হলে এই session-এর count reset হবে।`
+                    text: `📊 *MAHIRU COMMAND STATS*\n\n${report}\n\nনোট: বট Restart হলে এই session-এর count reset হবে।`
                 }, { quoted: message });
                 commandExecuted = true;
                 break;
@@ -549,7 +549,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     commandExecuted = true;
                     break;
                 }
-                const parts = rawText.trim().split(/\\s+/);
+                const parts = rawText.trim().split(/\s+/);
                 const handled = await handleOwnerDotCommand(sock, chatId, message, parts[0].slice(1), parts.slice(1).join(' '));
                 if (!handled) await sock.sendMessage(chatId, { text: 'এই cleanup action বর্তমানে উপলব্ধ নয়।' }, { quoted: message });
                 commandExecuted = true;
@@ -566,13 +566,13 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const context = unwrappedMessage?.extendedTextMessage?.contextInfo || {};
                 const mentioned = Array.isArray(context.mentionedJid) ? context.mentionedJid[0] : '';
                 const quotedParticipant = context.participant || '';
-                const supplied = rawText.trim().split(/\\s+/)[1] || '';
+                const supplied = rawText.trim().split(/\s+/)[1] || '';
                 const target = mentioned || quotedParticipant || (supplied.includes('@') ? supplied : (supplied.replace(/\\D/g, '') ? supplied.replace(/\\D/g, '') + '@s.whatsapp.net' : ''));
                 if (!target || target.endsWith('@g.us') || target === sock.user?.id || target === senderId) {
                     await sock.sendMessage(chatId, { text: `ব্যবহার: .${action} <নম্বর/@mention> অথবা মেসেজে reply দিয়ে .${action}` }, { quoted: message });
                 } else {
                     await sock.updateBlockStatus(target, action);
-                    await sock.sendMessage(chatId, { text: `${action === 'block' ? '🚫 Block' : '✅ Unblock'} সফল হয়েছে।\\nTarget: ${target}` }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: `${action === 'block' ? '🚫 Block' : '✅ Unblock'} সফল হয়েছে।\nTarget: ${target}` }, { quoted: message });
                 }
                 commandExecuted = true;
                 break;
