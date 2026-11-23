@@ -1,7 +1,7 @@
 /**
- * Mahiru Shiina • Maya v1.0 ULTIMATE — Live System Status, AI Cores & Health Card (.alive / .a)
+ * Mahiru Shiina • Mahiru v1.0 ULTIMATE — Live System Status, AI Cores & Health Card (.alive / .a)
  * Fixes: Removed Raw LINUX Leak (Now PRIME CLOUD) + Real Event-Loop Lag + Removed Unused os Import
- * Features: Zero-Upload MAYA Banner + Dual-Gemini/Backup AI Status + Quick Action Buttons
+ * Features: Zero-Upload MAHIRU Banner + Dual-Gemini/Backup AI Status + Quick Action Buttons
  * RAM Profile: Zero Disk I/O (256MB Cloud Optimized) | 100% Group Anti-Link Shield Safe
  */
 const settings = require('../settings');
@@ -31,8 +31,8 @@ function getRamHealthBadge() {
     const mem = process.memoryUsage();
     const rssMb = mem.rss / 1024 / 1024;
     const heapMb = (mem.heapUsed / 1024 / 1024).toFixed(1);
-    const soft = settings.maya?.optimizer?.ramSoftLimitMb || 235;
-    const crit = settings.maya?.optimizer?.ramCriticalLimitMb || 295;
+    const soft = settings.mahiru?.optimizer?.ramSoftLimitMb || 235;
+    const crit = settings.mahiru?.optimizer?.ramCriticalLimitMb || 295;
 
     let indicator = '🟢 OPTIMAL';
     if (rssMb >= crit) indicator = '🔴 CRITICAL';
@@ -51,7 +51,7 @@ function getAiSummaryText() {
             const g = keys?.geminiKeys?.length || 0;
             const q = keys?.groqKeys?.length || 0;
             const or = keys?.openrouterKeys?.length || 0;
-            const bk = settings.maya?.backupAI?.enabled !== false ? ' • BK:ON' : '';
+            const bk = settings.mahiru?.backupAI?.enabled !== false ? ' • BK:ON' : '';
             return `G:${g} • Q:${q} • OR:${or}${bk}`;
         }
     } catch {}
@@ -70,12 +70,12 @@ async function aliveCommand(sock, chatId, message) {
     const ownerTitle = settings.ownerDisplayName || settings.botOwner || 'MSK';
     const modeText = toSmallCaps(String(settings.commandMode || 'public').toUpperCase());
     const versionClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
-    const securityText = settings.maya?.security?.strictOwnerChatbotLock !== false
+    const securityText = settings.mahiru?.security?.strictOwnerChatbotLock !== false
         ? '🛡️ Root Firewall Active'
         : '⚙️ Standard';
-    const takeoverMin = settings.maya?.takeover?.defaultWaitMin || 2;
+    const takeoverMin = settings.mahiru?.takeover?.defaultWaitMin || 2;
 
-    const statusCard = buildInfoFrame('Maya System Status', [
+    const statusCard = buildInfoFrame('Mahiru System Status', [
         { raw: `${timeInfo.greetEmoji} *${toSmallCaps(timeInfo.greeting)}*, ${userName}!` },
         { icon: '⚡', label: 'STATUS', value: `ONLINE • ${toSmallCaps(healthText)}` },
         { icon: '🤖', label: 'ENGINE', value: `${botTitle} • Mahiru` },
@@ -113,7 +113,7 @@ async function aliveCommand(sock, chatId, message) {
     try {
         await sendInteractiveCard(sock, chatId, {
             body: bodyText,
-            footer: settings.maya?.ui?.footerText || `Powered By ${botTitle} • Mahiru`,
+            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • Mahiru`,
             headerTitle: `${botTitle} • ALIVE`,
             headerSubtitle: `⚡ ${toSmallCaps('MAHIRU ONLINE')}`,
             headerType: 'location',
