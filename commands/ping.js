@@ -1,7 +1,7 @@
 /**
- * PRIME MONIR • Maya v1.0 ULTIMATE — Precision Latency & Cloud Telemetry Engine
+ * MSK • Mahiru v1.0 ULTIMATE — Precision Latency & Cloud Telemetry Engine
  * Fixes: Zero Dangling Timer Leak + Cached CPU Core Count + PRIME CLOUD Branding (Zero LINUX Leak)
- * Features: Zero-Spam Reaction RTT Probe + Event Loop Lag Meter + 256MB RAM Profiler + MAYA Banner
+ * Features: Zero-Spam Reaction RTT Probe + Event Loop Lag Meter + 256MB RAM Profiler + MAHIRU Banner
  * Security: 100% Link-Free (Group Anti-Link Shield Safe) | Zero Disk I/O
  */
 const os = require('os');
@@ -110,7 +110,7 @@ async function pingCommand(sock, chatId, message) {
         const speedBadge = getSpeedGrade(rttMs);
 
         const pingCard = buildInfoFrame('Speed & Telemetry', [
-            { raw: `⚡ *${toSmallCaps('PONG! MAYA ENGINE RESPONSIVE')}*` },
+            { raw: `⚡ *${toSmallCaps('PONG! MAHIRU ENGINE RESPONSIVE')}*` },
             { icon: '🚀', label: 'LATENCY', value: `${rttMs} ms (${toSmallCaps(speedBadge)})` },
             { icon: '⚙️', label: 'LOOP LAG', value: `${loopLagMs} ms` },
             { icon: '📡', label: 'PROBE', value: liveProbe ? 'Live WhatsApp RTT' : 'Local Runtime' },
@@ -132,7 +132,7 @@ async function pingCommand(sock, chatId, message) {
 
         await sendInteractiveCard(sock, chatId, {
             body: pingCard,
-            footer: settings.maya?.ui?.footerText || `Powered By ${botTitle} • Mahiru v${versionClean}`,
+            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • Mahiru v${versionClean}`,
             headerTitle: `${botTitle} • SPEED`,
             headerSubtitle: `🚀 ${rttMs} ms • ${toSmallCaps('ONLINE')}`,
             headerType: 'location',
