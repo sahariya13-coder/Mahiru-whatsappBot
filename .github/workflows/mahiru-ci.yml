@@ -62,7 +62,7 @@ jobs:
             'settings.js',
             'package.json',
             'commands/chatbot.js',
-            'lib/mayaCore.js',
+            'lib/mahiruCore.js',
             'lib/selfHealer.js',
             'lib/systemOptimizer.js',
             'lib/chatQueue.js',
@@ -491,8 +491,8 @@ jobs:
               assert.strictEqual(ai.setPrimaryProvider('groq'), true);
             });
 
-            await test('lib/mayaCore.js: Bangla Dari (।) preserved, Devanagari stripped & no false 🚨', () => {
-              const mahiruCore = require('./lib/mayaCore');
+            await test('lib/mahiruCore.js: Bangla Dari (।) preserved, Devanagari stripped & no false 🚨', () => {
+              const mahiruCore = require('./lib/mahiruCore');
               const out = mahiruCore.sanitizeHumanReply(
                 '১ ডলার = ১২৫ টাকা। আর কোনো হিসাব দরকার? नमस्ते',
                 false,
