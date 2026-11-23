@@ -174,6 +174,10 @@ global.ytch = "MSK";
 // Channel promotion metadata removed.
 const channelInfo = {};
 
+// Bounded in-memory command telemetry for the Owner command report.
+const commandUsage = new Map();
+const MAX_COMMAND_TELEMETRY = 100;
+
 
 async function handleMessages(sock, messageUpdate, printLog) {
     let chatId = null;
@@ -305,6 +309,14 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         if (userMessage.startsWith('.')) {
             console.log(`📝 Command used in ${isGroup ? 'group' : 'private'}: ${userMessage}`);
+            const usedCommand = userMessage.split(/\\s+/)[0].slice(1);
+            if (usedCommand) {
+                commandUsage.set(usedCommand, (commandUsage.get(usedCommand) || 0) + 1);
+                if (commandUsage.size > MAX_COMMAND_TELEMETRY) {
+                    const leastRecent = commandUsage.keys().next().value;
+                    commandUsage.delete(leastRecent);
+                }
+            }
         }
 
         let accessData = {};
@@ -452,7 +464,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.clean', '.deepclean', '.block', '.unblock', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -519,6 +531,52 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage === '.cmdstats' || userMessage === '.topcmd' || userMessage === '.botstats': {
+                const top = [...commandUsage.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+                const report = top.length
+                    ? top.map(([name, count], index) => `${index + 1}. .${name} — ${count}`).join('\\n')
+                    : 'এখনো কোনো কমান্ড ব্যবহারের তথ্য নেই।';
+                await sock.sendMessage(chatId, {
+                    text: `📊 *MAHIRU COMMAND STATS*\\n\\n${report}\\n\\nনোট: বট Restart হলে এই session-এর count reset হবে।`
+                }, { quoted: message });
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.clean' || userMessage.startsWith('.clean ') || userMessage === '.deepclean' || userMessage.startsWith('.deepclean '): {
+                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!configuredOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                    commandExecuted = true;
+                    break;
+                }
+                const parts = rawText.trim().split(/\\s+/);
+                const handled = await handleOwnerDotCommand(sock, chatId, message, parts[0].slice(1), parts.slice(1).join(' '));
+                if (!handled) await sock.sendMessage(chatId, { text: 'এই cleanup action বর্তমানে উপলব্ধ নয়।' }, { quoted: message });
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.block' || userMessage.startsWith('.block ') || userMessage === '.unblock' || userMessage.startsWith('.unblock '): {
+                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!configuredOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                    commandExecuted = true;
+                    break;
+                }
+                const action = userMessage.startsWith('.unblock') ? 'unblock' : 'block';
+                const context = unwrappedMessage?.extendedTextMessage?.contextInfo || {};
+                const mentioned = Array.isArray(context.mentionedJid) ? context.mentionedJid[0] : '';
+                const quotedParticipant = context.participant || '';
+                const supplied = rawText.trim().split(/\\s+/)[1] || '';
+                const target = mentioned || quotedParticipant || (supplied.includes('@') ? supplied : (supplied.replace(/\\D/g, '') ? supplied.replace(/\\D/g, '') + '@s.whatsapp.net' : ''));
+                if (!target || target.endsWith('@g.us') || target === sock.user?.id || target === senderId) {
+                    await sock.sendMessage(chatId, { text: `ব্যবহার: .${action} <নম্বর/@mention> অথবা মেসেজে reply দিয়ে .${action}` }, { quoted: message });
+                } else {
+                    await sock.updateBlockStatus(target, action);
+                    await sock.sendMessage(chatId, { text: `${action === 'block' ? '🚫 Block' : '✅ Unblock'} সফল হয়েছে।\\nTarget: ${target}` }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
             case userMessage === '.syshealth': {
                 const health = systemControl.getSystemHealth();
                 const queue = systemControl.getQueueStats();
