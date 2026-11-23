@@ -826,7 +826,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^(?:\.heal|\.health|\.doc|\.doctor|\.ram|\.bk|\.backup)\b/i.test(rawText.trim()):
-                await handleSelfHealerCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
+                await handleSelfHealerCommand(sock, chatId, message, rawText.trim());
                 commandExecuted = true;
                 break;
             case userMessage.startsWith('.callblock'):
