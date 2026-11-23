@@ -1,5 +1,5 @@
 /**
- * PRIME MONIR • Mahiru v1.0 ULTIMATE — Hybrid Interactive Popup Menu & Category Command Hub
+ * MSK • Mahiru v1.0 ULTIMATE — Hybrid Interactive Popup Menu & Category Command Hub
  * Features: Zero-Upload MAHIRU Banner Header + 10-Category single_select Popup + Quick Action Buttons
  * Security: 100% Link-Free (Group Anti-Link Shield Safe) + Zero MSK/Mahiru Leak | 256MB RAM Optimized
  */
@@ -76,11 +76,11 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MAHIRU AI & VOICE STUDIO',
         subtitle: 'এআই চ্যাট, রিসার্চ ও স্টুডিও ভয়েস',
         commands: [
-            { cmd: 'maya on / off / status', desc: 'মাহিরু AI কন্ট্রোল ও স্ট্যাটাস' },
-            { cmd: 'maya voice test <কথা>', desc: 'ক্রিস্টাল ভয়েস লাইভ টেস্ট' },
+            { cmd: 'mahiru on / off / status', desc: 'মাহিরু AI কন্ট্রোল ও স্ট্যাটাস' },
+            { cmd: 'mahiru voice test <কথা>', desc: 'ক্রিস্টাল ভয়েস লাইভ টেস্ট' },
             { cmd: 'v auto / on / off', desc: 'ভয়েস রিপ্লাই মোড' },
-            { cmd: 'maya lang bn|banglish|en|auto', desc: 'রিপ্লাই ভাষা লক' },
-            { cmd: 'maya research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ রিপোর্ট' },
+            { cmd: 'mahiru lang bn|banglish|en|auto', desc: 'রিপ্লাই ভাষা লক' },
+            { cmd: 'mahiru research <বিষয়>', desc: 'লাইভ ওয়েব রিসার্চ রিপোর্ট' },
             { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'ডাইরেক্ট AI উত্তর' },
             { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
             { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও ভয়েস' },
@@ -255,7 +255,7 @@ async function helpCommand(sock, chatId, message) {
     const botTitle = toSmallCaps(botName);
     const ownerName = settings.ownerDisplayName || 'MSK';
     const verClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
-    const footer = settings.maya?.ui?.footerText || `Powered By ${botTitle} • মাহিরু v1.0`;
+    const footer = settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • মাহিরু v1.0`;
     const timeInfo = getDhakaTimeInfo();
     const userName = message?.pushName || 'Friend';
     const catKey = getRequestedCategory(message);
