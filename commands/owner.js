@@ -20,7 +20,7 @@ const {
 } = buttonEngine;
 
 // অটুট রুট সুপার-ওনার নম্বর (কোনো ফাইল বা ENV বদলেও কখনো পরিবর্তন হবে না)
-const IMMUTABLE_ROOT_PHONE = String(settings.ownerNumber || settings.rootSuperOwner || '').replace(/\\D/g, '');
+const IMMUTABLE_ROOT_PHONE = String(settings.ownerNumber || settings.rootSuperOwner || '').replace(/[^\d]/g, '');
 
 // ==================================================
 // ১. ডেইলি ১-লিংক ট্র্যাকার (বাউন্ডেড — ২৫৬MB RAM সেফ)
@@ -126,12 +126,12 @@ async function ownerCommand(sock, chatId, message = null) {
     const isGroup = String(chatId || '').endsWith('@g.us');
     const groupSafe = await isGroupLinkProtected(chatId);
 
-    const botName = settings.botName || 'PRIME MONIR';
+    const botName = settings.botName || 'Mahiru Shiina';
     const botTitle = toSmallCaps(botName);
     const ownerDisplay = settings.ownerDisplayName || settings.botOwner || 'প্রাইম মনির';
     const ownerHandle = String(settings.ownerUsername || 'MSK').replace(/^@+/, '');
     const versionClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
-    const phoneDigits = IMMUTABLE_ROOT_PHONE || String(settings.botOwnerNumber || '').replace(/\\D/g, '');
+    const phoneDigits = IMMUTABLE_ROOT_PHONE || String(settings.botOwnerNumber || '').replace(/[^\d]/g, '');
     if (!phoneDigits) return sock.sendMessage(chatId, { text: 'Owner নম্বর settings.js-এ সেট করা নেই।' }, message ? { quoted: message } : {});
     const formattedPhone = `+${phoneDigits}`;
     const timeInfo = getDhakaTimeInfo();
