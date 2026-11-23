@@ -356,6 +356,12 @@ async function startXeonBotInc() {
         
         if (connection == "open") {
             startDailyBackup(XeonBotInc);
+            try {
+                require('./lib/ownerAgent').startOwnerScheduler(XeonBotInc);
+                require('./lib/scheduler').startScheduler(XeonBotInc);
+            } catch (schedulerStartError) {
+                console.error('[MAHIRU 1.0.3] Scheduler startup failed:', schedulerStartError?.message || schedulerStartError);
+            }
             const connectionLabel = hasConnectedOnce ? 'RECONNECTED' : 'CONNECTED / LOGIN';
             hasConnectedOnce = true;
             console.log(chalk.magenta(` `))

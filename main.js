@@ -150,6 +150,8 @@ const settingsCommand = require('./commands/settings');
 const soraCommand = require('./commands/sora');
 const { handleBackupMessage } = require('./commands/backup');
 const githubCommand = require('./commands/github');
+const { handleOwnerCommand, handleOwnerDotCommand } = require('./lib/ownerAgent');
+const scheduler = require('./lib/scheduler');
 
 // Global settings
 global.packname = settings.packname;
@@ -382,9 +384,35 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await handleMentionDetection(sock, chatId, message);
             }
 
-            // Mahiru AI access control
-            // Public mode: Everyone can use AI in inbox and groups.
-            // Private mode: Only owner and sudo can use AI in inbox and groups.
+            // Reference v1.0.3 owner-agent bridge: recognize natural-language owner tasks
+            // without replacing Mahiru's existing chatbot flow.
+            if (!isGroup) {
+                try {
+                    const configuredOwner = message.key.fromMe ||
+                        await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                    if (configuredOwner) {
+                        const ownerResult = await handleOwnerCommand({
+                            sock,
+                            chatId,
+                            senderId,
+                            ownerJid: getOwnerInbox(sock) || senderId,
+                            text: rawText || userMessage,
+                            isOwner: true,
+                            isSuperOwner: Boolean(configuredOwner),
+                            isVoiceInput: inputResponseMode === 'voice',
+                            forceTryAI: false
+                        });
+                        if (ownerResult?.handled && ownerResult.reply) {
+                            await sock.sendMessage(chatId, { text: ownerResult.reply }, { quoted: message });
+                            return;
+                        }
+                    }
+                } catch (ownerAgentError) {
+                    console.error('[OWNER AGENT] Message handling failed:', ownerAgentError?.message || ownerAgentError);
+                }
+            }
+
+            // Mahiru AI access control remains the fallback for ordinary conversations.
             if (isPublic || isOwnerOrSudoCheck) {
                 await handleChatbotResponse(
                     sock,
@@ -409,7 +437,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -458,6 +486,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage.startsWith('.sch') || userMessage.startsWith('.schedule'):
+                await scheduler.handleScheduleCommand(sock, chatId, message, rawText.trim().split(/\\s+/).slice(1).join(' '));
+                commandExecuted = true;
+                break;
             case userMessage === '.github' || userMessage === '.git':
                 await githubCommand(sock, chatId, message);
                 commandExecuted = true;
@@ -1695,6 +1727,28 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
 
             default:
+                if (!isGroup && userMessage.startsWith('.')) {
+                    try {
+                        const configuredOwner = message.key.fromMe ||
+                            await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                        if (configuredOwner) {
+                            const parts = rawText.trim().split(/\\s+/);
+                            const handled = await handleOwnerDotCommand(
+                                sock,
+                                chatId,
+                                message,
+                                (parts[0] || '').slice(1),
+                                parts.slice(1).join(' ')
+                            );
+                            if (handled) {
+                                commandExecuted = true;
+                                break;
+                            }
+                        }
+                    } catch (ownerCommandError) {
+                        console.error('[OWNER AGENT] Dot-command failed:', ownerCommandError?.message || ownerCommandError);
+                    }
+                }
                 if (isGroup) {
                     await handleTagDetection(sock, chatId, message, senderId);
                     await handleMentionDetection(sock, chatId, message);
