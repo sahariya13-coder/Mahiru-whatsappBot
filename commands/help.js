@@ -78,7 +78,7 @@ ${menuTitle}
 ╭───「 🎨 ছবি ও স্টিকার 」 
 │ .blur (reply to image)
 │ .simage (reply to sticker)
-│ .sticker (reply to image)
+│ .sticker / .sticker-alt (reply to image)
 │ .crop (reply to sticker)
 │ .crop (reply to image)
 │ .removebg
