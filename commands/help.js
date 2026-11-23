@@ -321,7 +321,7 @@ async function helpCommand(sock, chatId, message) {
                     { text: '📋 অন্য ক্যাটাগরি', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                     { text: '🏠 MAIN MENU', id: `${p}menu`, type: 'quick_reply' },
                     { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
-                    ...(isPrivileged ? [{ text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }] : [])
+                    ...(isPrivileged ? [...(isPrivileged ? [{ text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }] : [])] : [])
                 ],
                 quoted: message
             });
@@ -358,7 +358,7 @@ async function helpCommand(sock, chatId, message) {
                     { text: '📋 ক্যাটাগরি বাছুন', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                     { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
                     { text: '🚀 PING', id: `${p}ping`, type: 'quick_reply' },
-                    { text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }
+                    ...(isPrivileged ? [{ text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }] : [])
                 ],
                 quoted: message
             });
@@ -405,7 +405,7 @@ async function helpCommand(sock, chatId, message) {
                 { text: '📋 কমান্ড মেনু', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                 { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
                 { text: '🚀 PING', id: `${p}ping`, type: 'quick_reply' },
-                { text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' },
+                ...(isPrivileged ? [{ text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }] : []),
                 { text: '⚙️ SETTINGS', id: `${p}settings`, type: 'quick_reply' }
             ],
             quoted: message
