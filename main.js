@@ -516,7 +516,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const health = systemControl.getSystemHealth();
                 const queue = systemControl.getQueueStats();
                 await sock.sendMessage(chatId, {
-                    text: `🧠 *MAHIRU SYSTEM HEALTH*\n\nRAM: ${health.rssMb} MB\nHeap: ${health.heapUsedMb} / ${health.heapTotalMb} MB\nQueue: ${queue.activeWorkers}/${queue.maxWorkers} active\nWaiting: ${queue.waitingGlobal}\nProcessed: ${queue.processed}\nTimed out: ${queue.timedOut}\nDropped: ${queue.dropped}`
+                    text: `🧠 *MAHIRU SYSTEM HEALTH*\n\nRAM: ${health.rssMb} MB\nHeap: ${health.heapMb} MB\nHealth: ${health.status}\nQueue: ${queue.activeWorkers}/${queue.maxWorkers} active\nWaiting: ${queue.waitingGlobal}\nProcessed: ${queue.processed}\nTimed out: ${queue.timedOut}\nDropped: ${queue.dropped}`
                 }, { quoted: message });
                 commandExecuted = true;
                 break;
