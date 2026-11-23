@@ -491,8 +491,15 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         if (isOwnerCommand) {
             if (!message.key.fromMe && !senderIsOwnerOrSudo) {
+                await isOwnerOrSudo.reportUnauthorizedAttempt?.(sock, {
+                    senderId,
+                    chatId,
+                    command: rawText,
+                    pushName: message.pushName || '',
+                    reason: 'Owner/Sudo only command'
+                });
                 await sock.sendMessage(chatId, {
-                    text: '❌ This command is only available for the owner or sudo!'
+                    text: '🔒 এই কমান্ডটি শুধু Bot Owner বা Sudo ব্যবহার করতে পারবেন।'
                 }, { quoted: message });
                 return;
             }
@@ -2008,10 +2015,22 @@ async function handleMessages(sock, messageUpdate, printLog) {
     } catch (error) {
         console.error('❌ Error in message handler:', error);
 
+        try {
+            await notifyOwner(sock,
+                '🚨 *MAHIRU ERROR NOTICE*\n\n' +
+                '📍 Source: Message Handler\n' +
+                '💬 Chat ID: ' + (chatId || 'Unknown') + '\n' +
+                '🧾 Error: ' + String(error?.message || error).slice(0, 1200) + '\n' +
+                '🕒 সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+            );
+        } catch (noticeError) {
+            console.error('[ERROR NOTICE] Owner notification failed:', noticeError?.message || noticeError);
+        }
+
         if (chatId) {
             try {
                 await sock.sendMessage(chatId, {
-                    text: '❌ Failed to process command!',
+                    text: '❌ Failed to process command! Owner-কে error notice পাঠানো হয়েছে।',
                     ...channelInfo
                 });
             } catch (sendError) {
