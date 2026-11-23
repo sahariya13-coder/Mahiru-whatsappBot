@@ -166,6 +166,7 @@ const { handleSelfHealerCommand } = require('./lib/selfHealer');
 const systemControl = require('./lib/systemControl');
 const dynamicOwners = require('./lib/dynamicOwners');
 const privacyFirewall = require('./lib/privacyFirewall');
+const takeoverControl = require('./lib/takeover');
 
 // Global settings
 global.packname = settings.packname;
@@ -441,6 +442,9 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 }
             }
 
+            // Manual human takeover suppresses automatic AI replies in this private inbox.
+            if (!isGroup && !message.key.fromMe && takeoverControl.isEnabled(chatId)) return;
+
             // Mahiru AI access control remains the fallback for ordinary conversations.
             if (isPublic || isOwnerOrSudoCheck) {
                 await handleChatbotResponse(
@@ -466,7 +470,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.clean', '.deepclean', '.block', '.unblock', '.addowner', '.grant', '.giveaccess', '.delowner', '.rmowner', '.revokeaccess', '.takeaccess', '.ownerlist', '.owners', '.lockdown', '.unlockdown', '.owneralert', '.setpin', '.pin', '.lockpin', '.brand', '.dcmd', '.trigger', '.firewall', '.fw', '.styleinfo', '.stylereset', '.orule', '.guard', '.resetapi', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.takeover', '.tk', '.fx', '.fix', '.recover', '.maint', '.reload', '.clean', '.deepclean', '.block', '.unblock', '.addowner', '.grant', '.giveaccess', '.delowner', '.rmowner', '.revokeaccess', '.takeaccess', '.ownerlist', '.owners', '.lockdown', '.unlockdown', '.owneralert', '.setpin', '.pin', '.lockpin', '.brand', '.dcmd', '.trigger', '.firewall', '.fw', '.styleinfo', '.stylereset', '.orule', '.guard', '.resetapi', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -533,6 +537,47 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case /^(?:\.takeover|\.tk)(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                await takeoverControl.handleTakeoverCommand(
+                    sock, chatId, message,
+                    rawText.trim().split(/\s+/).slice(1).join(' '),
+                    Boolean(rootOwner)
+                );
+                commandExecuted = true;
+                break;
+            }
+            case /^(?:\.fx|\.fix|\.recover)(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!rootOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 এই recovery command শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                } else {
+                    await handleSelfHealerCommand(sock, chatId, message, 'verify');
+                }
+                commandExecuted = true;
+                break;
+            }
+            case /^\.maint(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!rootOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 Maintenance panel শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                } else {
+                    await handleSelfHealerCommand(sock, chatId, message, '');
+                }
+                commandExecuted = true;
+                break;
+            }
+            case /^\.reload(?:\s|$)/i.test(rawText.trim()): {
+                const rootOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                if (!rootOwner) {
+                    await sock.sendMessage(chatId, { text: '🔒 Reload command শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
+                } else {
+                    const handled = await handleOwnerDotCommand(sock, chatId, message, 'ai', 'reload');
+                    if (!handled) await sock.sendMessage(chatId, { text: 'AI provider reload করা যায়নি।' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
             case userMessage === '.cmdstats' || userMessage === '.topcmd' || userMessage === '.botstats': {
                 const top = [...commandUsage.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
                 const report = top.length
