@@ -1,5 +1,5 @@
 /**
- * PRIME MONIR • Maya v3.0 ULTRA — Interactive Master Control & Settings Dashboard
+ * MSK • Mahiru v3.0 ULTRA — Interactive Master Control & Settings Dashboard
  * Features: Zero-Spam mtime Config Cache + Accurate Bool/Object Resolver + Live Reload + Group Safe Shield
  * Security: Strict Owner Verification + Silent Unauthorized Alert | RAM: 256MB Cloud Optimized
  */
@@ -123,7 +123,7 @@ async function settingsCommand(sock, chatId, message) {
             if (typeof isStrictOwner === 'function') {
                 allowed = await isStrictOwner(senderId, sock, chatId, message);
             }
-            if (!allowed && !settings.maya?.security?.strictOwnerOnly) {
+            if (!allowed && !settings.mahiru?.security?.strictOwnerOnly) {
                 allowed = await isOwnerOrSudo(senderId, sock, chatId, message);
             }
         }
@@ -250,11 +250,11 @@ async function settingsCommand(sock, chatId, message) {
         ]);
 
         const runtimeFrame = buildInfoFrame('Security & Engine', [
-            { icon: '🛡️', label: 'CHATBOT LOCK', value: settings.maya?.security?.strictOwnerChatbotLock !== false ? '🔒 OWNER LOCKED' : '⚪ OFF' },
+            { icon: '🛡️', label: 'CHATBOT LOCK', value: settings.mahiru?.security?.strictOwnerChatbotLock !== false ? '🔒 OWNER LOCKED' : '⚪ OFF' },
             { icon: '👑', label: 'SUDO / BLOCKED', value: `Sudo: ${sudoCount} • Blocked: ${secDiag?.hardBlockedCount ?? 1}` },
             { icon: '🤖', label: 'AI CORES', value: getAiSummary() },
-            { icon: '🎙️', label: 'VOICE ENGINE', value: `${settings.maya?.voice?.defaultGlobalMode || 'auto'} • Studio v3` },
-            { icon: '🔗', label: 'LINK LIMIT', value: `${settings.maya?.sanitizer?.portfolioLinkDailyLimitPerChat ?? 1}/day per chat` },
+            { icon: '🎙️', label: 'VOICE ENGINE', value: `${settings.mahiru?.voice?.defaultGlobalMode || 'auto'} • Studio v3` },
+            { icon: '🔗', label: 'LINK LIMIT', value: `${settings.mahiru?.sanitizer?.portfolioLinkDailyLimitPerChat ?? 1}/day per chat` },
             { icon: '🐏', label: 'RAM USAGE', value: getRamUsageText() },
             { icon: '🕒', label: 'TIME', value: `${timeInfo.time} (${timeInfo.date})` }
         ]);
@@ -288,7 +288,7 @@ async function settingsCommand(sock, chatId, message) {
 
             const safeModeOn = typeof userGroupLib.isGroupSafeMode === 'function'
                 ? await userGroupLib.isGroupSafeMode(chatId)
-                : (settings.maya?.ui?.groupAntiLinkShield !== false);
+                : (settings.mahiru?.ui?.groupAntiLinkShield !== false);
 
             const groupFrame = buildInfoFrame('Group Settings', [
                 { icon: '🤖', label: 'CHATBOT', value: cbText },
@@ -318,7 +318,7 @@ async function settingsCommand(sock, chatId, message) {
 
         await sendInteractiveCard(sock, chatId, {
             body: bodyText,
-            footer: settings.maya?.ui?.footerText || `Powered By ${botTitle} • Mahiru v${settings.version || '3.0.8'}`,
+            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • Mahiru v${settings.version || '3.0.8'}`,
             headerTitle: `${botTitle} • SETTINGS`,
             headerSubtitle: `⚙️ ${toSmallCaps(isGroup ? 'GROUP & GLOBAL PANEL' : 'GLOBAL CONTROL PANEL')}`,
             headerType: 'location',
