@@ -126,7 +126,7 @@ async function aliveCommand(sock, chatId, message) {
         try {
             await sock.sendMessage(
                 chatId,
-                { text: `⚡ *${botName} • মায়া v${versionClean} Online!*\n⏱️ Uptime: ${formatUptime()}\n🐏 RAM: ${ramText}` },
+                { text: `⚡ *${botName} • Mahiru v${versionClean} Online!*\n⏱️ Uptime: ${formatUptime()}\n🐏 RAM: ${ramText}` },
                 { quoted: message }
             );
         } catch {}
