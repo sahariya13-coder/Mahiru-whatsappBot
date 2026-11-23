@@ -132,6 +132,7 @@ const MENU_CATEGORIES = Object.freeze({
         subtitle: 'দৈনন্দিন কাজের স্মার্ট টুলস',
         commands: [
             { cmd: 'vv (রিপ্লাই দিয়ে)', desc: 'View-Once ছবি/ভিডিও আনলক' },
+            { cmd: 'vv2 (রিপ্লাই দিয়ে)', desc: 'View-Once মিডিয়া নিজের ইনবক্সে পাঠানো' },
             { cmd: 'trt <টেক্সট> <ভাষা>', desc: 'যেকোনো ভাষায় অনুবাদ' },
             { cmd: 'ss <লিংক>', desc: 'ওয়েবসাইট লাইভ স্ক্রিনশট' },
             { cmd: 'weather <শহর>', desc: 'লাইভ আবহাওয়া আপডেট' },
