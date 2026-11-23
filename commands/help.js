@@ -5,7 +5,7 @@
  */
 const settings = require('../settings');
 const buttonEngine = require('../lib/buttonEngine');
-const isOwnerOrSudo = require('../lib/isOwner');
+const ownerAccess = require('../lib/isOwner');
 
 async function isPrivilegedMenuRequest(sock, chatId, message) {
     if (message?.key?.fromMe === true) return true;
@@ -30,7 +30,7 @@ async function isPrivilegedMenuRequest(sock, chatId, message) {
 
     for (const senderId of candidates) {
         try {
-            if (await isOwnerOrSudo(senderId, sock, chatId, message)) return true;
+            if (await ownerAccess.isConfiguredOwner(senderId, sock, chatId, message)) return true;
         } catch (error) {
             console.error('[MENU] Role check failed:', error?.message || error);
         }
@@ -98,7 +98,7 @@ const MENU_CATEGORIES = Object.freeze({
         id: 'owner',
         icon: '👑',
         title: 'BOT OWNER & SECURITY',
-        subtitle: 'শুধু Owner/Sudo • Owner inbox controls',
+        subtitle: 'শুধু Bot Owner • Private Owner controls',
         commands: [
             { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
             { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
@@ -295,7 +295,7 @@ async function helpCommand(sock, chatId, message) {
     const catKey = getRequestedCategory(message);
     const isPrivileged = await isPrivilegedMenuRequest(sock, chatId, message);
     if (catKey === 'owner' && !isPrivileged) {
-        await sock.sendMessage(chatId, { text: '❌ এই ক্যাটাগরিটি শুধু Owner/Sudo দেখতে পারবে।' }, { quoted: message });
+        await sock.sendMessage(chatId, { text: '❌ এই ক্যাটাগরিটি শুধু Bot Owner দেখতে পারবে।' }, { quoted: message });
         return;
     }
 
@@ -321,7 +321,7 @@ async function helpCommand(sock, chatId, message) {
                     { text: '📋 অন্য ক্যাটাগরি', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                     { text: '🏠 MAIN MENU', id: `${p}menu`, type: 'quick_reply' },
                     { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
-                    { text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }
+                    ...(isPrivileged ? [{ text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }] : [])
                 ],
                 quoted: message
             });
