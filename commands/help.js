@@ -81,6 +81,7 @@ const MENU_CATEGORIES = Object.freeze({
         commands: [
             { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
             { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
+            { cmd: 'gai on / off / iai on / off', desc: 'Group ও Inbox AI কন্ট্রোল' },
             { cmd: 'iai on / off', desc: 'Inbox AI কন্ট্রোল' },
             { cmd: 'human on / off', desc: 'Human persona কন্ট্রোল' },
             { cmd: 'voice test <কথা>', desc: 'ভয়েস রিপ্লাই পরীক্ষা' },
