@@ -309,7 +309,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         if (userMessage.startsWith('.')) {
             console.log(`📝 Command used in ${isGroup ? 'group' : 'private'}: ${userMessage}`);
-            const usedCommand = userMessage.split(/\\s+/)[0].slice(1);
+            const usedCommand = userMessage.split(/\s+/)[0].slice(1);
             if (usedCommand) {
                 commandUsage.set(usedCommand, (commandUsage.get(usedCommand) || 0) + 1);
                 if (commandUsage.size > MAX_COMMAND_TELEMETRY) {
