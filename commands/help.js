@@ -4,8 +4,6 @@ const path = require('path');
 const isOwnerOrSudo = require('../lib/isOwner');
 
 async function getMenuRole(sock, chatId, message) {
-    if (message?.key?.fromMe === true) return 'owner';
-
     const key = message?.key || {};
     const candidates = [
         key.participant,
@@ -37,7 +35,7 @@ async function getMenuRole(sock, chatId, message) {
 async function helpCommand(sock, chatId, message) {
     const role = await getMenuRole(sock, chatId, message);
     const isPrivileged = role !== 'user';
-    const menuTitle = isPrivileged ? '*OWNER / SUDO MENU*' : '*USER MENU*';
+    const menuTitle = isPrivileged ? '*OWNER / SUDO PRIVATE MENU*' : '*USER MENU*';
 
     const helpMessage = `
 ╔══════════════════════════╗
@@ -61,6 +59,7 @@ ${menuTitle}
 │ .weather <city>
 │ .news
 │ .gif <search>
+│ .github (GitHub repository info)
 │ .twitter <X/Twitter link>
 │ .joke
 │ .quote
@@ -86,6 +85,7 @@ ${menuTitle}
 │ .meme
 │ .take <packname>
 │ .emojimix <emoji>+<emoji>
+│ .tg <Telegram sticker pack link>
 │ .igs <Instagram link>
 │ .igsc <Instagram link>
 ╰──────────────────────────
