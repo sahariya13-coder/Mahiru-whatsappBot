@@ -4,6 +4,11 @@ const settings = require('../settings'); // Assuming the API key is stored here
 async function gifCommand(sock, chatId, query) {
     const apiKey = settings.giphyApiKey; // Replace with your Giphy API Key
 
+    if (!apiKey) {
+        await sock.sendMessage(chatId, { text: 'GIF সার্চ চালু করতে Hosting Panel-এ GIPHY_API_KEY যোগ করুন।' });
+        return;
+    }
+
     if (!query) {
         await sock.sendMessage(chatId, { text: 'GIF খুঁজতে একটি শব্দ লিখুন।' });
         return;
