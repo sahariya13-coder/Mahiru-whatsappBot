@@ -15,7 +15,7 @@ on:
       trigger_deploy:
         description: 'সব টেস্ট পাস করলে হোস্টিং সার্ভার রিস্টার্ট করবে? (true/false)'
         required: false
-        default: 'true'
+        default: 'false'
         type: boolean
       deep_audit:
         description: 'ডিপ NPM সিকিউরিটি অডিট চালাবে?'
@@ -559,9 +559,12 @@ jobs:
           let deployStatus = '⚪ Skipped (No Deploy Secret Set)';
 
           (async () => {
+            // Never restart the live bot on an ordinary git push.
+            // A deploy/restart must be explicitly requested from workflow_dispatch.
             const canDeploy =
               allPassed &&
-              (process.env.EVENT_NAME === 'push' || (process.env.EVENT_NAME === 'workflow_dispatch' && process.env.INPUT_DEPLOY !== 'false'));
+              process.env.EVENT_NAME === 'workflow_dispatch' &&
+              process.env.INPUT_DEPLOY === 'true';
 
             if (canDeploy) {
               const pteroUrl = (process.env.PTERO_URL || '').replace(/\/+$/, '');
