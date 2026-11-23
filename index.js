@@ -399,9 +399,24 @@ async function startXeonBotInc() {
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
             try {
-                await notifyOwner(XeonBotInc,
-                    `🤖 *MAHIRU BOT ${connectionLabel}*\n\n⏰ Time: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}\n✅ Status: Online and Ready!`
-                );
+                const loginNumber = String(XeonBotInc.user?.id || '').split(':')[0].split('@')[0] || 'Unknown';
+                const memoryMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
+                const bootNotice = [
+                    '╭━━━━━━━━━━━━━━━━━━━╮',
+                    '┃  🤖 *MAHIRU SYSTEM*  ┃',
+                    '╰━━━━━━━━━━━━━━━━━━━╯',
+                    '',
+                    `🔔 *নোটিশ:* BOT ${connectionLabel}`,
+                    `👑 *Bot Owner:* ${settings.ownerDisplayName || settings.botOwner || 'MSK'}`,
+                    `📱 *Login Number:* ${loginNumber}`,
+                    `⚙️ *Version:* ${settings.version || 'Unknown'}`,
+                    `🧠 *RAM Usage:* ${memoryMb} MB`,
+                    `🕒 *সময়:* ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
+                    '',
+                    '✅ *Status:* Online and Ready!',
+                    '━━━━━━━━━━━━━━━━━━━'
+                ].join('\\n');
+                await notifyOwner(XeonBotInc, bootNotice);
             } catch (error) {
                 console.error('Error sending connection message:', error.message)
             }
