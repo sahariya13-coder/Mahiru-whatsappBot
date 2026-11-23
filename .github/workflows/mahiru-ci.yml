@@ -138,6 +138,9 @@ jobs:
           console.log(`\n✅ STATIC GATE PASSED: ${jsFiles.length} JS files, ${jsonFiles.length} JSON files, all ${CORE_REQUIRED_FILES.length} core files verified!`);
           EOF
 
+      - name: Run reusable npm test validator
+        run: npm test
+
   security-firewall:
     name: "🛡️ ২. সিকিউরিটি ও সিক্রেট ফায়ারওয়াল"
     runs-on: ubuntu-latest
