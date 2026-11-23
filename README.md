@@ -1,11 +1,11 @@
 <div align="center">
 
 <!-- ⚡ ANIMATED CYBERPUNK WAVE BANNER (HIGH-CONTRAST DARK GRADIENT) -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:020617,35:0f172a,70:0e7490,100:5b21b6&height=250&section=header&text=PRIME%20MONIR&fontSize=62&fontColor=ffffff&fontAlignY=38&desc=WA-BOT%20%7C%20mahiru%20v1.0%20AUTONOMOUS%20AI%20OPERATING%20SYSTEM&descAlignY=64&descSize=16&animation=fadeIn" width="100%" alt="MAHIRU SHIINA Banner" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:020617,35:0f172a,70:0e7490,100:5b21b6&height=250&section=header&text=MSK&fontSize=62&fontColor=ffffff&fontAlignY=38&desc=WA-BOT%20%7C%20mahiru%20v1.0%20AUTONOMOUS%20AI%20OPERATING%20SYSTEM&descAlignY=64&descSize=16&animation=fadeIn" width="100%" alt="MAHIRU SHIINA Banner" />
 
 <!-- ⌨️ LIVE ANIMATED TYPING TERMINAL -->
 <a href="https://mahiru-shiina-ai.vercel.app">
-  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=2300&pause=850&color=38BDF8&center=true&vCenter=true&width=800&lines=PRIME+MONIR+%E2%80%A2+mahiru+v1.0+AUTONOMOUS+WHATSAPP+AI;ZERO-DOWNTIME+SRE+SELF-HEALER+%7C+400MB+RAM+GOVERNOR;NEURAL+BANGLA+VOICE+STUDIO+%2B+10%2B+API+FAILOVER+POOL;ANDROID+ROOT+%E2%80%A2+UNBRICK+%E2%80%A2+VPN+%E2%80%A2+FULL-STACK+STUDIO" alt="MAHIRU SHIINA Typing" />
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=2300&pause=850&color=38BDF8&center=true&vCenter=true&width=800&lines=MSK+%E2%80%A2+mahiru+v1.0+AUTONOMOUS+WHATSAPP+AI;ZERO-DOWNTIME+SRE+SELF-HEALER+%7C+400MB+RAM+GOVERNOR;NEURAL+BANGLA+VOICE+STUDIO+%2B+10%2B+API+FAILOVER+POOL;ANDROID+ROOT+%E2%80%A2+UNBRICK+%E2%80%A2+VPN+%E2%80%A2+FULL-STACK+STUDIO" alt="MAHIRU SHIINA Typing" />
 </a>
 
 <br/>
@@ -281,7 +281,7 @@ node index.js
 ## ⚡ MAHIRU SHIINA • OFFICIAL TECH STUDIO
 
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&duration=2600&pause=900&color=A855F7&center=true&vCenter=true&width=760&lines=PRIME+MONIR+STUDIO+%E2%80%A2+ARCHITECT+OF+mahiru+v1.0;ANDROID+ROOT+%7C+CUSTOM+ROM+%7C+UNBRICK+SPECIALIST;FULL-STACK+WEB+%7C+ANDROID+APPS+%7C+AI+BOT+AUTOMATION" alt="MAHIRU SHIINA Studio Banner" />
+  <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=18&duration=2600&pause=900&color=A855F7&center=true&vCenter=true&width=760&lines=MSK+STUDIO+%E2%80%A2+ARCHITECT+OF+mahiru+v1.0;ANDROID+ROOT+%7C+CUSTOM+ROM+%7C+UNBRICK+SPECIALIST;FULL-STACK+WEB+%7C+ANDROID+APPS+%7C+AI+BOT+AUTOMATION" alt="MAHIRU SHIINA Studio Banner" />
 </div>
 
 <table>
@@ -344,7 +344,7 @@ node index.js
 <br/>
 
 <!-- 🌊 HIGH-CONTRAST ANIMATED CYBERPUNK FOOTER -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:5b21b6,45:0e7490,100:020617&height=130&section=footer&text=ENGINEERED%20BY%20PRIME%20MONIR&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=twinkling" width="100%" alt="MAHIRU SHIINA Footer" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:5b21b6,45:0e7490,100:020617&height=130&section=footer&text=ENGINEERED%20BY%20MSK&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=twinkling" width="100%" alt="MAHIRU SHIINA Footer" />
 
 </div>
 
@@ -356,5 +356,6 @@ node index.js
 |---|---|
 | `TENOR_API_KEY` | Emoji Mix API |
 | `TELEGRAM_BOT_TOKEN` | Telegram sticker pack downloader |
+| `GIPHY_API_KEY` | GIF search command (`.gif`) |
 
 এই মানগুলো source code-এ রাখা হয় না। Telegram bot token আগে public repository-তে প্রকাশিত হয়ে থাকলে BotFather থেকে token revoke করে নতুন token ব্যবহার করুন।
