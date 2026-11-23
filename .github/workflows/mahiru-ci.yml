@@ -267,12 +267,17 @@ jobs:
   mahiru-v2-tests:
     name: "🧪 ৩. মাহিরু v2.0 আল্ট্রা টেস্ট সুইট"
     needs: [syntax-integrity]
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
 
       - name: Setup Node.js v24
         uses: actions/setup-node@v4
@@ -520,6 +525,23 @@ jobs:
             process.exit(failed > 0 ? 1 : 0);
           })();
           EOF
+
+      - name: Commit tested compatible dependency security fixes
+        if: success() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "No compatible lockfile updates to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: apply compatible npm security fixes [skip ci]"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin "HEAD:${TARGET_BRANCH}"
 
       - name: Upload compatible security-updated lockfile for review
         if: always()
