@@ -190,6 +190,9 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .human on/off
 │ .sudo add/remove/list
 │ .backup
+│ .heal [status/logs/verify]
+│ .doc / .doctor
+│ .ram / .bk
 │ .settings
 │ .update
 │ .setpp (reply to image)
