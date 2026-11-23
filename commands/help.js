@@ -196,6 +196,9 @@ ${isPrivileged ? `╭───「 👮 Group Admin Commands 」
 │ .ownerpref <title> | <instruction>
 │ .ownerrule add/del/list/clear
 │ .syshealth
+│ .research <বিষয়/URL>
+│ .watch add/del/list <URL/ID>
+│ .memory stats/search/clear
 │ .doc / .doctor
 │ .ram / .bk
 │ .settings
