@@ -41,6 +41,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const { isSudo } = require('./lib/index');
 const isOwnerOrSudo = require('./lib/isOwner');
 const groupAccess = require('./lib/groupAccess');
+const { extractInteractiveCommand } = require('./lib/buttonEngine');
 const { setGroupFeature, FEATURES: REMOTE_GROUP_FEATURES } = require('./lib/groupFeatureControl');
 const { autotypingCommand, isAutotypingEnabled, handleAutotypingForMessage, handleAutotypingForCommand, showTypingAfterCommand } = require('./commands/autotyping');
 const { autoreadCommand, isAutoreadEnabled, handleAutoread } = require('./commands/autoread');
@@ -224,22 +225,23 @@ async function handleMessages(sock, messageUpdate, printLog) {
             unwrappedMessage = nested;
         }
 
-        let userMessage = (
-            unwrappedMessage?.conversation?.trim() ||
-            unwrappedMessage?.extendedTextMessage?.text?.trim() ||
-            unwrappedMessage?.imageMessage?.caption?.trim() ||
-            unwrappedMessage?.videoMessage?.caption?.trim() ||
-            unwrappedMessage?.documentMessage?.caption?.trim() ||
-            unwrappedMessage?.buttonsResponseMessage?.selectedButtonId?.trim() ||
-            ''
-        ).toLowerCase().replace(/\.\s+/g, '.').trim();
+        // Decode WhatsApp native-flow quick replies and single-select rows.
+        // These arrive as interactiveResponseMessage, not conversation text.
+        const interactiveCommand = extractInteractiveCommand(message) ||
+            extractInteractiveCommand({ message: unwrappedMessage });
 
         let rawText = unwrappedMessage?.conversation?.trim() ||
             unwrappedMessage?.extendedTextMessage?.text?.trim() ||
             unwrappedMessage?.imageMessage?.caption?.trim() ||
             unwrappedMessage?.videoMessage?.caption?.trim() ||
             unwrappedMessage?.documentMessage?.caption?.trim() ||
+            unwrappedMessage?.buttonsResponseMessage?.selectedButtonId?.trim() ||
+            unwrappedMessage?.templateButtonReplyMessage?.selectedId?.trim() ||
+            unwrappedMessage?.listResponseMessage?.singleSelectReply?.selectedRowId?.trim() ||
+            interactiveCommand ||
             '';
+
+        let userMessage = String(rawText || '').toLowerCase().replace(/\.\s+/g, '.').trim();
 
         // Owner can activate/deactivate a group by replying to that group's add-notice.
         if (!isGroup && /^(active|activate|deactivate|inactive|অ্যাক্টিভ|ডিঅ্যাক্টিভ)$/i.test(rawText.trim())) {
