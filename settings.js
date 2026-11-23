@@ -331,7 +331,7 @@ const settings = {
     },
 
     // --- মিডিয়া ও স্টিকার API ---
-    giphyApiKey: envStr('GIPHY_API_KEY', 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq'),
+    giphyApiKey: envStr('GIPHY_API_KEY', ''),
     tenorApiKey: envStr('TENOR_API_KEY', ''),
     telegramBotToken: envStr('TELEGRAM_BOT_TOKEN', ''),
     knightApiUrl: envStr('KNIGHT_API_URL', 'https://Mahiru Shiinaapi.stream'),
