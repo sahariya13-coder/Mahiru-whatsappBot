@@ -357,6 +357,11 @@ async function startXeonBotInc() {
         if (connection == "open") {
             startDailyBackup(XeonBotInc);
             try {
+                require('./lib/selfHealer').initSelfHealer(() => activeSocket);
+            } catch (selfHealerStartError) {
+                console.error('[MAHIRU SELF-HEALER] Startup failed:', selfHealerStartError?.message || selfHealerStartError);
+            }
+            try {
                 require('./lib/ownerAgent').startOwnerScheduler(XeonBotInc);
                 require('./lib/scheduler').startScheduler(XeonBotInc);
             } catch (schedulerStartError) {
