@@ -1,5 +1,5 @@
 /**
- * Mahiru Shiina • Maya v2.0 ULTRA — Emoji Kitchen Mixer (Zero-Hardcoded-Key & EXIF Branded)
+ * Mahiru Shiina • Mahiru v2.0 ULTRA — Emoji Kitchen Mixer (Zero-Hardcoded-Key & EXIF Branded)
  * Usage: .emix 😎+🥰  or  .emojimix 😎 + 🥰
  * Optional ENV: TENOR_API_KEY (falls back to free Emoji Kitchen endpoint if unset)
  */
@@ -87,7 +87,7 @@ async function fetchEmojiMixImage(emoji1, emoji2) {
 
 async function emojimixCommand(sock, chatId, msg) {
     const uid = `${process.pid}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const tmpDir = path.join(os.tmpdir(), 'maya_emix');
+    const tmpDir = path.join(os.tmpdir(), 'mahiru_emix');
     const tempFile = path.join(tmpDir, `emix_in_${uid}.png`);
     const outputFile = path.join(tmpDir, `emix_out_${uid}.webp`);
 
