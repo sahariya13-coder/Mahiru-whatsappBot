@@ -101,8 +101,8 @@ const { welcomeCommand, handleJoinEvent } = require('./commands/welcome');
 const { goodbyeCommand, handleLeaveEvent } = require('./commands/goodbye');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
 const antibadwordCommand = require('./commands/antibadword');
-const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand, handleRoleCommand, handleStyleCommand, handleSummaryCommand, handleGuardCommand, handleOwnerRulesCommand } = require('./commands/chatbot');
-const { handleRuleCommand } = require('./commands/rule');
+const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand, handleRoleCommand, handleStyleCommand, handleSummaryCommand, handleInboxRuleCommand, handleGuardCommand, handleOwnerRulesCommand } = require('./commands/chatbot');
+
 const takeCommand = require('./commands/take');
 const { flirtCommand } = require('./commands/flirt');
 const characterCommand = require('./commands/character');
@@ -1326,12 +1326,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
 
-            case userMessage === '.rule' || userMessage.startsWith('.rule '): {
-                if (!message.key.fromMe && !senderIsOwnerOrSudo) {
-                    await sock.sendMessage(chatId, { text: '❌ AI Rule পরিচালনা শুধু Bot Owner/Sudo করতে পারবে।' }, { quoted: message });
-                    break;
-                }
-                await handleRuleCommand(sock, chatId, message, rawText);
+            case userMessage === '.rule' || userMessage.startsWith('.rule ') ||
+                 userMessage === '.rules' || userMessage.startsWith('.rules '): {
+                const ruleArgs = rawText.replace(/^\\.rules?\\s*/i, '').trim();
+                await handleInboxRuleCommand(sock, chatId, message, ruleArgs);
                 break;
             }
 
