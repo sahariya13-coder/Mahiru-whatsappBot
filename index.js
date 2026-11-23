@@ -277,7 +277,7 @@ async function startXeonBotInc() {
                 const isGroup = mek.key?.remoteJid?.endsWith('@g.us')
                 if (!isGroup) return // Block DMs in private mode, but allow group messages
             }
-            if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
+            // BAE5 IDs are passed through so the antibot detector can inspect them.
 
             // Clear message retry cache to prevent memory bloat
             if (XeonBotInc?.msgRetryCounterCache) {
