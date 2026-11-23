@@ -883,7 +883,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 commandExecuted = true;
                 break;
 
-            case userMessage === '.sticker' || userMessage === '.s':
+            case userMessage === '.sticker' || userMessage === '.s' || userMessage === '.sticker-alt':
                 await stickerCommand(sock, chatId, message);
                 commandExecuted = true;
                 break;
