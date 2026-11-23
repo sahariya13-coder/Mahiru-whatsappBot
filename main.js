@@ -470,7 +470,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.takeover', '.tk', '.fx', '.fix', '.recover', '.maint', '.reload', '.clean', '.deepclean', '.block', '.unblock', '.addowner', '.grant', '.giveaccess', '.delowner', '.rmowner', '.revokeaccess', '.takeaccess', '.ownerlist', '.owners', '.lockdown', '.unlockdown', '.owneralert', '.setpin', '.pin', '.lockpin', '.brand', '.dcmd', '.trigger', '.firewall', '.fw', '.styleinfo', '.stylereset', '.orule', '.guard', '.resetapi', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.cmdstats', '.takeover', '.tk', '.fx', '.fix', '.recover', '.maint', '.reload', '.clean', '.deepclean', '.block', '.unblock', '.addowner', '.grant', '.giveaccess', '.delowner', '.rmowner', '.revokeaccess', '.takeaccess', '.ownerlist', '.owners', '.lockdown', '.unlockdown', '.owneralert', '.setpin', '.pin', '.lockpin', '.brand', '.dcmd', '.trigger', '.firewall', '.fw', '.styleinfo', '.stylereset', '.orule', '.guard', '.resetapi', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.remind', '.tasks', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -833,7 +833,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await handleCallBlockCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
                 commandExecuted = true;
                 break;
-            case userMessage.startsWith('.sch') || userMessage.startsWith('.schedule'):
+            case userMessage.startsWith('.sch') || userMessage.startsWith('.schedule') || userMessage.startsWith('.remind') || userMessage === '.tasks' || userMessage.startsWith('.tasks '):
                 await scheduler.handleScheduleCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
                 commandExecuted = true;
                 break;
