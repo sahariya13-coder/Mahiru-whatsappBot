@@ -499,15 +499,31 @@ Owner-defined system rules:
 ${(userContext.systemRules || []).map((rule, index) => `${index + 1}. [${rule.name}] ${rule.text}`).join('\n')}
 `.trim();
 
-    const { chatWithMahiruAI } = require('../lib/mahiruAI');
-    const answer = await chatWithMahiruAI({
-        uid: userContext.uid || 'whatsapp-image',
-        text: String(userContext.caption || '').trim() || 'এই ছবিটি বিশ্লেষণ করে কী দেখা যাচ্ছে তা বর্ণনা করো।',
-        system: systemPrompt + (history ? '\n\nআগের কথোপকথন:\n' + history : ''),
-        image: imageData
-    });
-    console.log('✅ Mahiru AI API image understanding success');
-    return answer;
+    const imagePrompt = String(userContext.caption || '').trim() || 'এই ছবিটি বিশ্লেষণ করে কী দেখা যাচ্ছে তা বর্ণনা করো।';
+    try {
+        const { chatWithMahiruAI } = require('../lib/mahiruAI');
+        const answer = await chatWithMahiruAI({
+            uid: userContext.uid || 'whatsapp-image',
+            text: imagePrompt,
+            system: systemPrompt + (history ? '\n\nআগের কথোপকথন:\n' + history : ''),
+            image: imageData
+        });
+        if (answer) {
+            console.log('✅ Mahiru AI API image understanding success');
+            return answer;
+        }
+    } catch (primaryError) {
+        console.error('⚠️ Mahiru AI image API failed; trying 1.0.3 multi-provider vision:', primaryError?.message || primaryError);
+    }
+
+    const { generateWithFailover } = require('../lib/mayaCore');
+    const fallback = await generateWithFailover(
+        systemPrompt,
+        [{ role: 'user', text: imagePrompt }],
+        { imageObj: { base64: imageData.data, mimeType: imageData.mimeType }, temperature: 0.65, maxTokens: 520 }
+    );
+    if (fallback?.text) return fallback.text;
+    throw new Error('All Mahiru image AI providers failed');
 }
 
 async function handleChatbotResponse(
@@ -1046,15 +1062,50 @@ async function getAIResponse(userContext = {}) {
         console.error('⚠️ Worm AI primary failed; switching to Mahiru AI API:', error.message);
     }
 
-    // Fallback text AI: user's Mahiru AI API.
-    const { chatWithMahiruAI } = require('../lib/mahiruAI');
-    const answer = await chatWithMahiruAI({
-        uid: userContext.uid || 'whatsapp-default',
-        text: userText,
-        system: systemPrompt + (conversation ? '\\n\\nConversation history:\\n' + conversation : '')
-    });
-    console.log('✅ Mahiru AI API text fallback received');
-    return answer;
+    // Secondary text AI: user's existing Mahiru API remains in place.
+    let primaryError = null;
+    try {
+        const { chatWithMahiruAI } = require('../lib/mahiruAI');
+        const answer = await chatWithMahiruAI({
+            uid: userContext.uid || 'whatsapp-default',
+            text: userText,
+            system: systemPrompt + (conversation ? '\n\nConversation history:\n' + conversation : '')
+        });
+        if (answer) {
+            console.log('✅ Mahiru AI API text fallback received');
+            return answer;
+        }
+    } catch (error) {
+        primaryError = error;
+        console.error('⚠️ Mahiru AI API failed; trying 1.0.3 multi-provider fallback:', error?.message || error);
+    }
+
+    // Final fallback: reference 1.0.3 multi-provider engine (Gemini / Groq / OpenRouter / backup).
+    try {
+        const { generateWithFailover } = require('../lib/mayaCore');
+        const historyMessages = history.slice(-MAX_CHAT_HISTORY).map((entry) => {
+            const splitAt = entry.indexOf(':');
+            const label = splitAt >= 0 ? entry.slice(0, splitAt).trim() : 'User';
+            const text = splitAt >= 0 ? entry.slice(splitAt + 1).trim() : entry;
+            return {
+                role: /^(?:Mahiru|Assistant)$/i.test(label) ? 'assistant' : 'user',
+                text
+            };
+        }).filter(item => item.text);
+        const fallback = await generateWithFailover(systemPrompt, historyMessages, {
+            temperature: 0.72,
+            maxTokens: 520
+        });
+        if (fallback?.text) {
+            console.log('✅ Mahiru 1.0.3 multi-provider text fallback received:', fallback.provider || 'unknown');
+            return fallback.text;
+        }
+    } catch (fallbackError) {
+        console.error('❌ Mahiru 1.0.3 multi-provider text fallback failed:', fallbackError?.message || fallbackError);
+    }
+
+    if (primaryError) throw primaryError;
+    return null;
 }
 
 
