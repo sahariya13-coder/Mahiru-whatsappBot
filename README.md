@@ -139,7 +139,7 @@ graph LR
 ## 🗂️ প্রজেক্ট স্ট্রাকচার
 
 ```text
-primemonir/wa-bot
+sahariya13-coder/Mahiru-whatsappBot
 ├── 📂 assets/                # Brand banners, stickers & media assets
 ├── 📂 commands/              # Modular command handlers (chatbot, media, group, fun)
 │   └── 📄 chatbot.js         # Mahiru v1.0 AI engine, Omni voice/text brain & media analyzer
@@ -227,7 +227,7 @@ primemonir/wa-bot
 
 ### ১️⃣ ক্লোন ও প্যাকেজ ইনস্টল
 ```bash
-git clone [https://github.com/primemonir/wa-bot.git](https://github.com/primemonir/wa-bot.git)
+git clone [https://github.com/sahariya13-coder/Mahiru-whatsappBot.git](https://github.com/sahariya13-coder/Mahiru-whatsappBot.git)
 cd wa-bot
 npm install --no-fund --no-audit
 ```
@@ -298,7 +298,7 @@ node index.js
         <li><b>🤖 AI Engine:</b> Mahiru v1.0 (Autonomous Edition)</li>
         <li><b>📍 Location:</b> Dhaka, Bangladesh</li>
         <li><b>🌐 Website:</b> <a href="https://mahiru-shiina-ai.vercel.app">mahiru-shiina-ai.vercel.app</a></li>
-        <li><b>💻 GitHub:</b> <a href="https://github.com/primemonir">@primemonir</a></li>
+        <li><b>💻 GitHub:</b> <a href="https://github.com/sahariya13-coder">@sahariya13-coder</a></li>
       </ul>
     </td>
     <td width="52%" valign="top">
@@ -330,8 +330,8 @@ node index.js
   <a href="https://mahiru-shiina-ai.vercel.app">
     <img src="https://img.shields.io/badge/WEBSITE-PRIME_WEB-0E7490?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0F172A" alt="Website" />
   </a>
-  <a href="https://github.com/primemonir">
-    <img src="https://img.shields.io/badge/GITHUB-@primemonir-7C3AED?style=for-the-badge&logo=github&logoColor=white&labelColor=0F172A" alt="GitHub" />
+  <a href="https://github.com/sahariya13-coder">
+    <img src="https://img.shields.io/badge/GITHUB-@sahariya13-coder-7C3AED?style=for-the-badge&logo=github&logoColor=white&labelColor=0F172A" alt="GitHub" />
   </a>
   <a href="https://mahiru-shiina-ai.vercel.app/posts">
     <img src="https://img.shields.io/badge/PROOFS-PORTFOLIO_HUB-059669?style=for-the-badge&logo=verified&logoColor=white&labelColor=0F172A" alt="Work Proofs" />
