@@ -8,12 +8,34 @@ const buttonEngine = require('../lib/buttonEngine');
 const isOwnerOrSudo = require('../lib/isOwner');
 
 async function isPrivilegedMenuRequest(sock, chatId, message) {
-    const senderId =
-        message?.key?.participant ||
-        message?.key?.participantAlt ||
-        message?.key?.remoteJid ||
-        chatId;
-    return isOwnerOrSudo(senderId, sock, chatId, message);
+    if (message?.key?.fromMe === true) return true;
+
+    const key = message?.key || {};
+    const candidates = [
+        key.participant,
+        key.participantAlt,
+        key.remoteJid,
+        key.remoteJidAlt,
+        key.senderPn,
+        message?.participant,
+        message?.participantAlt,
+        message?.senderPn,
+        chatId
+    ].filter((value, index, list) =>
+        typeof value === 'string' &&
+        value &&
+        !value.endsWith('@g.us') &&
+        list.indexOf(value) === index
+    );
+
+    for (const senderId of candidates) {
+        try {
+            if (await isOwnerOrSudo(senderId, sock, chatId, message)) return true;
+        } catch (error) {
+            console.error('[MENU] Role check failed:', error?.message || error);
+        }
+    }
+    return false;
 }
 
 const {
