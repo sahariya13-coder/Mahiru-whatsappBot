@@ -529,7 +529,7 @@ ${(userContext.systemRules || []).map((rule, index) => `${index + 1}. [${rule.na
         console.error('⚠️ Mahiru AI image API failed; trying 1.0.3 multi-provider vision:', primaryError?.message || primaryError);
     }
 
-    const { generateWithFailover } = require('../lib/mayaCore');
+    const { generateWithFailover } = require('../lib/mahiruCore');
     const fallback = await generateWithFailover(
         systemPrompt,
         [{ role: 'user', text: imagePrompt }],
@@ -1143,7 +1143,7 @@ async function getAIResponse(userContext = {}) {
 
     // Final fallback: reference 1.0.3 multi-provider engine (Gemini / Groq / OpenRouter / backup).
     try {
-        const { generateWithFailover } = require('../lib/mayaCore');
+        const { generateWithFailover } = require('../lib/mahiruCore');
         const historyMessages = history.slice(-MAX_CHAT_HISTORY).map((entry) => {
             const splitAt = entry.indexOf(':');
             const label = splitAt >= 0 ? entry.slice(0, splitAt).trim() : 'User';
