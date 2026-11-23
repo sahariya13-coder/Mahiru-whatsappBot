@@ -344,7 +344,7 @@ const settings = {
     vidFetchApiKey: envStr('VIDFETCH_API_KEY', ''),
 
     // --- মাহিরু v1.0 ULTIMATE মডিউল কনফিগারেশন ---
-    maya: {
+    mahiru: {
         // ১. সিস্টেম অপটিমাইজার ও ডিপ ক্লিনার (২৫৬MB OOM-সেফ)
         optimizer: {
             sessionDir: './session',
@@ -438,7 +438,7 @@ const settings = {
             enableInteractiveButtons: envBool('ENABLE_INTERACTIVE_BUTTONS', true),
             buttonFallbackToText: true,
             menuStyle: envStr('MENU_STYLE', 'ultra_framed'),
-            footerText: envStr('UI_FOOTER_TEXT', 'Powered By ᴘʀɪᴍᴇ ᴍᴏɴɪʀ • মাহিরু v1.0'),
+            footerText: envStr('UI_FOOTER_TEXT', 'Powered By MSK • মাহিরু v1.0'),
             runtimeLabel: envStr('RUNTIME_LABEL', 'PRIME CLOUD'),
             useLocationBannerTrick: true,
             useVerifiedQuote: true,
@@ -557,7 +557,7 @@ const settings = {
 
     isBlockedSudoJid(jid = '', lid = '') {
         if (this.isRootSuperOwner(jid, lid)) return false;
-        const blocked = this.maya?.security?.hardBlockedSudoNumbers || HARD_BLOCKED_SUDO;
+        const blocked = this.mahiru?.security?.hardBlockedSudoNumbers || HARD_BLOCKED_SUDO;
         if (!blocked.length) return false;
         const checkOne = (val) => {
             const norm = normalizePhone(val);
@@ -593,7 +593,7 @@ const settings = {
         if (this.isRootSuperOwner(jid, lid)) return true;
         if (this.isBlockedSudoJid(jid, lid)) return false;
         if (this.isSuperOwnerJid(jid, lid)) return true;
-        if (this.maya?.security?.strictOwnerOnly) return false;
+        if (this.mahiru?.security?.strictOwnerOnly) return false;
 
         if (typeof global.__PRIME_IS_DYNAMIC_OWNER__ === 'function') {
             try { if (global.__PRIME_IS_DYNAMIC_OWNER__(jid, lid, null)) return true; } catch {}
@@ -629,7 +629,7 @@ const settings = {
     getAllOwnerNumbers() {
         const dyn = readDynamicOwnersCached();
         const now = Date.now();
-        const activeDyn = (dyn.lockdown || this.maya?.security?.strictOwnerOnly)
+        const activeDyn = (dyn.lockdown || this.mahiru?.security?.strictOwnerOnly)
             ? []
             : Object.values(dyn.owners || {})
                 .filter((e) => e?.phone && (!e.expiresAt || now < e.expiresAt))
