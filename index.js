@@ -415,7 +415,7 @@ async function startXeonBotInc() {
                     '',
                     '✅ *Status:* Online and Ready!',
                     '━━━━━━━━━━━━━━━━━━━'
-                ].join('\\n');
+                ].join('\n');
                 await notifyOwner(XeonBotInc, bootNotice);
             } catch (error) {
                 console.error('Error sending connection message:', error.message)
