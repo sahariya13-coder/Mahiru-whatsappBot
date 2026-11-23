@@ -20,6 +20,34 @@ function walk(dir) {
 
 walk(ROOT);
 const failures = [];
+const PACKAGE_JSON = require(path.join(ROOT, 'package.json'));
+const LOCAL_EXTENSIONS = ['.js', '.cjs', '.mjs', '.json', '.node'];
+
+function resolveLocalRequire(fromFile, specifier) {
+    const base = path.resolve(path.dirname(fromFile), specifier);
+    const candidates = [base, ...LOCAL_EXTENSIONS.map((ext) => base + ext)];
+    for (const candidate of candidates) {
+        try {
+            if (fs.statSync(candidate).isFile()) return candidate;
+            if (fs.statSync(candidate).isDirectory()) {
+                const packageFile = path.join(candidate, 'package.json');
+                if (fs.existsSync(packageFile)) {
+                    const pkg = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
+                    if (pkg.main) {
+                        const mainTarget = path.resolve(candidate, pkg.main);
+                        for (const option of [mainTarget, ...LOCAL_EXTENSIONS.map((ext) => mainTarget + ext)]) {
+                            if (fs.existsSync(option) && fs.statSync(option).isFile()) return option;
+                        }
+                    }
+                }
+                const indexFile = path.join(candidate, 'index.js');
+                if (fs.existsSync(indexFile)) return indexFile;
+            }
+        } catch {}
+    }
+    return null;
+}
+
 
 for (const file of files) {
     const result = spawnSync(process.execPath, ['--check', file], { cwd: ROOT, encoding: 'utf8' });
@@ -29,6 +57,18 @@ for (const file of files) {
             error: (result.stderr || result.stdout || 'Unknown syntax error').trim()
         });
     }
+
+    const source = fs.readFileSync(file, 'utf8');
+    const requireRx = /require\\(\\s*['"]([.]{1,2}\\/[^'"]+)['"]\\s*\\)/g;
+    for (const match of source.matchAll(requireRx)) {
+        const resolved = resolveLocalRequire(file, match[1]);
+        if (!resolved) {
+            failures.push({
+                file: path.relative(ROOT, file),
+                error: 'Unresolved local require: ' + match[1]
+            });
+        }
+    }
 }
 
 if (failures.length) {
@@ -37,4 +77,4 @@ if (failures.length) {
     process.exit(1);
 }
 
-console.log('✅ JavaScript syntax validation passed for ' + files.length + ' files.');
+console.log('✅ JavaScript syntax + local module validation passed for ' + files.length + ' files.');
