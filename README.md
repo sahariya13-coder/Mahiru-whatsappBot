@@ -347,3 +347,14 @@ node index.js
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:5b21b6,45:0e7490,100:020617&height=130&section=footer&text=ENGINEERED%20BY%20PRIME%20MONIR&fontSize=22&fontColor=ffffff&fontAlignY=72&animation=twinkling" width="100%" alt="MAHIRU SHIINA Footer" />
 
 </div>
+
+## 🔐 প্রয়োজনীয় Environment Variables
+
+কিছু বাহ্যিক API-ভিত্তিক কমান্ডের জন্য Hosting Panel-এর Environment Variables-এ নিচের মানগুলো যোগ করতে হবে:
+
+| Variable | কাজ |
+|---|---|
+| `TENOR_API_KEY` | Emoji Mix API |
+| `TELEGRAM_BOT_TOKEN` | Telegram sticker pack downloader |
+
+এই মানগুলো source code-এ রাখা হয় না। Telegram bot token আগে public repository-তে প্রকাশিত হয়ে থাকলে BotFather থেকে token revoke করে নতুন token ব্যবহার করুন।
