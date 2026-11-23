@@ -330,17 +330,18 @@ const settings = {
         defaultFallbackNumber: ROOT_SUPER_OWNER
     },
 
-    // --- মিডিয়া ও স্টিকার API ---
+    // --- Media / GIF / Telegram API (legacy-compatible defaults) ---
     giphyApiKey: envStr('GIPHY_API_KEY', ''),
     tenorApiKey: envStr('TENOR_API_KEY', ''),
     telegramBotToken: envStr('TELEGRAM_BOT_TOKEN', ''),
-    knightApiUrl: envStr('KNIGHT_API_URL', 'https://Mahiru Shiinaapi.stream'),
+    knightApiUrl: envStr('KNIGHT_API_URL', 'https://knightbotapi.stream'),
     knightApiKey: envStr('KNIGHT_API_KEY', 'knight'),
-    mediaApiUrl: envStr('MEDIA_API_URL', 'https://Mahiru Shiinaapi.stream'),
+    mediaApiUrl: envStr('MEDIA_API_URL', 'https://knightbotapi.stream'),
     mediaApiKey: envStr('MEDIA_API_KEY', 'knight'),
     princeApiUrl: envStr('PRINCE_API_URL', 'https://api.princetechn.com'),
     princeApiKey: envStr('PRINCE_API_KEY', 'prince'),
-    vidFetchApiKey: envStr('VIDFETCH_API_KEY', 'vf_live_sk_4cfc16047ffb3ccb87ee93daf5d36999f99da9c53d013246'),
+    // Never ship a previously exposed private key; set your own in the hosting panel.
+    vidFetchApiKey: envStr('VIDFETCH_API_KEY', ''),
 
     // --- মাহিরু v1.0 ULTIMATE মডিউল কনফিগারেশন ---
     maya: {
