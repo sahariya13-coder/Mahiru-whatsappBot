@@ -2,7 +2,7 @@
  * Mahiru Shiina • Mahiru v1.0 ULTIMATE — Immutable Root Security, 256MB-Strict Auto-Scaling & Dual-Gemini Core
  * Fixes: True 256MB OOM-Safe RAM Thresholds (185/222MB) + Strict AIza/AQ. Filter + banner.png Default
  *        + ownerIdentity.json Boot Scrubber + Master Group Control Config + Crystal Voice v1.0 Sync
- * Immutable Root Super Owner: 01869332798 | 100% Backward-Compatible
+ * Immutable Root Super Owner: 8801624235915 | 100% Backward-Compatible
  */
 const fs = require('fs');
 const path = require('path');
