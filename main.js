@@ -49,6 +49,7 @@ const antibotCommand = require('./commands/antibot');
 const gifCommand = require('./commands/gif');
 const twitterCommand = require('./commands/twitter');
 const savestatusCommand = require('./commands/savestatus');
+const autoSaveStatus = savestatusCommand.autoSave;
 
 // Command imports
 const tagAllCommand = require('./commands/tagall');
@@ -1983,10 +1984,9 @@ module.exports = {
     handleStatus: async (sock, status) => {
         await handleStatusUpdate(sock, status);
         const statusMessages = Array.isArray(status?.messages) ? status.messages : [status];
-        const { autoSave } = require('./commands/savestatus');
         for (const statusMessage of statusMessages) {
             if (statusMessage?.key?.remoteJid === 'status@broadcast') {
-                await autoSave(sock, statusMessage);
+                await autoSaveStatus(sock, statusMessage);
             }
         }
     }
