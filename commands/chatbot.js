@@ -1087,7 +1087,7 @@ async function getAIResponse(userContext = {}) {
             prefs.ownerTitle ? `Owner সম্বোধন: ${prefs.ownerTitle}` : '',
             prefs.ownerCustomInstruction || '',
             ...ownerRules.map((item, index) => `Owner rule ${index + 1}: ${item.rule}`)
-        ].filter(Boolean).join('\\n');
+        ].filter(Boolean).join('\n');
     } catch (controlError) {
         console.error('[MAHIRU SYSTEM CONTROL] Prompt rules unavailable:', controlError?.message || controlError);
     }
