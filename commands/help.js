@@ -122,6 +122,12 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'clean / deepclean', desc: 'Owner-only safe temporary-file cleanup' },
             { cmd: 'cmdstats / topcmd', desc: 'কমান্ড ব্যবহারের পরিসংখ্যান' },
             { cmd: 'block / unblock', desc: 'Owner-only WhatsApp user block control' },
+            { cmd: 'addowner / delowner / ownerlist', desc: 'Dynamic Owner access management' },
+            { cmd: 'lockdown / unlockdown', desc: 'Dynamic Owner emergency access lockdown' },
+            { cmd: 'owneralert on / off', desc: 'Security alert notification control' },
+            { cmd: 'setpin / pin / lockpin', desc: 'Master PIN protection for sensitive controls' },
+            { cmd: 'firewall / styleinfo / stylereset', desc: 'Privacy firewall and style-learning controls' },
+            { cmd: 'dcmd / trigger / brand / orule', desc: 'Dynamic commands, triggers, branding and owner rules' },
             { cmd: 'sch / remind / tasks', desc: 'Scheduler ও Reminder' },
             { cmd: 'anticall / pmblocker / antidelete', desc: 'কল ও ইনবক্স সুরক্ষা' },
             { cmd: 'autoread / autotyping / autostatus', desc: 'অটোমেশন কন্ট্রোল' }
