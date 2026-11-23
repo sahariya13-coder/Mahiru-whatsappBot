@@ -1,4 +1,37 @@
-# Local runtime backups (never commit user data)
-.mahiru-backup/
+# Dependencies and generated build output
+node_modules/
+coverage/
+dist/
+build/
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+
+# WhatsApp authentication and message-store data
+session/*
+!session/.gitkeep
+sessions/
+auth_info_baileys/
+baileys_store.json
+
+# Runtime files, caches, temporary data and logs
+temp/
+tmp/
+.cache/
+logs/
+*.log
+*.tmp
 *.tmp-*
 *.restore-*
+
+# Mahiru generated backups and runtime stores
+.mahiru-backup/
+data/backups/
+data/snapshots/
+data/voice_cache/
+data/owner_tasks.json
+data/mahiru_live_models_cache.json
+data/mahiru_healer_state.json
+data/mahiru_outbox_queue.json
