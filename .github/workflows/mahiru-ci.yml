@@ -2,7 +2,7 @@ name: "⚡ MAHIRU SHIINA • Mahiru v2.0 ULTRA CI/CD & Security"
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, merge/mahiru-1.0.3-features ]
     paths-ignore:
       - '**.md'
       - 'LICENSE'
