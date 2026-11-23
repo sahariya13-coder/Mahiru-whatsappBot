@@ -19,9 +19,6 @@ const {
     sendInteractiveCard
 } = buttonEngine;
 
-// অটুট রুট সুপার-ওনার নম্বর (কোনো ফাইল বা ENV বদলেও কখনো পরিবর্তন হবে না)
-const IMMUTABLE_ROOT_PHONE = String(settings.ownerNumber || settings.rootSuperOwner || '').replace(/[^\d]/g, '');
-
 // ==================================================
 // ১. ডেইলি ১-লিংক ট্র্যাকার (বাউন্ডেড — ২৫৬MB RAM সেফ)
 // ==================================================
@@ -80,46 +77,7 @@ function canShowPortfolioButton(chatId, groupSafe) {
 }
 
 // ==================================================
-// ২. মেমোয়াইজড RFC-কমপ্লায়েন্ট vCard বিল্ডার (জিরো রি-অ্যালোকেশন)
-// ==================================================
-let cachedVcardSig = '';
-let cachedVcardStr = '';
-
-function escapeVcardText(val = '') {
-    return String(val || '')
-        .replace(/\\/g, '\\\\')
-        .replace(/\r?\n/g, ' ')
-        .replace(/;/g, '\\;')
-        .replace(/,/g, '\\,')
-        .trim();
-}
-
-function getProVcard({ displayName, brandName, phoneDigits, versionClean }) {
-    const sig = `${displayName}|${brandName}|${phoneDigits}|${versionClean}`;
-    if (sig === cachedVcardSig && cachedVcardStr) return cachedVcardStr;
-
-    const fn = escapeVcardText(displayName || brandName || 'MSK');
-    const org = escapeVcardText(brandName || 'Mahiru Shiina');
-    const desc = escapeVcardText(`Founder & Root Developer • Mahiru v${versionClean}`);
-
-    cachedVcardStr = [
-        'BEGIN:VCARD',
-        'VERSION:3.0',
-        `N:;${fn};;;`,
-        `FN:${fn}`,
-        `ORG:${org};`,
-        'TITLE:Founder & System Architect',
-        `TEL;type=CELL;type=VOICE;waid=${phoneDigits}:+${phoneDigits}`,
-        `X-WA-BIZ-NAME:${fn}`,
-        `X-WA-BIZ-DESCRIPTION:${desc}`,
-        'END:VCARD'
-    ].join('\n');
-    cachedVcardSig = sig;
-    return cachedVcardStr;
-}
-
-// ==================================================
-// ৩. মূল ওনার কমান্ড হ্যান্ডলার (.owner / .o)
+// ২. মূল ওনার কমান্ড হ্যান্ডলার (.owner / .o)
 // ==================================================
 async function ownerCommand(sock, chatId, message = null) {
     const prefix = settings.prefix || '.';
@@ -131,81 +89,29 @@ async function ownerCommand(sock, chatId, message = null) {
     const ownerDisplay = settings.ownerDisplayName || settings.botOwner || 'MSK';
     const ownerHandle = String(settings.ownerUsername || 'MSK').replace(/^@+/, '');
     const versionClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
-    const phoneDigits = IMMUTABLE_ROOT_PHONE || String(settings.botOwnerNumber || '').replace(/[^\d]/g, '');
-    if (!phoneDigits) return sock.sendMessage(chatId, { text: 'Owner নম্বর settings.js-এ সেট করা নেই।' }, message ? { quoted: message } : {});
-    const formattedPhone = `+${phoneDigits}`;
+    const whatsappLink = `https://wa.me//${ownerHandle}`;
     const timeInfo = getDhakaTimeInfo();
 
-    // ১. ক্লিন vCard কন্টাক্ট কার্ড পাঠানো (স্থায়ীভাবে +8801869332798)
-    const vcard = getProVcard({
-        displayName: ownerDisplay,
-        brandName: botName,
-        phoneDigits,
-        versionClean
-    });
-
-    let sentContactMsg = null;
-    try {
-        sentContactMsg = await sock.sendMessage(
-            chatId,
-            {
-                contacts: {
-                    displayName: ownerDisplay,
-                    contacts: [{ vcard }]
-                }
-            },
-            message ? { quoted: message } : {}
-        );
-    } catch (err) {
-        console.warn(`⚠️ [owner] vCard send failed: ${err?.message || err}`);
-    }
-
-    // ২. প্রিমিয়াম ফ্রেমড ওনার প্রোফাইল কার্ড (১০০% টেক্সট-লিংক ফ্রি)
+    // ১. বট ওনার প্রোফাইল কার্ড — ফোন নম্বর প্রকাশ করা হবে না
     const profileCard = buildInfoFrame('Bot Owner', [
         { raw: `👑 *${toSmallCaps('VERIFIED BOT ARCHITECT')}*` },
         { icon: '👤', label: 'NAME', value: ownerDisplay },
         { icon: '🏷️', label: 'BRAND', value: botTitle },
         { icon: '🆔', label: 'HANDLE', value: `@${ownerHandle}` },
-        { icon: '📱', label: 'CONTACT', value: `\`${formattedPhone}\`` },
+        { icon: '🔗', label: 'WHATSAPP', value: `wa.me//${ownerHandle}` },
         { icon: '🤖', label: 'SYSTEM', value: `Mahiru v${versionClean}` },
         { icon: '🛠️', label: 'SERVICES', value: 'Mahiru Shiina • WhatsApp Bot • AI' },
         { icon: '🕒', label: 'LOCAL TIME', value: `${timeInfo.time} (${timeInfo.date})` }
     ]);
 
-    const bodyText = `${profileCard}\n\n💡 _সরাসরি যোগাযোগ করতে ওপরের কন্টাক্ট কার্ডে ট্যাপ করো অথবা নিচের বাটন ব্যবহার করো।_`;
+    const bodyText = `${profileCard}\n\n💡 _ওনারের সাথে WhatsApp-এ যোগাযোগ করতে WhatsApp লিংকটি ব্যবহার করো।_`;
 
-    // ৩. কনটেক্সট-অ্যাওয়্যার বাটন (গ্রুপে সম্পূর্ণ লিংক-ফ্রি, ইনবক্সে কল/কপি/ডেইলি ১-লিংক)
-    const buttons = [];
-
-    if (!isGroup) {
-        buttons.push({
-            text: 'CALL OWNER 📞',
-            id: 'owner_call',
-            type: 'cta_call',
-            phone: formattedPhone
-        });
-    }
-
-    buttons.push({
-        text: 'COPY NUMBER 📋',
-        id: 'copy_owner_phone',
-        type: 'cta_copy',
-        copyCode: formattedPhone
-    });
-
-    if (canShowPortfolioButton(chatId, groupSafe)) {
-        buttons.push({
-            text: 'PORTFOLIO 🌐',
-            id: 'owner_portfolio',
-            type: 'cta_url',
-            url: settings.ownerWebsite
-        });
-    }
-
-    buttons.push(
+    // ২. যোগাযোগের বাটন — ফোন নম্বর প্রকাশ নয়
+    const buttons = [
+        { text: 'WHATSAPP OWNER ↗', id: 'owner_whatsapp', type: 'cta_url', url: whatsappLink },
         { text: 'MENU 📚', id: `${prefix}menu`, type: 'quick_reply' },
         { text: 'ALIVE ⚡', id: `${prefix}alive`, type: 'quick_reply' }
-    );
+    ];
 
     if (isGroup) {
         buttons.push({ text: 'PING 🚀', id: `${prefix}ping`, type: 'quick_reply' });
@@ -220,19 +126,13 @@ async function ownerCommand(sock, chatId, message = null) {
             headerType: 'location',
             useVerifiedQuote: true,
             buttons,
-            quoted: sentContactMsg || message
+            quoted: message
         });
     } catch (error) {
         console.error('❌ [owner] Error sending owner card:', error?.message || error);
-        if (!sentContactMsg) {
-            try {
-                await sock.sendMessage(
-                    chatId,
-                    { text: `👑 *Owner:* ${ownerDisplay}\n📱 *Contact:* ${formattedPhone}` },
-                    message ? { quoted: message } : {}
-                );
-            } catch {}
-        }
+        try {
+            await sock.sendMessage(chatId, { text: `👑 *Bot Owner:* ${ownerDisplay}\n🆔 *Username:* @${ownerHandle}\n🔗 *WhatsApp:* wa.me//${ownerHandle}` }, message ? { quoted: message } : {});
+        } catch {}
     }
 }
 
