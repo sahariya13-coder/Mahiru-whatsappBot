@@ -101,7 +101,7 @@ const { welcomeCommand, handleJoinEvent } = require('./commands/welcome');
 const { goodbyeCommand, handleLeaveEvent } = require('./commands/goodbye');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
 const antibadwordCommand = require('./commands/antibadword');
-const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand } = require('./commands/chatbot');
+const { handleChatbotCommand, handleChatbotResponse, handleHumanCommand, handleRoleCommand, handleStyleCommand, handleSummaryCommand, handleCmdControlCommand, handleGuardCommand, handleOwnerRulesCommand } = require('./commands/chatbot');
 const { handleRuleCommand } = require('./commands/rule');
 const takeCommand = require('./commands/take');
 const { flirtCommand } = require('./commands/flirt');
@@ -1362,6 +1362,49 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 } else {
                     await handleChatbotCommand(sock, chatId, message, match);
                 }
+                break;
+            }
+
+            case userMessage === '.role' || userMessage.startsWith('.role '): {
+                await handleRoleCommand(sock, chatId, message, rawText.slice(5).trim());
+                break;
+            }
+
+            case userMessage === '.style' || userMessage.startsWith('.style '): {
+                await handleStyleCommand(sock, chatId, message, rawText.slice(6).trim());
+                break;
+            }
+
+            case userMessage === '.sm' || userMessage === '.summary' || userMessage.startsWith('.summary '): {
+                await handleSummaryCommand(sock, chatId, message, rawText.replace(/^\.(?:sm|summary)\s*/i, ''));
+                break;
+            }
+
+            case userMessage === '.cmd' || userMessage.startsWith('.cmd '): {
+                await handleCmdControlCommand(sock, chatId, message, rawText.slice(4).trim());
+                break;
+            }
+
+            case userMessage === '.guard' || userMessage.startsWith('.guard ') ||
+                 userMessage === '.antiabuse' || userMessage.startsWith('.antiabuse '): {
+                await handleGuardCommand(sock, chatId, message, rawText.replace(/^\.(?:guard|antiabuse)\s*/i, ''));
+                break;
+            }
+
+            case userMessage === '.orule' || userMessage.startsWith('.orule '): {
+                await handleOwnerRulesCommand(sock, chatId, message, rawText.slice(6).trim());
+                break;
+            }
+
+            case userMessage === '.voice' || userMessage.startsWith('.voice ') ||
+                 userMessage === '.v' || userMessage.startsWith('.v '): {
+                const voiceArgs = rawText.replace(/^\.(?:voice|v)\s*/i, '');
+                await handleChatbotCommand(sock, chatId, message, ('voice ' + voiceArgs).trim());
+                break;
+            }
+
+            case userMessage.startsWith('.research '): {
+                await handleChatbotCommand(sock, chatId, message, ('research ' + rawText.slice(9).trim()).trim());
                 break;
             }
 
