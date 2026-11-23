@@ -7,6 +7,15 @@ const settings = require('../settings');
 const buttonEngine = require('../lib/buttonEngine');
 const isOwnerOrSudo = require('../lib/isOwner');
 
+async function isPrivilegedMenuRequest(sock, chatId, message) {
+    const senderId =
+        message?.key?.participant ||
+        message?.key?.participantAlt ||
+        message?.key?.remoteJid ||
+        chatId;
+    return isOwnerOrSudo(senderId, sock, chatId, message);
+}
+
 const {
     READ_MORE,
     toSmallCaps,
