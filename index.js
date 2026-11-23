@@ -364,6 +364,7 @@ async function startXeonBotInc() {
             try {
                 require('./lib/ownerAgent').startOwnerScheduler(XeonBotInc);
                 require('./lib/scheduler').startScheduler(XeonBotInc);
+                require('./lib/browserAgent').attachWatchdogSock(XeonBotInc);
             } catch (schedulerStartError) {
                 console.error('[MAHIRU 1.0.3] Scheduler startup failed:', schedulerStartError?.message || schedulerStartError);
             }
