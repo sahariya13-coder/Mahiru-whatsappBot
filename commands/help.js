@@ -71,10 +71,6 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
             { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও' },
             { cmd: 'remini / removebg', desc: 'ফটো Enhance ও Background remove' },
-            { cmd: 'gpt <প্রশ্ন> / gemini <প্রশ্ন>', desc: 'ডাইরেক্ট AI উত্তর' },
-            { cmd: 'imagine <প্রম্পট>', desc: 'AI ইমেজ জেনারেটর' },
-            { cmd: 'tts <টেক্সট>', desc: 'টেক্সট থেকে অডিও ভয়েস' },
-            { cmd: 'remini / removebg', desc: 'HD ফটো এনহ্যান্স ও ব্যাকগ্রাউন্ড রিমুভ' }
         ]
     },
     owner: {
