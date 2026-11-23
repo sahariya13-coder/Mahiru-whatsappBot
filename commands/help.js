@@ -138,7 +138,8 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'weather <শহর>', desc: 'লাইভ আবহাওয়া আপডেট' },
             { cmd: 'news', desc: 'সর্বশেষ সংবাদ' },
             { cmd: 'url (ছবিতে রিপ্লাই)', desc: 'ছবি থেকে ডাইরেক্ট লিংক' },
-            { cmd: 'jid / uid', desc: 'চ্যাট বা ইউজারের আইডি দেখা' }
+            { cmd: 'jid / uid', desc: 'চ্যাট বা ইউজারের আইডি দেখা' },
+            { cmd: 'pair <WhatsApp নম্বর>', desc: 'Pairing Code API দিয়ে কোড তৈরি' }
         ]
     },
     sticker: {
