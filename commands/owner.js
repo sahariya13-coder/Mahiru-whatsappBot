@@ -128,7 +128,7 @@ async function ownerCommand(sock, chatId, message = null) {
 
     const botName = settings.botName || 'Mahiru Shiina';
     const botTitle = toSmallCaps(botName);
-    const ownerDisplay = settings.ownerDisplayName || settings.botOwner || 'প্রাইম মনির';
+    const ownerDisplay = settings.ownerDisplayName || settings.botOwner || 'MSK';
     const ownerHandle = String(settings.ownerUsername || 'MSK').replace(/^@+/, '');
     const versionClean = String(settings.version || '1.0.0-ULTIMATE').replace(/^v/i, '');
     const phoneDigits = IMMUTABLE_ROOT_PHONE || String(settings.botOwnerNumber || '').replace(/[^\d]/g, '');
