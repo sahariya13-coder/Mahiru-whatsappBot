@@ -302,7 +302,7 @@ async function helpCommand(sock, chatId, message) {
                 footer,
                 headerTitle: `${botTitle} • ${cat.title}`,
                 headerSubtitle: `${cat.icon} ${cat.subtitle}`,
-                headerType: 'location',
+                headerType: 'image',
                 useVerifiedQuote: true,
                 buttons: [
                     { text: '📋 অন্য ক্যাটাগরি', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
@@ -339,7 +339,7 @@ async function helpCommand(sock, chatId, message) {
                 footer,
                 headerTitle: `${botTitle} • FULL INDEX`,
                 headerSubtitle: `📚 ${getTotalCommandCount()}+ ${toSmallCaps('COMMANDS')}`,
-                headerType: 'location',
+                headerType: 'image',
                 useVerifiedQuote: true,
                 buttons: [
                     { text: '📋 ক্যাটাগরি বাছুন', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
@@ -386,7 +386,7 @@ async function helpCommand(sock, chatId, message) {
             footer,
             headerTitle: `${botTitle} • মাহিরু v1.0`,
             headerSubtitle: `⚡ ${toSmallCaps('ULTIMATE AI & BOT ENGINE')}`,
-            headerType: 'location',
+            headerType: 'image',
             useVerifiedQuote: true,
             buttons: [
                 { text: '📋 কমান্ড মেনু', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
