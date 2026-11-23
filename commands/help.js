@@ -190,7 +190,7 @@ const MENU_CATEGORIES = Object.freeze({
 const CATEGORY_ALIASES = Object.freeze({
     short: 'shortcuts', shortcut: 'shortcuts', shortcuts: 'shortcuts', pro: 'shortcuts',
     group: 'group', grp: 'group', g: 'group', admin: 'group',
-    ai: 'ai', maya: 'ai', voice: 'ai', chatbot: 'ai',
+    ai: 'ai', mahiru: 'ai', voice: 'ai', chatbot: 'ai',
     owner: 'owner', root: 'owner', security: 'owner', sudo: 'owner', adm: 'owner',
     media: 'media', dl: 'media', download: 'media', downloader: 'media', music: 'media',
     tools: 'tools', tool: 'tools', util: 'tools', general: 'tools',
