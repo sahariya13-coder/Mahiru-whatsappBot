@@ -626,18 +626,19 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const args = rawText.trim().split(/\s+/);
                 const action = (args[1] || 'stats').toLowerCase();
                 const vectorGraph = require('./lib/vectorGraph');
+                const memoryKey = `${chatId}:${senderId}`;
                 if (action === 'search' && args.length > 2) {
-                    const hits = await vectorGraph.searchGraph(chatId, args.slice(2).join(' '), 5);
+                    const hits = await vectorGraph.searchGraph(memoryKey, args.slice(2).join(' '), 5);
                     await sock.sendMessage(chatId, { text: hits.length ? hits.map((hit, i) => `${i + 1}. ${hit.text}\nScore: ${hit.score}`).join('\n\n') : 'এই চ্যাটে মিলে এমন কোনো স্মৃতি পাওয়া যায়নি।' }, { quoted: message });
                 } else if (action === 'clear') {
                     if (isGroup && !senderIsOwnerOrSudoCheck) {
                         await sock.sendMessage(chatId, { text: 'গ্রুপের shared memory মুছতে Owner/Sudo permission লাগবে।' }, { quoted: message });
                     } else {
-                        vectorGraph.clearUserGraph(chatId);
+                        vectorGraph.clearUserGraph(memoryKey);
                         await sock.sendMessage(chatId, { text: '✅ এই চ্যাটের Mahiru memory clear করা হয়েছে।' }, { quoted: message });
                     }
                 } else {
-                    const stats = vectorGraph.getGraphStats(chatId);
+                    const stats = vectorGraph.getGraphStats(memoryKey);
                     await sock.sendMessage(chatId, { text: `🧠 *MAHIRU MEMORY*\nMemories: ${stats.currentUserMemories}\nEntities: ${Object.keys(stats.currentUserEntities || {}).length}\nTotal recalls: ${stats.totalRecalls}\nVectorized: ${stats.vectorizedCount}\nCloud sync: ${stats.cloudEnabled ? 'Enabled' : 'Disabled'}\n\n.memory search <text>\n.memory clear` }, { quoted: message });
                 }
                 commandExecuted = true;
