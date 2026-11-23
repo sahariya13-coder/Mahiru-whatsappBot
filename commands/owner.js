@@ -1,7 +1,7 @@
 /**
- * PRIME MONIR • Maya v1.0 ULTIMATE — Immutable Root Owner Profile & Pro vCard Engine
+ * MSK • Mahiru v1.0 ULTIMATE — Immutable Root Owner Profile & Pro vCard Engine
  * Fixes: Correct ../lib/systemOptimizer Path + Immutable +8801869332798 Root Lock + Memoized vCard
- * Features: Zero-Upload MAYA Banner Card + Group Anti-Link Shield + Daily 1-Link Guard
+ * Features: Zero-Upload MAHIRU Banner Card + Group Anti-Link Shield + Daily 1-Link Guard
  * RAM Profile: Zero Disk I/O + Bounded Map (256MB Cloud Optimized)
  */
 const settings = require('../settings');
@@ -34,7 +34,7 @@ function pruneLinkHistory(force = false) {
         return;
     }
     const now = Date.now();
-    const windowMs = settings.maya?.sanitizer?.linkCooldownMs || (24 * 60 * 60 * 1000);
+    const windowMs = settings.mahiru?.sanitizer?.linkCooldownMs || (24 * 60 * 60 * 1000);
     for (const [k, v] of portfolioLinkHistory.entries()) {
         if (now - v.ts > windowMs) portfolioLinkHistory.delete(k);
     }
@@ -46,18 +46,18 @@ if (systemOptimizer?.registerCleanupHook) {
 
 function canShowPortfolioButton(chatId, groupSafe) {
     const isGroup = String(chatId || '').endsWith('@g.us');
-    if (groupSafe || (isGroup && !settings.maya?.sanitizer?.portfolioLinkAllowInGroups)) {
+    if (groupSafe || (isGroup && !settings.mahiru?.sanitizer?.portfolioLinkAllowInGroups)) {
         return false;
     }
 
     const url = String(settings.ownerWebsite || '').trim();
     if (!/^https?:\/\//i.test(url)) return false;
 
-    const dailyLimit = settings.maya?.sanitizer?.portfolioLinkDailyLimitPerChat ?? 1;
+    const dailyLimit = settings.mahiru?.sanitizer?.portfolioLinkDailyLimitPerChat ?? 1;
     if (dailyLimit <= 0) return false;
 
     const now = Date.now();
-    const windowMs = settings.maya?.sanitizer?.linkCooldownMs || (24 * 60 * 60 * 1000);
+    const windowMs = settings.mahiru?.sanitizer?.linkCooldownMs || (24 * 60 * 60 * 1000);
     const key = String(chatId || '').toLowerCase();
     const entry = portfolioLinkHistory.get(key);
 
@@ -100,7 +100,7 @@ function getProVcard({ displayName, brandName, phoneDigits, versionClean }) {
 
     const fn = escapeVcardText(displayName || brandName || 'MSK');
     const org = escapeVcardText(brandName || 'Mahiru Shiina');
-    const desc = escapeVcardText(`Founder & Root Developer • Maya v${versionClean}`);
+    const desc = escapeVcardText(`Founder & Root Developer • Mahiru v${versionClean}`);
 
     cachedVcardStr = [
         'BEGIN:VCARD',
@@ -214,7 +214,7 @@ async function ownerCommand(sock, chatId, message = null) {
     try {
         await sendInteractiveCard(sock, chatId, {
             body: bodyText,
-            footer: settings.maya?.ui?.footerText || `Powered By ${botTitle} • মায়া v1.0`,
+            footer: settings.mahiru?.ui?.footerText || `Powered By ${botTitle} • মায়া v1.0`,
             headerTitle: `${botTitle} • OWNER`,
             headerSubtitle: `👑 ${ownerDisplay}`,
             headerType: 'location',
