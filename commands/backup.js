@@ -210,6 +210,10 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
     const document = readDocument(message);
 
     if (/^\.backup(?:\s|$)/i.test(text)) {
+        if (String(chatId || '').endsWith('@g.us')) {
+            await sock.sendMessage(chatId, { text: '🔒 নিরাপত্তার জন্য Backup/Restore শুধু Bot Owner-এর ব্যক্তিগত ইনবক্সে ব্যবহার করুন।' }, { quoted: message });
+            return true;
+        }
         if (!owner) {
             await sock.sendMessage(chatId, { text: 'এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
             return true;
