@@ -20,7 +20,6 @@ function walk(dir) {
 
 walk(ROOT);
 const failures = [];
-const PACKAGE_JSON = require(path.join(ROOT, 'package.json'));
 const LOCAL_EXTENSIONS = ['.js', '.cjs', '.mjs', '.json', '.node'];
 
 function resolveLocalRequire(fromFile, specifier) {
@@ -59,7 +58,7 @@ for (const file of files) {
     }
 
     const source = fs.readFileSync(file, 'utf8');
-    const requireRx = /require\\(\\s*['"]([.]{1,2}\\/[^'"]+)['"]\\s*\\)/g;
+    const requireRx = /require\(\s*['"]([.]{1,2}\/[^'"]+)['"]\s*\)/g;
     for (const match of source.matchAll(requireRx)) {
         const resolved = resolveLocalRequire(file, match[1]);
         if (!resolved) {
