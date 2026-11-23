@@ -1396,6 +1396,21 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
 
+            case userMessage === '.lang' || userMessage.startsWith('.lang '): {
+                await handleChatbotCommand(sock, chatId, message, ('lang ' + rawText.slice(5).trim()).trim());
+                break;
+            }
+
+            case userMessage === '.research' || userMessage.startsWith('.research '): {
+                await handleChatbotCommand(sock, chatId, message, ('research ' + rawText.slice(9).trim()).trim());
+                break;
+            }
+
+            case userMessage === '.resetapi' || userMessage.startsWith('.resetapi '): {
+                await handleChatbotCommand(sock, chatId, message, 'resetapi');
+                break;
+            }
+
             case userMessage === '.voice' || userMessage.startsWith('.voice ') ||
                  userMessage === '.v' || userMessage.startsWith('.v '): {
                 const voiceArgs = rawText.replace(/^\.(?:voice|v)\s*/i, '');
