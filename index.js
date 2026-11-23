@@ -65,7 +65,7 @@ async function notifyOwnerError(args, source = 'Console Error') {
         '🧾 Error: ' + info.message.slice(0, 700),
         '💡 সম্ভাব্য সমস্যা: ' + explainError(info),
         '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
-    ].join('\\n');
+    ].join('\n');
 
     try {
         return await notifyOwner(activeSocket, report);
