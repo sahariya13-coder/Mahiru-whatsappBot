@@ -52,7 +52,6 @@ const MENU_CATEGORIES = Object.freeze({
         title: 'MASTER GROUP CONTROL',
         subtitle: 'গ্রুপ কিল-সুইচ, অ্যাডমিন ও শিল্ড',
         commands: [
-            { cmd: 'gai on / off', desc: 'গ্রুপ AI চালু বা বন্ধ' },
             { cmd: 'tagall / hidetag', desc: 'সবার কাছে মেনশন/মেসেজ' },
             { cmd: 'kick / ban / unban', desc: 'মেম্বার রিমুভ ও ব্যান' },
             { cmd: 'promote / demote', desc: 'অ্যাডমিন বানানো বা সরানো' },
@@ -77,11 +76,11 @@ const MENU_CATEGORIES = Object.freeze({
         id: 'owner',
         icon: '👑',
         title: 'ROOT OWNER & SECURITY',
-        subtitle: 'সুপার-ওনার ফায়ারওয়াল ও পাওয়ার OS',
+        subtitle: 'শুধু Owner/Sudo • Owner inbox controls',
         commands: [
             { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
             { cmd: 'chatbot on / off / status', desc: 'Mahiru AI কন্ট্রোল' },
-            { cmd: 'gai on / off / iai on / off', desc: 'Group ও Inbox AI কন্ট্রোল' },
+            { cmd: 'gai on / off', desc: 'Group AI কন্ট্রোল' },
             { cmd: 'iai on / off', desc: 'Inbox AI কন্ট্রোল' },
             { cmd: 'human on / off', desc: 'Human persona কন্ট্রোল' },
             { cmd: 'voice test <কথা>', desc: 'ভয়েস রিপ্লাই পরীক্ষা' },
