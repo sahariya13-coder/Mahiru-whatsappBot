@@ -249,7 +249,12 @@ async function helpCommand(sock, chatId, message) {
     const footer = settings.maya?.ui?.footerText || `Powered By ${botTitle} • মাহিরু v1.0`;
     const timeInfo = getDhakaTimeInfo();
     const userName = message?.pushName || 'Friend';
-    const catKey = getRequestedCategory(message);\n    const isPrivileged = await isPrivilegedMenuRequest(sock, chatId, message);\n    if (catKey === 'owner' && !isPrivileged) {\n        await sock.sendMessage(chatId, { text: '❌ এই ক্যাটাগরিটি শুধু Owner/Sudo দেখতে পারবে।' }, { quoted: message });\n        return;\n    }
+    const catKey = getRequestedCategory(message);
+    const isPrivileged = await isPrivilegedMenuRequest(sock, chatId, message);
+    if (catKey === 'owner' && !isPrivileged) {
+        await sock.sendMessage(chatId, { text: '❌ এই ক্যাটাগরিটি শুধু Owner/Sudo দেখতে পারবে।' }, { quoted: message });
+        return;
+    }
 
     try {
         // ক) নির্দিষ্ট ক্যাটাগরি ভিউ (.menu group / .menu ai / .menu owner ইত্যাদি)
