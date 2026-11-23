@@ -87,6 +87,31 @@ const chalk = require('chalk')
 const FileType = require('file-type')
 const path = require('path')
 
+// One-time storage filename migration: preserve existing runtime data after branding rename.
+try {
+    const dataDir = path.join(process.cwd(), 'data');
+    const legacyFiles = [
+        'maya_activity.json', 'maya_training.json', 'maya_live_models_cache.json',
+        'maya_system_control.json', 'maya_web_watch.json', 'maya_phone_specs_cache.json',
+        'maya_voice_studio.json', 'maya_schedules.json', 'maya_healer_state.json',
+        'maya_outbox_queue.json', 'maya_style_dna.json', 'maya_vector_graph.json'
+    ];
+    for (const oldName of legacyFiles) {
+        const oldPath = path.join(dataDir, oldName);
+        const newPath = path.join(dataDir, oldName.replace(/^maya_/, 'mahiru_'));
+        if (fs.existsSync(oldPath) && !fs.existsSync(newPath)) fs.renameSync(oldPath, newPath);
+    }
+    if (fs.existsSync(dataDir)) {
+        for (const oldName of fs.readdirSync(dataDir)) {
+            if (!oldName.startsWith('maya_backup_')) continue;
+            const newPath = path.join(dataDir, oldName.replace(/^maya_backup_/, 'mahiru_backup_'));
+            if (!fs.existsSync(newPath)) fs.renameSync(path.join(dataDir, oldName), newPath);
+        }
+    }
+} catch (migrationError) {
+    console.warn('[MAHIRU] Legacy data filename migration skipped:', migrationError?.message || migrationError);
+}
+
 // Restore local + Redis active data before loading modules that read JSON settings.
 const persistentDataReady = require('./lib/persistent_data').start()
 const axios = require('axios')
