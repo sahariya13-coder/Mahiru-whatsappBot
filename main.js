@@ -452,7 +452,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -499,7 +499,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         }
 
         if (userMessage.startsWith('.')) {
-            const commandName = userMessage.trim().split(/\\s+/)[0];
+            const commandName = userMessage.trim().split(/\s+/)[0];
             const blockState = systemControl.isCommandBlocked(commandName, isGroup);
             if (blockState.blocked) {
                 await sock.sendMessage(chatId, {
@@ -512,6 +512,66 @@ async function handleMessages(sock, messageUpdate, printLog) {
         let commandExecuted = false;
 
         switch (true) {
+            case userMessage === '.syshealth': {
+                const health = systemControl.getSystemHealth();
+                const queue = systemControl.getQueueStats();
+                await sock.sendMessage(chatId, {
+                    text: `🧠 *MAHIRU SYSTEM HEALTH*\n\nRAM: ${health.rssMb} MB\nHeap: ${health.heapUsedMb} / ${health.heapTotalMb} MB\nQueue: ${queue.activeWorkers}/${queue.maxWorkers} active\nWaiting: ${queue.waitingGlobal}\nProcessed: ${queue.processed}\nTimed out: ${queue.timedOut}\nDropped: ${queue.dropped}`
+                }, { quoted: message });
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.cmd' || userMessage.startsWith('.cmd '): {
+                const args = rawText.trim().split(/\s+/).slice(1);
+                const action = (args.shift() || '').toLowerCase();
+                const scope = ['all', 'group', 'private'].includes((args[args.length - 1] || '').toLowerCase()) ? args.pop().toLowerCase() : 'all';
+                if (action === 'list') {
+                    const blocked = Object.entries(systemControl.getDisabledCommands());
+                    const output = blocked.length ? blocked.map(([cmd, item]) => `${cmd} — ${item.scope}`).join('\n') : 'কোনো কমান্ড বন্ধ নেই।';
+                    await sock.sendMessage(chatId, { text: `📋 *DISABLED COMMANDS*\n\n${output}` }, { quoted: message });
+                } else if (['off', 'disable', 'block', 'on', 'enable', 'unblock'].includes(action) && args.length) {
+                    const enabling = ['on', 'enable', 'unblock'].includes(action);
+                    const updated = systemControl.setCommandsState(args, enabling, scope);
+                    await sock.sendMessage(chatId, { text: updated.length ? `✅ ${updated.length}টি কমান্ড ${enabling ? 'চালু' : 'বন্ধ'} করা হয়েছে।\nScope: ${scope}\n${updated.join(', ')}` : '⚠️ কোনো পরিবর্তন হয়নি। Protected command বন্ধ করা যায় না অথবা পরিবর্তন প্রয়োজন নেই।' }, { quoted: message });
+                } else {
+                    await sock.sendMessage(chatId, { text: 'ব্যবহার:\n.cmd off .play [all/group/private]\n.cmd on .play [all/group/private]\n.cmd list' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.ownerpref' || userMessage.startsWith('.ownerpref '): {
+                const raw = rawText.trim().slice('.ownerpref'.length).trim();
+                if (!raw) {
+                    const prefs = systemControl.getOwnerPrefs();
+                    await sock.sendMessage(chatId, { text: `Owner title: ${prefs.ownerTitle}\nInstruction: ${prefs.ownerCustomInstruction || '(নেই)'}\nব্যবহার: .ownerpref <title> | <instruction>` }, { quoted: message });
+                } else {
+                    const [ownerTitle, ...instructionParts] = raw.split('|');
+                    const prefs = systemControl.setOwnerPrefs({ ownerTitle: ownerTitle.trim(), ownerCustomInstruction: instructionParts.join('|').trim() });
+                    await sock.sendMessage(chatId, { text: `✅ Owner preference saved.\nTitle: ${prefs.ownerTitle}` }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
+            case userMessage === '.ownerrule' || userMessage.startsWith('.ownerrule '): {
+                const args = rawText.trim().split(/\s+/);
+                const action = (args[1] || 'list').toLowerCase();
+                const value = args.slice(2).join(' ');
+                if (action === 'add' && value) {
+                    const item = systemControl.addOwnerRule(value);
+                    await sock.sendMessage(chatId, { text: item ? `✅ Rule added: ${item.id}\n${item.rule}` : '❌ Rule যোগ করা যায়নি।' }, { quoted: message });
+                } else if (action === 'del' || action === 'remove') {
+                    const removed = systemControl.removeOwnerRule(value);
+                    await sock.sendMessage(chatId, { text: removed ? '✅ Rule মুছে ফেলা হয়েছে।' : '❌ Rule পাওয়া যায়নি।' }, { quoted: message });
+                } else if (action === 'clear') {
+                    systemControl.clearOwnerRules();
+                    await sock.sendMessage(chatId, { text: '✅ সব Owner rule মুছে ফেলা হয়েছে।' }, { quoted: message });
+                } else {
+                    const rules = systemControl.getOwnerRules();
+                    await sock.sendMessage(chatId, { text: rules.length ? rules.map((item, i) => `${i + 1}. [${item.id}] ${item.rule}`).join('\n') : 'কোনো Owner rule নেই।\nযোগ: .ownerrule add <rule>' }, { quoted: message });
+                }
+                commandExecuted = true;
+                break;
+            }
             case /^(?:\.heal|\.health|\.doc|\.doctor|\.ram|\.bk|\.backup)\b/i.test(rawText.trim()):
                 await handleSelfHealerCommand(sock, chatId, message, rawText.trim().split(/\s+/).slice(1).join(' '));
                 commandExecuted = true;
