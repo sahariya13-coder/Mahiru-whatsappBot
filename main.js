@@ -45,6 +45,11 @@ const { setGroupFeature, FEATURES: REMOTE_GROUP_FEATURES } = require('./lib/grou
 const { autotypingCommand, isAutotypingEnabled, handleAutotypingForMessage, handleAutotypingForCommand, showTypingAfterCommand } = require('./commands/autotyping');
 const { autoreadCommand, isAutoreadEnabled, handleAutoread } = require('./commands/autoread');
 
+const antibotCommand = require('./commands/antibot');
+const gifCommand = require('./commands/gif');
+const twitterCommand = require('./commands/twitter');
+const savestatusCommand = require('./commands/savestatus');
+
 // Command imports
 const tagAllCommand = require('./commands/tagall');
 const helpCommand = require('./commands/help');
@@ -173,6 +178,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         const message = messages[0];
         if (!message?.message) return;
+        // Detect known bot-library message IDs before ordinary command processing.
+        if (await antibotCommand.handleAntibotDetection(sock, message)) return;
 
         await handleAutoread(sock, message);
 
@@ -900,6 +907,22 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     return;
                 }
                 await handleAntitagCommand(sock, chatId, userMessage, senderId, isSenderAdmin, message);
+                break;
+
+            case userMessage.startsWith('.antibot'):
+                await antibotCommand(sock, chatId, message, senderId);
+                break;
+
+            case userMessage.startsWith('.gif'):
+                await gifCommand(sock, chatId, rawText.trim().split(/\\s+/).slice(1).join(' '));
+                break;
+
+            case userMessage.startsWith('.twitter') || userMessage.startsWith('.x '):
+                await twitterCommand(sock, chatId, message);
+                break;
+
+            case userMessage.startsWith('.savestatus'):
+                await savestatusCommand(sock, chatId, message, senderId);
                 break;
 
             case userMessage === '.meme':
@@ -1959,5 +1982,12 @@ module.exports = {
     handleGroupParticipantUpdate,
     handleStatus: async (sock, status) => {
         await handleStatusUpdate(sock, status);
+        const statusMessages = Array.isArray(status?.messages) ? status.messages : [status];
+        const { autoSave } = require('./commands/savestatus');
+        for (const statusMessage of statusMessages) {
+            if (statusMessage?.key?.remoteJid === 'status@broadcast') {
+                await autoSave(sock, statusMessage);
+            }
+        }
     }
 };
