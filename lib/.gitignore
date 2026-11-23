@@ -1,0 +1,13 @@
+node_modules/
+session/
+sessions/
+auth_info_baileys/
+temp/
+tmp/
+.cache/
+.env
+.env.*
+*.log
+data/snapshots/
+data/backups/
+data/voice_cache/

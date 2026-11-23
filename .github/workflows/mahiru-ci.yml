@@ -1,0 +1,666 @@
+name: "⚡ MAHIRU SHIINA • Mahiru v2.0 ULTRA CI/CD & Security"
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 21 * * 6'
+  workflow_dispatch:
+    inputs:
+      trigger_deploy:
+        description: 'সব টেস্ট পাস করলে হোস্টিং সার্ভার রিস্টার্ট করবে? (true/false)'
+        required: false
+        default: 'true'
+        type: boolean
+      deep_audit:
+        description: 'ডিপ NPM সিকিউরিটি অডিট চালাবে?'
+        required: false
+        default: 'true'
+        type: boolean
+
+concurrency:
+  group: mahiru-ultra-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  syntax-integrity:
+    name: "🔍 ১. সিনট্যাক্স ও ফাইল ইন্টিগ্রিটি"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run Full Static Gate (JS Syntax, JSON, Merge Conflicts & Core Files)
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const { execFileSync } = require('child_process');
+
+          const IGNORE_DIRS = new Set(['.git', 'node_modules', 'temp', 'tmp', '.cache', 'session', 'sessions']);
+          const CORE_REQUIRED_FILES = [
+            'index.js',
+            'main.js',
+            'settings.js',
+            'package.json',
+            'commands/chatbot.js',
+            'lib/mahiruCore.js',
+            'lib/selfHealer.js',
+            'lib/systemOptimizer.js',
+            'lib/chatQueue.js',
+            'lib/textSanitizer.js',
+            'lib/langGuard.js',
+            'lib/voiceEngine.js',
+            'lib/intentRouter.js',
+            'lib/aiOrchestrator.js',
+            'lib/memoryEngine.js',
+            'lib/knowledgeEngine.js',
+            'lib/ownerAgent.js'
+          ];
+
+          const jsFiles = [];
+          const jsonFiles = [];
+          const allTextFiles = [];
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (IGNORE_DIRS.has(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(full);
+              } else if (entry.isFile()) {
+                const ext = path.extname(entry.name).toLowerCase();
+                if (ext === '.js' || ext === '.cjs' || ext === '.mjs') {
+                  jsFiles.push(full);
+                  allTextFiles.push(full);
+                } else if (ext === '.json') {
+                  jsonFiles.push(full);
+                  allTextFiles.push(full);
+                }
+              }
+            }
+          }
+
+          walk('.');
+          const errors = [];
+
+          for (const rel of CORE_REQUIRED_FILES) {
+            if (!fs.existsSync(rel)) errors.push(`Missing core file: ${rel}`);
+          }
+
+          for (const file of jsFiles) {
+            try {
+              execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' });
+            } catch (err) {
+              const msg = String(err.stderr || err.message).split('\n').slice(0, 4).join(' | ');
+              errors.push(`JS Syntax Error in ${file}: ${msg}`);
+            }
+          }
+
+          for (const file of jsonFiles) {
+            try {
+              JSON.parse(fs.readFileSync(file, 'utf8'));
+            } catch (err) {
+              errors.push(`Invalid JSON in ${file}: ${err.message}`);
+            }
+          }
+
+          const conflictRx = /^(<{7}\s|={7}$|>{7}\s)/m;
+          for (const file of allTextFiles) {
+            const content = fs.readFileSync(file, 'utf8');
+            if (conflictRx.test(content)) errors.push(`Merge conflict marker found in ${file}`);
+          }
+
+          if (errors.length > 0) {
+            console.error('\n❌ STATIC GATE FAILED:\n');
+            for (const e of errors) console.error('  • ' + e);
+            process.exit(1);
+          }
+
+          console.log(`\n✅ STATIC GATE PASSED: ${jsFiles.length} JS files, ${jsonFiles.length} JSON files, all ${CORE_REQUIRED_FILES.length} core files verified!`);
+          EOF
+
+  security-firewall:
+    name: "🛡️ ২. সিকিউরিটি ও সিক্রেট ফায়ারওয়াল"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Scan for Leaked Secrets, Session Creds & .env Files
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          const { execFileSync } = require('child_process');
+
+          const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+          const violations = [];
+          const warnings = [];
+          const sessionLeaks = [];
+
+          const FORBIDDEN_FILE_PATTERNS = [
+            { rx: /(^|\/)\.env(\.local|\.prod|\.production)?$/i, label: 'Committed .env file' },
+            { rx: /(^|\/)creds\.json$/i, label: 'WhatsApp creds.json leaked (Account Hijack Risk!)' }
+          ];
+
+          const SESSION_KEY_RX = /(^|\/)(?:session|sessions|auth_info_baileys)\/(?:pre-key|session|sender-key|app-state-sync)-.+\.json$/i;
+
+          const SECRET_PATTERNS = [
+            { name: 'Google/Gemini API Key', rx: /\bAIzaSy[0-9A-Za-z_-]{33}\b/g },
+            { name: 'Groq API Key', rx: /\bgsk_[0-9A-Za-z]{40,}\b/g },
+            { name: 'OpenRouter API Key', rx: /\bsk-or-v1-[0-9a-f]{40,}\b/gi },
+            { name: 'GitHub Personal Access Token', rx: /\b(?:ghp|gho|ghu|ghs)_[0-9A-Za-z]{36,}\b/g },
+            { name: 'Private Cryptographic Key', rx: /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/g },
+            { name: 'Telegram Bot Token', rx: /\b\d{8,11}:AA[0-9A-Za-z_-]{33}\b/g }
+          ];
+
+          const SKIP_SCAN_EXTS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.mp3', '.ogg', '.mp4', '.gz', '.zip', '.pdf', '.ico', '.woff', '.woff2']);
+
+          function stripJsComments(code = '') {
+            return code
+              .replace(/\/\*[\s\S]*?\*\//g, '')
+              .replace(/(^|[^:\\])\/\/.*$/gm, '$1');
+          }
+
+          for (const rel of tracked) {
+            if (SESSION_KEY_RX.test(rel)) {
+              sessionLeaks.push(rel);
+              continue;
+            }
+
+            for (const rule of FORBIDDEN_FILE_PATTERNS) {
+              if (rule.rx.test(rel)) {
+                violations.push(`[FILE LEAK] ${rel} — ${rule.label}`);
+              }
+            }
+
+            if (rel.startsWith('.github/workflows/')) continue;
+            const ext = path.extname(rel).toLowerCase();
+            if (SKIP_SCAN_EXTS.has(ext)) continue;
+
+            try {
+              const st = fs.statSync(rel);
+              if (!st.isFile() || st.size > 2 * 1024 * 1024) continue;
+              const content = fs.readFileSync(rel, 'utf8');
+
+              for (const sec of SECRET_PATTERNS) {
+                sec.rx.lastIndex = 0;
+                const matches = content.match(sec.rx);
+                if (matches && matches.length > 0) {
+                  violations.push(`[SECRET LEAK] ${sec.name} detected in ${rel} (${matches.length}x)`);
+                }
+              }
+
+              if (ext === '.js') {
+                const codeOnly = stripJsComments(content);
+                if (/\beval\s*\(/.test(codeOnly)) {
+                  warnings.push(`eval() detected in ${rel}`);
+                }
+              }
+            } catch {}
+          }
+
+          if (sessionLeaks.length > 0) {
+            violations.push(
+              `[SESSION LEAK] ${sessionLeaks.length} WhatsApp session key files committed (e.g. ${sessionLeaks.slice(0, 3).join(', ')}) — add session/ to .gitignore and untrack them.`
+            );
+          }
+
+          if (warnings.length > 0) {
+            console.log('⚠️ Security Warnings:');
+            for (const w of warnings) console.log('  • ' + w);
+          }
+
+          if (violations.length > 0) {
+            console.error('\n🚨 SECURITY FIREWALL BLOCKED THIS PUSH:\n');
+            for (const v of violations) console.error('  ❌ ' + v);
+            console.error('\nFix: Remove tracked session files & move hardcoded keys into environment variables.');
+            process.exit(1);
+          }
+
+          console.log(`✅ SECURITY FIREWALL PASSED: Scanned ${tracked.length} tracked files — zero leaked keys or WhatsApp sessions!`);
+          EOF
+
+      - name: NPM Dependency Vulnerability Audit (Advisory)
+        if: ${{ github.event_name == 'schedule' || github.event.inputs.deep_audit == 'true' || github.event_name == 'push' }}
+        continue-on-error: true
+        run: |
+          if [ -f package-lock.json ]; then
+            npm audit --omit=dev --audit-level=high || true
+          else
+            echo "ℹ️ No package-lock.json found — skipping strict npm audit."
+          fi
+
+  mahiru-v2-tests:
+    name: "🧪 ৩. মায়া v2.0 আল্ট্রা টেস্ট সুইট"
+    needs: [syntax-integrity]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node24-${{ hashFiles('package.json', 'package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node24-
+
+      - name: Install Dependencies (Lockfile-Safe)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Execute Mahiru v2.0 ULTRA Behavioral Test Suite
+        run: |
+          node << 'EOF'
+          const assert = require('assert');
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+
+          const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mahiru-ci-'));
+          let passed = 0;
+          let failed = 0;
+
+          async function test(name, fn) {
+            try {
+              await fn();
+              console.log(`  ✅ ${name}`);
+              passed++;
+            } catch (err) {
+              console.error(`  ❌ ${name}\n     ↳ ${err?.message || err}`);
+              failed++;
+            }
+          }
+
+          (async () => {
+            console.log('\n🚀 Running MAHIRU SHIINA • Mahiru v2.0 ULTRA Automated Test Suite...\n');
+
+            await test('settings.js: Owner phone & @lid verification + typo fix', () => {
+              const settings = require('./settings');
+              assert.strictEqual(settings.botName, 'MAHIRU SHIINA');
+              assert.strictEqual(settings.isOwnerJid('8801869332798@s.whatsapp.net'), true);
+              assert.strictEqual(settings.isOwnerJid('216123442245856@lid'), true);
+              assert.strictEqual(settings.isOwnerJid('8801949787846@s.whatsapp.net'), false);
+            });
+
+            await test('lib/textSanitizer.js: LaTeX -> Unicode while preserving currency', () => {
+              const { TextSanitizer } = require('./lib/textSanitizer');
+              const ts = new TextSanitizer();
+              const eq1 = ts.cleanLatexForWhatsApp('$a - \\frac{1}{a} = \\sqrt{2}$').text;
+              const eq2 = ts.cleanLatexForWhatsApp('$a^2 + \\frac{1}{a^2}$').text;
+              const cur = ts.cleanLatexForWhatsApp('1$= 125 tk এবং $50 থেকে $100').text;
+              assert.strictEqual(eq1, 'a - (1/a) = √2');
+              assert.strictEqual(eq2, 'a² + (1/a²)');
+              assert.ok(cur.includes('1$= 125 tk'), `Currency corrupted: ${cur}`);
+            });
+
+            await test('lib/textSanitizer.js: Link Firewall blocks unsolicited image & refusal links', () => {
+              const { TextSanitizer } = require('./lib/textSanitizer');
+              const ts = new TextSanitizer();
+
+              const imgRes = ts.sanitizeReply(
+                'ছবিটা বেশ সুন্দর!\n• পেজ: Work Proofs\n• লিংক: https://prime-web.netlify.app/posts',
+                { chatId: 'u1@s.whatsapp.net', userText: '', intent: 'VISION_CASUAL', isImageOnly: true }
+              );
+              assert.strictEqual(imgRes.strippedLinks, true);
+              assert.ok(!imgRes.text.includes('prime-web.netlify.app'));
+
+              const refRes = ts.sanitizeReply(
+                'দুঃখিত, আমি কোনো হ্যাকিং বা অননুমোদিত প্যানেল সরবরাহ করতে পারি না।\n• লিংক: https://prime-web.netlify.app/downloads',
+                { chatId: 'u1@s.whatsapp.net', userText: 'ফ্রি প্যানেল', intent: 'POLICY_REFUSAL' }
+              );
+              assert.strictEqual(refRes.strippedLinks, true);
+              assert.ok(!refRes.text.includes('prime-web.netlify.app'));
+            });
+
+            await test('lib/textSanitizer.js: TTS phonetic cleaner strips emojis/URLs & fixes tech words', () => {
+              const { TextSanitizer } = require('./lib/textSanitizer');
+              const ts = new TextSanitizer();
+              const tts = ts.prepareTextForTTS('হ্যালো! FF MAX এবং KernelSU ডাউনলোড https://prime-web.netlify.app 100$ 🔥');
+              assert.ok(tts.includes('ফ্রি ফায়ার ম্যাক্স'), `Missing FF MAX phonetic: ${tts}`);
+              assert.ok(tts.includes('কার্নেল এস ইউ'), `Missing KernelSU phonetic: ${tts}`);
+              assert.ok(tts.includes('100 ডলার'), `Missing currency phonetic: ${tts}`);
+              assert.ok(!tts.includes('https://') && !tts.includes('🔥'));
+            });
+
+            await test('lib/langGuard.js: Banglish detector, sticky neutral & zero-leak offline enforcer', async () => {
+              const { LanguageGuard } = require('./lib/langGuard');
+              const lg = new LanguageGuard({ prefsFile: path.join(tmpDir, 'lang_prefs.json') });
+
+              const d1 = lg.analyze('ami valoooo achi, tumi kmn aso?', { chatId: 'c1@s.whatsapp.net' });
+              assert.strictEqual(d1.mode, 'banglish_reply');
+
+              const d2 = lg.analyze('ok', { chatId: 'c1@s.whatsapp.net' });
+              assert.strictEqual(d2.mode, 'banglish_reply');
+
+              const enforced = await lg.enforceOutputLanguage('আমি ভালো আছি। তুমি কেমন আছো?', 'banglish_reply', 'tumi');
+              assert.strictEqual(enforced.fixed, true);
+              assert.ok(!/[\u0980-\u09FF।]/.test(enforced.text), `Bangla leaked in Banglish reply: ${enforced.text}`);
+            });
+
+            await test('lib/intentRouter.js: Intent isolation, safe math (phone-safe) & no false 🚨 reaction', () => {
+              const { IntentRouter } = require('./lib/intentRouter');
+              const ir = new IntentRouter();
+
+              const hack = ir.route({ text: 'ফ্রি হ্যাক প্যানেল দাও' });
+              assert.strictEqual(hack.intent, 'POLICY_REFUSAL');
+              assert.strictEqual(hack.allowSiteLink, false);
+
+              const imgOnly = ir.route({ text: '', hasImage: true });
+              assert.strictEqual(imgOnly.intent, 'VISION_CASUAL');
+              assert.strictEqual(imgOnly.allowSiteLink, false);
+              assert.strictEqual(imgOnly.allowProofCard, false);
+
+              const proof = ir.route({ text: 'কাজের প্রুফ দেখাও' });
+              assert.strictEqual(proof.intent, 'PROOF');
+              assert.strictEqual(proof.allowSiteLink, true);
+
+              assert.strictEqual(ir.tryEvaluateSimpleMath('40+69')?.result, 109);
+              assert.strictEqual(ir.tryEvaluateSimpleMath('20+20= কত')?.result, 40);
+              assert.strictEqual(ir.tryEvaluateSimpleMath('01869-332451'), null);
+              assert.strictEqual(ir.tryEvaluateSimpleMath('3(a)+4'), null);
+              assert.notStrictEqual(ir.pickSmartReaction('MATH', '1$= বাংলায় কত টাকা হবে'), '🚨');
+            });
+
+            await test('lib/memoryEngine.js: Phonetic contact resolver, inbox toggle & voice/image isolation', () => {
+              const { MemoryEngine } = require('./lib/memoryEngine');
+              const me = new MemoryEngine({
+                profilesFile: path.join(tmpDir, 'mem_profiles.json'),
+                sessionsFile: path.join(tmpDir, 'mem_sessions.json')
+              });
+
+              const jid = '8801949787846@s.whatsapp.net';
+              me.ensureProfile(jid, { pushName: 'Rifat Prime' });
+              const found = me.resolveContact('রিফাতের');
+              assert.strictEqual(found.found, true);
+              assert.strictEqual(found.best.chatId, jid);
+
+              me.recordTurn(jid, { role: 'user', text: '[ছবি]', kind: 'image' });
+              me.recordTurn(jid, { role: 'assistant', text: 'স্ক্রিনশটে নোটিফিকেশন সেটিংস দেখা যাচ্ছে', kind: 'text' });
+              me.recordTurn(jid, { role: 'user', text: 'কেমন আছো?', kind: 'voice' });
+
+              const isolated = me.getPromptHistory(jid, { isolatePreviousMedia: true });
+              assert.strictEqual(isolated.length, 1);
+              assert.strictEqual(isolated[0].text, 'কেমন আছো?');
+
+              me.setChatBotEnabled(jid, false);
+              assert.strictEqual(me.isBotActiveInChat(jid).active, false);
+              me.resumeChat(jid);
+              assert.strictEqual(me.isBotActiveInChat(jid).active, true);
+            });
+
+            await test('lib/knowledgeEngine.js: Link-safe Mini-RAG & urgent human handoff trigger', () => {
+              const { KnowledgeAndLeadEngine } = require('./lib/knowledgeEngine');
+              const ke = new KnowledgeAndLeadEngine({
+                knowledgeFile: path.join(tmpDir, 'kb.json'),
+                leadsFile: path.join(tmpDir, 'leads.json')
+              });
+
+              const blockNoLink = ke.buildKnowledgePromptBlock('root korte koto lagbe', {
+                categories: ['services'],
+                allowSiteLink: false
+              });
+              assert.ok(blockNoLink.length > 20);
+              assert.ok(!blockNoLink.includes('https://'));
+
+              const handoff = ke.evaluateLeadAndHandoff({
+                chatId: '8801949787846@s.whatsapp.net',
+                userText: 'মনির ভাইয়ের সাথে সরাসরি কথা বলতে চাই'
+              });
+              assert.strictEqual(handoff.triggered, true);
+              assert.strictEqual(handoff.shouldPauseBot, true);
+            });
+
+            await test('lib/ownerAgent.js: Strict non-owner lock & zero-latency Bangla voice commands', async () => {
+              const { OwnerAgent } = require('./lib/ownerAgent');
+              const oa = new OwnerAgent({ tasksFile: path.join(tmpDir, 'owner_tasks.json') });
+
+              const blocked = await oa.handleOwnerCommand({ isOwner: false, text: '.clean' });
+              assert.strictEqual(blocked.handled, false);
+
+              const p1 = oa.tryFastNaturalParse('কয়টা ইনবক্সে বট আর ভয়েস অফ আছে দেখাও');
+              assert.strictEqual(p1?.[0]?.tool, 'inbox_status');
+              assert.strictEqual(p1?.[0]?.filter, 'all');
+
+              const p2 = oa.tryFastNaturalParse('সেশন ক্লিন করো');
+              assert.strictEqual(p2?.[0]?.tool, 'deep_clean');
+            });
+
+            await test('Core v2.0 Engines: systemOptimizer, chatQueue, voiceEngine & aiOrchestrator boot cleanly', () => {
+              const { SystemOptimizer } = require('./lib/systemOptimizer');
+              const { ChatQueueEngine } = require('./lib/chatQueue');
+              const { VoiceEngine } = require('./lib/voiceEngine');
+              const { AIOrchestrator } = require('./lib/aiOrchestrator');
+
+              const opt = new SystemOptimizer({ sessionDir: path.join(tmpDir, 'empty_sess') });
+              assert.ok(opt.getSystemStats().healthScore >= 0);
+
+              const cq = new ChatQueueEngine();
+              assert.strictEqual(cq.checkRateLimit('u1@s.whatsapp.net', 'u1@s.whatsapp.net').allowed, true);
+              cq.shutdown();
+
+              const ve = new VoiceEngine({ prefsFile: path.join(tmpDir, 'voice_prefs.json') });
+              assert.strictEqual(ve.detectVoiceMood('খুব মন খারাপ লাগছে, দুঃখিত'), 'empathetic_sad');
+              assert.strictEqual(ve.isBadVoiceRejection('আমি আপনার ভাষা বুঝতে পারতেছি না, দয়া করে বাংলায় বলুন'), true);
+
+              const ai = new AIOrchestrator({ prefsFile: path.join(tmpDir, 'ai_prefs.json') });
+              assert.strictEqual(ai.setPrimaryProvider('groq'), true);
+            });
+
+            await test('lib/mahiruCore.js: Bangla Dari (।) preserved, Devanagari stripped & no false 🚨', () => {
+              const mahiruCore = require('./lib/mahiruCore');
+              const out = mahiruCore.sanitizeHumanReply(
+                '১ ডলার = ১২৫ টাকা। আর কোনো হিসাব দরকার? नमस्ते',
+                false,
+                'tumi',
+                'general',
+                { enforceLinkFirewall: false }
+              );
+              assert.ok(out.includes('।'), `Bangla Dari (।) was stripped: ${out}`);
+              assert.ok(!/[\u0900-\u0963\u0966-\u097F]/.test(out), `Hindi leaked: ${out}`);
+              assert.notStrictEqual(mahiruCore.pickSmartReaction('1$= বাংলায় কত টাকা হবে'), '🚨');
+            });
+
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+            console.log(`\n📊 TEST SUMMARY: ${passed} passed | ${failed} failed\n`);
+            process.exit(failed > 0 ? 1 : 0);
+          })();
+          EOF
+
+  deploy-and-notify:
+    name: "🚀 ৪. রিপোর্ট, অটো-ডিপ্লয় ও অ্যালার্ট"
+    needs: [syntax-integrity, security-firewall, mahiru-v2-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      RES_SYNTAX: ${{ needs.syntax-integrity.result }}
+      RES_SECURITY: ${{ needs.security-firewall.result }}
+      RES_TESTS: ${{ needs.mahiru-v2-tests.result }}
+      COMMIT_SHA: ${{ github.sha }}
+      COMMIT_MSG: ${{ github.event.head_commit.message }}
+      ACTOR: ${{ github.actor }}
+      REF_NAME: ${{ github.ref_name }}
+      EVENT_NAME: ${{ github.event_name }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      INPUT_DEPLOY: ${{ github.event.inputs.trigger_deploy }}
+      PTERO_URL: ${{ secrets.PTERO_URL }}
+      PTERO_API_KEY: ${{ secrets.PTERO_API_KEY }}
+      PTERO_SERVER_ID: ${{ secrets.PTERO_SERVER_ID }}
+      DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+    steps:
+      - name: Generate Summary, Trigger Optional Auto-Restart & Send Alerts
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+
+          const resSyntax = process.env.RES_SYNTAX || 'unknown';
+          const resSecurity = process.env.RES_SECURITY || 'unknown';
+          const resTests = process.env.RES_TESTS || 'unknown';
+          const allPassed = resSyntax === 'success' && resSecurity === 'success' && resTests === 'success';
+
+          const icon = (r) => (r === 'success' ? '✅ Passed' : r === 'skipped' ? '⏭️ Skipped' : '❌ Failed');
+          const shortSha = String(process.env.COMMIT_SHA || '').slice(0, 7);
+          const commitTitle = String(process.env.COMMIT_MSG || 'Manual / Scheduled Run').split('\n')[0].slice(0, 90);
+          const runUrl = process.env.RUN_URL || '';
+
+          let deployStatus = '⚪ Skipped (No Deploy Secret Set)';
+
+          (async () => {
+            const canDeploy =
+              allPassed &&
+              (process.env.EVENT_NAME === 'push' || (process.env.EVENT_NAME === 'workflow_dispatch' && process.env.INPUT_DEPLOY !== 'false'));
+
+            if (canDeploy) {
+              const pteroUrl = (process.env.PTERO_URL || '').replace(/\/+$/, '');
+              const pteroKey = (process.env.PTERO_API_KEY || '').trim();
+              const pteroId = (process.env.PTERO_SERVER_ID || '').trim();
+
+              if (pteroUrl && pteroKey && pteroId) {
+                try {
+                  const res = await fetch(`${pteroUrl}/api/client/servers/${encodeURIComponent(pteroId)}/power`, {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${pteroKey}`,
+                      'Content-Type': 'application/json',
+                      Accept: 'application/json'
+                    },
+                    body: JSON.stringify({ signal: 'restart' }),
+                    signal: AbortSignal.timeout(15000)
+                  });
+                  deployStatus = res.ok
+                    ? '🚀 Pterodactyl Server Restarted'
+                    : `⚠️ Pterodactyl HTTP ${res.status}`;
+                } catch (err) {
+                  deployStatus = `⚠️ Pterodactyl Error (${err.message})`;
+                }
+              } else if ((process.env.DEPLOY_WEBHOOK_URL || '').trim()) {
+                try {
+                  const res = await fetch(process.env.DEPLOY_WEBHOOK_URL.trim(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event: 'mahiru_ci_passed', sha: shortSha, branch: process.env.REF_NAME }),
+                    signal: AbortSignal.timeout(15000)
+                  });
+                  deployStatus = res.ok ? '🚀 Deploy Webhook Triggered' : `⚠️ Webhook HTTP ${res.status}`;
+                } catch (err) {
+                  deployStatus = `⚠️ Webhook Error (${err.message})`;
+                }
+              }
+            } else if (!allPassed) {
+              deployStatus = '🛑 Blocked (CI Gate Failed)';
+            }
+
+            const summaryMd = [
+              `## ⚡ MAHIRU SHIINA • Mahiru v2.0 ULTRA CI/CD Report`,
+              '',
+              `| গেট / ধাপ | স্ট্যাটাস |`,
+              `| :--- | :--- |`,
+              `| 🔍 সিনট্যাক্স ও JSON ইন্টিগ্রিটি | ${icon(resSyntax)} |`,
+              `| 🛡️ সিকিউরিটি ও সিক্রেট ফায়ারওয়াল | ${icon(resSecurity)} |`,
+              `| 🧪 মায়া v2.0 আল্ট্রা টেস্ট সুইট | ${icon(resTests)} |`,
+              `| 🚀 অটো-ডিপ্লয় / রিস্টার্ট | ${deployStatus} |`,
+              '',
+              `**বিস্তারিত:** \`${process.env.REF_NAME}\` • \`${shortSha}\` • *${commitTitle}* (${process.env.ACTOR})`
+            ].join('\n');
+
+            if (process.env.GITHUB_STEP_SUMMARY) {
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summaryMd + '\n');
+            }
+            console.log(summaryMd);
+
+            const tgToken = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+            const tgChat = (process.env.TELEGRAM_CHAT_ID || '').trim();
+            if (tgToken && tgChat) {
+              const tgMsg = [
+                allPassed ? '✅ *MAHIRU SHIINA • Mahiru v2.0 CI পাস করেছে!*' : '🚨 *MAHIRU SHIINA • Mahiru v2.0 CI ব্যর্থ হয়েছে!*',
+                '──────────────────',
+                `• সিনট্যাক্স: ${icon(resSyntax)}`,
+                `• সিকিউরিটি: ${icon(resSecurity)}`,
+                `• v2.0 টেস্ট: ${icon(resTests)}`,
+                `• ডিপ্লয়: ${deployStatus}`,
+                `• কমিট: \`${shortSha}\` — ${commitTitle}`,
+                `🔗 ${runUrl}`
+              ].join('\n');
+
+              await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: tgChat, text: tgMsg, parse_mode: 'Markdown' }),
+                signal: AbortSignal.timeout(10000)
+              }).catch(() => {});
+            }
+
+            const discordUrl = (process.env.DISCORD_WEBHOOK_URL || '').trim();
+            if (discordUrl) {
+              await fetch(discordUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  embeds: [{
+                    title: allPassed ? '✅ MAHIRU SHIINA • Mahiru v2.0 CI Passed' : '🚨 MAHIRU SHIINA • Mahiru v2.0 CI Failed',
+                    color: allPassed ? 0x00e676 : 0xff1744,
+                    description: `**Commit:** \`${shortSha}\` — ${commitTitle}\n**Deploy:** ${deployStatus}`,
+                    fields: [
+                      { name: 'Syntax', value: icon(resSyntax), inline: true },
+                      { name: 'Security', value: icon(resSecurity), inline: true },
+                      { name: 'v2.0 Tests', value: icon(resTests), inline: true }
+                    ],
+                    url: runUrl
+                  }]
+                }),
+                signal: AbortSignal.timeout(10000)
+              }).catch(() => {});
+            }
+
+            if (!allPassed) process.exit(1);
+          })();
+          EOF
