@@ -452,7 +452,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.setgdesc', '.setgname', '.setgpp'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
-        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
+        const ownerCommands = ['.voicestudio', '.watch', '.cmd', '.research', '.ownerpref', '.ownerrule', '.syshealth', '.callblock', '.sch', '.schedule', '.mode', '.autostatus', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.gact', '.gdeact', '.gdelete'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -599,9 +599,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
             case userMessage === '.research' || userMessage.startsWith('.research '): {
                 const query = rawText.trim().slice('.research'.length).trim();
-                const browserAgent = require('./lib/browserAgent');
-                const report = await browserAgent.runDeepResearchReport(query);
-                await sock.sendMessage(chatId, { text: String(report).slice(0, 15000) }, { quoted: message });
+                await handleChatbotCommand(sock, chatId, message, ('research ' + query).trim());
                 commandExecuted = true;
                 break;
             }
@@ -1380,11 +1378,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
 
-            case userMessage === '.cmd' || userMessage.startsWith('.cmd '): {
-                await handleCmdControlCommand(sock, chatId, message, rawText.slice(4).trim());
-                break;
-            }
-
             case userMessage === '.guard' || userMessage.startsWith('.guard ') ||
                  userMessage === '.antiabuse' || userMessage.startsWith('.antiabuse '): {
                 await handleGuardCommand(sock, chatId, message, rawText.replace(/^\.(?:guard|antiabuse)\s*/i, ''));
@@ -1401,11 +1394,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
 
-            case userMessage === '.research' || userMessage.startsWith('.research '): {
-                await handleChatbotCommand(sock, chatId, message, ('research ' + rawText.slice(9).trim()).trim());
-                break;
-            }
-
             case userMessage === '.resetapi' || userMessage.startsWith('.resetapi '): {
                 await handleChatbotCommand(sock, chatId, message, 'resetapi');
                 break;
@@ -1415,11 +1403,6 @@ async function handleMessages(sock, messageUpdate, printLog) {
                  userMessage === '.v' || userMessage.startsWith('.v '): {
                 const voiceArgs = rawText.replace(/^\.(?:voice|v)\s*/i, '');
                 await handleChatbotCommand(sock, chatId, message, ('voice ' + voiceArgs).trim());
-                break;
-            }
-
-            case userMessage.startsWith('.research '): {
-                await handleChatbotCommand(sock, chatId, message, ('research ' + rawText.slice(9).trim()).trim());
                 break;
             }
 
