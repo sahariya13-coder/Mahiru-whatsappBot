@@ -439,6 +439,7 @@ jobs:
                 leadsFile: path.join(tmpDir, 'leads.json')
               });
 
+              ke.addEntry({ id: 'root-info', category: 'services', title: 'Root support', tags: ['root'], content: 'Root support service information for customers.' });
               const blockNoLink = ke.buildKnowledgePromptBlock('root korte koto lagbe', {
                 categories: ['services'],
                 allowSiteLink: false
