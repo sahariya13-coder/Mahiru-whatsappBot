@@ -1618,7 +1618,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 await handleAreactCommand(sock, chatId, message, isOwnerOrSudoCheck);
                 break;
 
-            case userMessage.startsWith('.sudo'):
+            case userMessage.startsWith('.sudo') || userMessage.startsWith('.adm'):
                 await sudoCommand(sock, chatId, message);
                 break;
 
