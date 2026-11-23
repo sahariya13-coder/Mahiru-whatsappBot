@@ -77,7 +77,7 @@ ${menuTitle}
 │ .blur (reply to image)
 │ .simage (reply to sticker)
 │ .sticker (reply to image)
-│ .stickercrop (reply to sticker)
+│ .crop (reply to sticker)
 │ .crop (reply to image)
 │ .removebg
 │ .remini
@@ -127,7 +127,7 @@ ${menuTitle}
 │ .goodnight
 │ .roseday
 │ .character @user
-│ .wasted @user
+│ .waste @user
 │ .ship @user
 │ .simp @user
 │ .stupid @user
