@@ -1336,21 +1336,12 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
 
             case userMessage.startsWith('.chatbot') || userMessage.startsWith('.gai') || userMessage.startsWith('.iai'): {
-                if (isGroup) {
-                    const chatbotAdminStatus = await isAdmin(sock, chatId, senderId);
-                    if (!chatbotAdminStatus.isSenderAdmin && !message.key.fromMe) {
-                        await sock.sendMessage(chatId, {
-                            text: '❌ শুধু গ্রুপ Admin অথবা Bot Owner এই কমান্ড ব্যবহার করতে পারবে।',
-                            ...channelInfo
-                        }, { quoted: message });
-                        return;
-                    }
-                } else if (!message.key.fromMe && !senderIsOwnerOrSudo) {
+                if (!message.key.fromMe && !senderIsOwnerOrSudo) {
                     await sock.sendMessage(chatId, {
-                        text: '❌ Inbox AI সেটিংস শুধু Bot Owner ব্যবহার করতে পারবে।',
+                        text: '❌ Mahiru AI-এর Inbox/Group সেটিংস শুধু Bot Owner/Sudo পরিবর্তন করতে পারবে।',
                         ...channelInfo
                     }, { quoted: message });
-                    return;
+                    break;
                 }
 
                 const prefix = userMessage.startsWith('.gai') ? '.gai' : (userMessage.startsWith('.iai') ? '.iai' : '.chatbot');
