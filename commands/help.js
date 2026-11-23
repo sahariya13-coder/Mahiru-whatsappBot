@@ -220,8 +220,8 @@ function getTotalCommandCount() {
     return count;
 }
 
-function buildPopupSections(prefix) {
-    const rows = Object.values(MENU_CATEGORIES).map((cat) => ({
+function buildPopupSections(prefix, isPrivileged = false) {
+    const rows = Object.values(MENU_CATEGORIES).filter((cat) => cat.id !== 'owner' || isPrivileged).map((cat) => ({
         header: '',
         title: `${cat.icon} ${cat.title}`,
         description: cat.subtitle,
@@ -307,7 +307,7 @@ async function helpCommand(sock, chatId, message) {
                 headerType: 'location',
                 useVerifiedQuote: true,
                 buttons: [
-                    { text: '📋 ক্যাটাগরি বাছুন', type: 'single_select', sections: buildPopupSections(p) },
+                    { text: '📋 ক্যাটাগরি বাছুন', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                     { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
                     { text: '🚀 PING', id: `${p}ping`, type: 'quick_reply' },
                     { text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' }
@@ -351,7 +351,7 @@ async function helpCommand(sock, chatId, message) {
             headerType: 'location',
             useVerifiedQuote: true,
             buttons: [
-                { text: '📋 কমান্ড মেনু', type: 'single_select', sections: buildPopupSections(p) },
+                { text: '📋 কমান্ড মেনু', type: 'single_select', sections: buildPopupSections(p, isPrivileged) },
                 { text: '⚡ ALIVE', id: `${p}alive`, type: 'quick_reply' },
                 { text: '🚀 PING', id: `${p}ping`, type: 'quick_reply' },
                 { text: '👑 OWNER', id: `${p}owner`, type: 'quick_reply' },
