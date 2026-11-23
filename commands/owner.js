@@ -161,7 +161,7 @@ async function ownerCommand(sock, chatId, message = null) {
     }
 
     // ২. প্রিমিয়াম ফ্রেমড ওনার প্রোফাইল কার্ড (১০০% টেক্সট-লিংক ফ্রি)
-    const profileCard = buildInfoFrame('Root Owner Profile', [
+    const profileCard = buildInfoFrame('Bot Owner', [
         { raw: `👑 *${toSmallCaps('VERIFIED BOT ARCHITECT')}*` },
         { icon: '👤', label: 'NAME', value: ownerDisplay },
         { icon: '🏷️', label: 'BRAND', value: botTitle },
