@@ -496,7 +496,7 @@ async function getImageAIResponse(userContext, imageData) {
             prefs.ownerTitle ? `Owner সম্বোধন: ${prefs.ownerTitle}` : '',
             prefs.ownerCustomInstruction || '',
             ...control.getOwnerRules().map((item, index) => `Owner rule ${index + 1}: ${item.rule}`)
-        ].filter(Boolean).join('\\n');
+        ].filter(Boolean).join('\n');
     } catch (controlError) {
         console.error('[MAHIRU SYSTEM CONTROL] Image rules unavailable:', controlError?.message || controlError);
     }
