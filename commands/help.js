@@ -97,7 +97,7 @@ const MENU_CATEGORIES = Object.freeze({
     owner: {
         id: 'owner',
         icon: '👑',
-        title: 'ROOT OWNER & SECURITY',
+        title: 'BOT OWNER & SECURITY',
         subtitle: 'শুধু Owner/Sudo • Owner inbox controls',
         commands: [
             { cmd: 'adm add / del / list / status / purge', desc: 'Owner-only Sudo কন্ট্রোল' },
