@@ -33,6 +33,7 @@ const OWNER_CONTACT_LINK = OWNER_CONTACT_USERNAME
     : '';
 const groupOwnerNoticeInFlight = new Set();
 const groupPublicNoticeInFlight = new Set();
+const groupActivationTriggerNoticeInFlight = new Set();
 const { extractInteractiveCommand } = require('./lib/buttonEngine');
 const { setGroupFeature, FEATURES: REMOTE_GROUP_FEATURES } = require('./lib/groupFeatureControl');
 const { autotypingCommand, isAutotypingEnabled, handleAutotypingForMessage, handleAutotypingForCommand, showTypingAfterCommand } = require('./commands/autotyping');
@@ -362,9 +363,50 @@ async function handleMessages(sock, messageUpdate, printLog) {
             if (!isGroupActivationCommand) {
                 if (isCommand || isBotMentioned) {
                     await sock.sendMessage(chatId, {
-                        text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}\n👤 Bot Owner: ${OWNER_CONTACT_LINK || 'Bot Owner'}`,
+                        text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে Activation নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}\n👤 Bot Owner: ${OWNER_CONTACT_LINK || 'Bot Owner'}`,
                         linkPreview: null
                     }, { quoted: message });
+
+                    // প্রথম Command বা Mahiru Mention-এ Owner-কে একবারই follow-up notice পাঠাও।
+                    if (!groupAccess.hasTriggerNoticeSent(chatId) &&
+                        !groupActivationTriggerNoticeInFlight.has(chatId)) {
+                        const ownerJid = getOwnerInbox(sock);
+                        if (ownerJid) {
+                            groupActivationTriggerNoticeInFlight.add(chatId);
+                            try {
+                                let groupName = 'Unknown group';
+                                try {
+                                    const metadata = await sock.groupMetadata(chatId);
+                                    groupName = metadata?.subject || groupName;
+                                } catch {}
+                                const senderName = message.pushName || senderId;
+                                const triggerLabel = isBotMentioned ? 'Mahiru-কে Mention' : 'Command';
+                                const notice = await sock.sendMessage(ownerJid, {
+                                    text: [
+                                        '🔔 *Inactive Group Activation Reminder*',
+                                        '',
+                                        `📛 Group: ${groupName}`,
+                                        `🆔 Group ID: ${chatId}`,
+                                        `👤 Triggered by: ${senderName}`,
+                                        `⚡ কারণ: ${triggerLabel}`,
+                                        '',
+                                        '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
+                                        `🛠️ বিকল্প: .gact ${chatId}`
+                                    ].join('\n'),
+                                    linkPreview: null
+                                });
+                                if (notice?.key?.id) groupAccess.setPendingReply(notice.key.id, chatId);
+                                groupAccess.markTriggerNoticeSent(chatId);
+                                console.log('[GROUP ACCESS] Owner activation reminder sent:', chatId);
+                            } catch (noticeError) {
+                                console.error('[GROUP ACCESS] Owner activation reminder failed:', noticeError?.message || noticeError);
+                            } finally {
+                                groupActivationTriggerNoticeInFlight.delete(chatId);
+                            }
+                        } else {
+                            console.error('[GROUP ACCESS] Cannot send activation reminder: owner inbox unavailable.');
+                        }
+                    }
                 }
                 return;
             }
