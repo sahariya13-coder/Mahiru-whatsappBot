@@ -74,8 +74,8 @@ async function sudoCommand(sock, chatId, message) {
     try {
         const isOwner = await isOwnerOrSudo(senderJid, sock, chatId, message);
         // Only the configured owner/root identity can change the Sudo list.
-        const isConfiguredOwner = await require('../lib/isOwner').isBotOwner(senderJid, sock, chatId, message);
-        if (!isConfiguredOwner) {
+        const isBotOwner = await require('../lib/isOwner').isBotOwner(senderJid, sock, chatId, message);
+        if (!isBotOwner) {
             await reply(sock, chatId, message, '🔒 এই কমান্ড শুধু যাচাইকৃত Bot Owner ব্যবহার করতে পারবেন।');
             return;
         }
