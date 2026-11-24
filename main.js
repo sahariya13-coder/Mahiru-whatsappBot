@@ -193,7 +193,7 @@ function normalizeGroupParticipantJid(value) {
 async function getBotIdentityJids(sock) {
     const aliases = new Set();
     const add = value => {
-        if (typeof value !== 'string' || !value.trim()) return;
+        if ((typeof value !== 'string' && typeof value !== 'number') || !String(value).trim()) return;
         const normalized = normalizeGroupParticipantJid(value);
         if (normalized.includes('@')) aliases.add(normalized);
     };
