@@ -175,6 +175,79 @@ const commandUsage = new Map();
 const MAX_COMMAND_TELEMETRY = 100;
 
 
+function normalizeGroupParticipantJid(value) {
+    if (typeof value !== 'string') return '';
+    return value.trim().toLowerCase().replace(/:\d+@/, '@');
+}
+
+// Baileys v7 uses LIDMapping objects ({ lid, pn }) for group participant updates.
+// Match both PN and LID identities, including cached SignalRepository mappings.
+async function getBotIdentityJids(sock) {
+    const aliases = new Set();
+    const add = value => {
+        if (typeof value !== 'string' || !value.trim()) return;
+        const normalized = normalizeGroupParticipantJid(value);
+        if (normalized.includes('@')) aliases.add(normalized);
+    };
+
+    const me = sock?.user || sock?.authState?.creds?.me || {};
+    add(me.id);
+    add(me.lid);
+    add(me.phoneNumber);
+    add(me.phone_number);
+    add(sock?.user?.jid);
+    add(sock?.authState?.creds?.me?.id);
+    add(sock?.authState?.creds?.me?.lid);
+    add(sock?.decodeJid?.(me.id));
+    add(sock?.decodeJid?.(me.lid));
+
+    const mapping = sock?.signalRepository?.lidMapping;
+    if (mapping) {
+        const phoneJids = [...aliases].filter(jid => jid.endsWith('@s.whatsapp.net'));
+        const lidJids = [...aliases].filter(jid => jid.endsWith('@lid'));
+        for (const pn of phoneJids) {
+            try {
+                const mappedLid = await mapping.getLIDForPN?.(pn);
+                if (typeof mappedLid === 'string') add(mappedLid);
+                else if (mappedLid && typeof mappedLid === 'object') add(mappedLid.lid);
+            } catch (error) {
+                console.log('[GROUP ACCESS] PN-to-LID lookup skipped:', error?.message || error);
+            }
+        }
+        for (const lid of lidJids) {
+            try {
+                const mappedPn = await mapping.getPNForLID?.(lid);
+                if (typeof mappedPn === 'string') add(mappedPn);
+                else if (mappedPn && typeof mappedPn === 'object') add(mappedPn.pn);
+            } catch (error) {
+                console.log('[GROUP ACCESS] LID-to-PN lookup skipped:', error?.message || error);
+            }
+        }
+    }
+    return aliases;
+}
+
+async function isBotInParticipantUpdate(sock, participants = []) {
+    const botJids = await getBotIdentityJids(sock);
+    if (!botJids.size) return false;
+
+    return (Array.isArray(participants) ? participants : []).some(participant => {
+        const ids = typeof participant === 'string'
+            ? [participant]
+            : [
+                participant?.id,
+                participant?.jid,
+                participant?.lid,
+                participant?.pn,
+                participant?.phoneNumber,
+                participant?.phone_number,
+                participant?.participantPn,
+                participant?.participantLid
+            ];
+        return ids.some(value => botJids.has(normalizeGroupParticipantJid(value)));
+    });
+}
+
 async function handleMessages(sock, messageUpdate, printLog) {
     let chatId = null;
 
@@ -346,16 +419,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 unwrappedMessage?.imageMessage?.contextInfo ||
                 unwrappedMessage?.videoMessage?.contextInfo || {};
             const mentionedJids = Array.isArray(contextInfo.mentionedJid) ? contextInfo.mentionedJid : [];
-            const normalizeMentionJid = value => typeof value === 'string'
-                ? value.replace(/:\d+@/, '@').trim()
-                : '';
-            const botMentionIds = [
-                sock.user?.id,
-                sock.user?.lid,
-                sock.decodeJid?.(sock.user?.id),
-                sock.decodeJid?.(sock.user?.lid)
-            ].map(normalizeMentionJid).filter(Boolean);
-            const isBotMentioned = mentionedJids.some(jid => botMentionIds.includes(normalizeMentionJid(jid)));
+            const botMentionIds = await getBotIdentityJids(sock);
+            const isBotMentioned = mentionedJids.some(jid =>
+                botMentionIds.has(normalizeGroupParticipantJid(jid))
+            );
             const isCommand = /^\./.test(userMessage);
             // Allow activation-management commands through to their owner-only handlers.
             const isGroupActivationCommand = /^\.(?:gact|gdeact|gdelete)(?:\s|$)/i.test(userMessage);
@@ -2262,20 +2329,14 @@ async function handleGroupParticipantUpdate(sock, update) {
 
         // Notify the configured owner when the bot account itself is added to a group.
         if (action === 'add') {
-            const normalizeJid = value => typeof value === 'string'
-                ? value.replace(/:\d+@/, '@').trim()
-                : '';
-            const botJids = new Set([
-                sock.user?.id,
-                sock.user?.lid,
-                sock.decodeJid?.(sock.user?.id),
-                sock.decodeJid?.(sock.user?.lid)
-            ].map(normalizeJid).filter(Boolean));
-            const botWasAdded = (participants || []).some(participant => {
-                const ids = typeof participant === 'string'
-                    ? [participant]
-                    : [participant?.id, participant?.jid, participant?.lid, participant?.phoneNumber, participant?.phone_number];
-                return ids.some(value => botJids.has(normalizeJid(value)));
+            const botWasAdded = await isBotInParticipantUpdate(sock, participants);
+            console.log('[GROUP ACCESS] Add event identity check:', {
+                groupId: id,
+                botWasAdded,
+                participantCount: Array.isArray(participants) ? participants.length : 0,
+                participantFormats: (Array.isArray(participants) ? participants : []).map(p =>
+                    typeof p === 'string' ? p.split('@').pop() : Object.keys(p || {}).join(',')
+                )
             });
 
             if (botWasAdded) {
@@ -2353,20 +2414,11 @@ async function handleGroupParticipantUpdate(sock, update) {
 
         // Notify the owner if the bot itself is removed from a group.
         if (action === 'remove') {
-            const normalizeJid = value => typeof value === 'string'
-                ? value.replace(/:\d+@/, '@').trim()
-                : '';
-            const botJids = new Set([
-                sock.user?.id,
-                sock.user?.lid,
-                sock.decodeJid?.(sock.user?.id),
-                sock.decodeJid?.(sock.user?.lid)
-            ].map(normalizeJid).filter(Boolean));
-            const botWasRemoved = (participants || []).some(participant => {
-                const ids = typeof participant === 'string'
-                    ? [participant]
-                    : [participant?.id, participant?.jid, participant?.lid, participant?.phoneNumber];
-                return ids.some(value => botJids.has(normalizeJid(value)));
+            const botWasRemoved = await isBotInParticipantUpdate(sock, participants);
+            console.log('[GROUP ACCESS] Remove event identity check:', {
+                groupId: id,
+                botWasRemoved,
+                participantCount: Array.isArray(participants) ? participants.length : 0
             });
 
             if (botWasRemoved) {
