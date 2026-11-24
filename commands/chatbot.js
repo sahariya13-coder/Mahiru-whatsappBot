@@ -1379,9 +1379,12 @@ async function runChatProcessing(sock, chatId, batch) {
         const isSuper = isSuperOwnerCaller(sock, chatId, message);
         const senderAltId = message?.key?.participantAlt || message?.key?.remoteJidAlt || '';
         // Root Owner identity is deliberately separate from broad Owner/Sudo authorization.
+        // Use the shared verified-owner resolver so private-chat remoteJid/remoteJidAlt,
+        // participant fields, configured LID and Baileys PN<->LID mapping are all checked.
+        // This remains Root Owner-only; dynamic owners and ordinary Sudo users do not pass.
         const isRootOwner = Boolean(
-            typeof settings?.isRootSuperOwner === 'function' &&
-            settings.isRootSuperOwner(senderId, senderAltId)
+            typeof isOwnerOrSudo?.isConfiguredOwner === 'function' &&
+            await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message)
         );
         const isAuthOwner = isSuper || await isAuthorizedOwner(sock, chatId, message);
 
