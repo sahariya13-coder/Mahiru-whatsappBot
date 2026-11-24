@@ -244,15 +244,27 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         let userMessage = String(rawText || '').toLowerCase().replace(/\.\s+/g, '.').trim();
 
-        // Owner can activate/deactivate a group by replying to that group's add-notice.
-        if (!isGroup && /^(active|activate|deactivate|inactive|অ্যাক্টিভ|ডিঅ্যাক্টিভ)$/i.test(rawText.trim())) {
+        // Owner can activate/deactivate a group directly, or by replying to its activation notice.
+        if (/^(active|activate|deactivate|inactive|অ্যাক্টিভ|ডিঅ্যাক্টিভ)$/i.test(rawText.trim())) {
             const replyContext = unwrappedMessage?.extendedTextMessage?.contextInfo || {};
             const quotedNoticeId = replyContext.stanzaId || '';
-            if (quotedNoticeId) {
-                const configuredOwner = await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+            const action = /^(deactivate|inactive|ডিঅ্যাক্টিভ)$/i.test(rawText.trim()) ? 'deactivate' : 'activate';
+            const configuredOwner = message.key.fromMe ||
+                await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+
+            if (isGroup && configuredOwner) {
+                groupAccess.setActive(chatId, action === 'activate');
+                await sock.sendMessage(chatId, {
+                    text: action === 'activate'
+                        ? '✅ *এই গ্রুপ Active করা হয়েছে!*\n\n🆔 Group ID: ' + chatId
+                        : '⏸️ *এই গ্রুপ Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + chatId
+                }, { quoted: message });
+                return;
+            }
+
+            if (!isGroup && configuredOwner && quotedNoticeId) {
                 const pendingGroupId = groupAccess.getPendingReply(quotedNoticeId);
-                if (configuredOwner && pendingGroupId) {
-                    const action = /^(deactivate|inactive|ডিঅ্যাক্টিভ)$/i.test(rawText.trim()) ? 'deactivate' : 'activate';
+                if (pendingGroupId) {
                     groupAccess.setActive(pendingGroupId, action === 'activate');
                     groupAccess.clearPendingReply(quotedNoticeId);
                     await sock.sendMessage(chatId, {
