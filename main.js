@@ -41,8 +41,9 @@ const ffmpeg = require('fluent-ffmpeg');
 const { isSudo } = require('./lib/index');
 const isOwnerOrSudo = require('./lib/isOwner');
 const groupAccess = require('./lib/groupAccess');
-const OWNER_CONTACT_LINK = settings.ownerUsername
-    ? 'https://wa.me//' + String(settings.ownerUsername).replace(/^@/, '')
+const OWNER_CONTACT_USERNAME = String(settings.ownerUsername || 'MSKBro0').replace(/^@+/, '');
+const OWNER_CONTACT_LINK = OWNER_CONTACT_USERNAME
+    ? 'https://wa.me/' + OWNER_CONTACT_USERNAME
     : '';
 const groupOwnerNoticeInFlight = new Set();
 const groupPublicNoticeInFlight = new Set();
