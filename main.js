@@ -2518,6 +2518,9 @@ async function handleGroupParticipantUpdate(sock, update) {
                             }
 
                             if (notice?.key?.id) {
+                                // Keep the owner notice linked to this group so replying "Active"
+                                // or "Deactivate" in the owner's inbox updates the correct group.
+                                groupAccess.setPendingReply(notice.key.id, id);
                                 groupAccess.markNoticeSent(id);
                                 console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
                             } else if (lastError) {
