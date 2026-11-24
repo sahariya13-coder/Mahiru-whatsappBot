@@ -720,16 +720,19 @@ async function handleSummaryCommand(sock, chatId, message, match = '') {
         clearActivityLog();
         return safeSend(sock, chatId, { text: '🧹 অ্যাক্টিভিটি সামারি ক্লিয়ার করা হয়েছে।' }, { quoted: message });
     }
-    const logs = getActivityLog();
+    const rawLogs = getActivityLog();
+    const logs = Array.isArray(rawLogs) ? rawLogs.filter(entry =>
+        entry && typeof entry === 'object' && typeof entry.summary === 'string'
+    ) : [];
     if (!logs.length) {
-        return safeSend(sock, chatId, { text: `📭 *${id.assistantName} সামারি:* এখনো নতুন কোনো অ্যাক্টিভিটি জমা হয়নি।` }, { quoted: message });
+        return safeSend(sock, chatId, { text: `📭 *${id.assistantName} অ্যাক্টিভিটি সামারি:* এখনো কোনো অ্যাক্টিভিটি জমা হয়নি।` }, { quoted: message });
     }
     const iconMap = { call: '📵', urgent: '🚨', lead: '💼', msg: '💬', abuse: '🛡️', security: '🔒' };
     const lines = logs.slice(-15).reverse().map((e, i) =>
-        `${i + 1}. ${iconMap[e.type] || '💬'} *${e.sender}* \`(${e.time})\`\n   └ ${e.summary}`
+        `${i + 1}. ${iconMap[e.type] || '💬'} *${String(e.sender || 'Unknown').slice(0, 40)}* \`(${e.time || 'সময় অজানা'})\`\n   └ ${e.summary.slice(0, 120)}`
     ).join('\n');
     return safeSend(sock, chatId, {
-        text: `> 📊 *${id.assistantName} • ইনবক্স সামারি (${Math.min(logs.length, 15)}টি)*\n──────────────\n${lines}\n\n_ক্লিয়ার করতে: \`.summary clear\`_`
+        text: `> 📊 *${id.assistantName} • অ্যাক্টিভিটি সামারি (${Math.min(logs.length, 15)}টি / মোট ${logs.length})*\n──────────────\n${lines}\n\n_ইনবক্স ও AI-প্রসেস হওয়া গ্রুপ মেসেজসহ সাম্প্রতিক কার্যক্রম।_\n_ক্লিয়ার করতে: \`.summary clear\`_`
     }, { quoted: message });
 }
 
@@ -1519,8 +1522,15 @@ async function runChatProcessing(sock, chatId, batch) {
             const escalated = await notifyOwnerOfInterestedContact(sock, {
                 chatId, senderId, pushName, userMessage: rawUserCombined || combinedText, message
             }).catch(() => false);
-            if (!escalated && !isGroup) {
-                logActivity('msg', `${pushName || 'User'} (+${senderPhone})`, mediaKind ? `[${mediaKind.toUpperCase()}] ${combinedText.slice(0, 80)}` : combinedText);
+            if (!escalated) {
+                const activitySender = isGroup
+                    ? `${pushName || 'Member'} [গ্রুপ]`
+                    : `${pushName || 'User'} (+${senderPhone})`;
+                logActivity(
+                    'msg',
+                    activitySender,
+                    mediaKind ? `[${mediaKind.toUpperCase()}] ${combinedText.slice(0, 80)}` : combinedText
+                );
             }
         }
 
