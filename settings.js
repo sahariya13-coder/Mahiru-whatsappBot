@@ -1,8 +1,8 @@
 /**
- * Mahiru Shiina • Mahiru v1.0 ULTIMATE — Immutable Root Security, 256MB-Strict Auto-Scaling & Dual-Gemini Core
+ * Mahiru Shiina • Mahiru v1.0 ULTIMATE — Immutable Bot Owner Security, 256MB-Strict Auto-Scaling & Dual-Gemini Core
  * Fixes: True 256MB OOM-Safe RAM Thresholds (185/222MB) + Strict AIza/AQ. Filter + banner.png Default
  *        + ownerIdentity.json Boot Scrubber + Master Group Control Config + Crystal Voice v1.0 Sync
- * Immutable Root Super Owner: 8801624235915 | 100% Backward-Compatible
+ * Immutable Bot Owner: 8801624235915 | 100% Backward-Compatible
  */
 const fs = require('fs');
 const path = require('path');
@@ -15,10 +15,10 @@ function loadDotEnv(override = false) {
 loadDotEnv(false);
 
 // ==================================================
-// ১. অটুট রুট সুপার-ওনার ভল্ট (কোনো ENV বা এডিটে রিমুভ হবে না)
+// ১. অটুট Bot Owner ভল্ট (কোনো ENV বা এডিটে রিমুভ হবে না)
 // ==================================================
-const ROOT_SUPER_OWNER = Object.freeze('8801624235915'); // Mahiru bot owner
-const ROOT_SUPER_OWNER_LID = Object.freeze('216123442245856@lid'); // Mahiru bot owner LID
+const BOT_OWNER_NUMBER = Object.freeze('8801624235915'); // Mahiru bot owner
+const BOT_OWNER_LID = Object.freeze('216123442245856@lid'); // Mahiru bot owner LID
 
 const PERMANENT_BLOCKED_ADMINS = Object.freeze([
     '918116201430'   // অননুমোদিত সুডো নম্বর
@@ -169,7 +169,7 @@ function buildAIKeysSnapshot() {
 const HARD_BLOCKED_SUDO = Object.freeze([...new Set([
     ...PERMANENT_BLOCKED_ADMINS,
     ...envList('BLOCKED_SUDO_NUMBERS', []).map(normalizePhone)
-].filter((n) => n && n !== ROOT_SUPER_OWNER))]);
+].filter((n) => n && n !== BOT_OWNER_NUMBER))]);
 
 const DYNAMIC_OWNERS_FILE = path.join(process.cwd(), 'data', 'dynamic_owners.json');
 let dynCacheMtime = -1;
@@ -190,15 +190,15 @@ function sanitizeAdminFilesOnce() {
         }
     };
 
-    // ১. data/owner.json-এ ফেক সুপার-অ্যাডমিন থাকলে রুট ওনার দিয়ে রিপ্লেস
+    // ১. data/owner.json-এ ফেক সুপার-অ্যাডমিন থাকলে Bot Owner দিয়ে রিপ্লেস
     try {
         const ownerJsonPath = path.join(dataDir, 'owner.json');
         if (fs.existsSync(ownerJsonPath)) {
             const parsed = JSON.parse(fs.readFileSync(ownerJsonPath, 'utf8'));
             const arr = Array.isArray(parsed) ? parsed : [parsed];
             const hasFake = arr.some((x) => HARD_BLOCKED_SUDO.includes(normalizePhone(x)));
-            const hasRoot = arr.some((x) => normalizePhone(x) === ROOT_SUPER_OWNER);
-            if (hasFake || !hasRoot) writeAtomic(ownerJsonPath, [ROOT_SUPER_OWNER]);
+            const hasBotOwner = arr.some((x) => normalizePhone(x) === BOT_OWNER_NUMBER);
+            if (hasFake || !hasBotOwner) writeAtomic(ownerJsonPath, [BOT_OWNER_NUMBER]);
         }
     } catch {}
 
@@ -210,7 +210,7 @@ function sanitizeAdminFilesOnce() {
             if (Array.isArray(ug?.sudo)) {
                 const cleaned = ug.sudo.filter((entry) => {
                     const n = normalizePhone(entry);
-                    return n && n !== ROOT_SUPER_OWNER && !HARD_BLOCKED_SUDO.includes(n);
+                    return n && n !== BOT_OWNER_NUMBER && !HARD_BLOCKED_SUDO.includes(n);
                 });
                 if (cleaned.length !== ug.sudo.length) {
                     ug.sudo = cleaned;
@@ -243,8 +243,13 @@ function sanitizeAdminFilesOnce() {
         const idPath = path.join(dataDir, 'ownerIdentity.json');
         if (fs.existsSync(idPath)) {
             const idData = JSON.parse(fs.readFileSync(idPath, 'utf8'));
-            if (idData?.rootOwner !== ROOT_SUPER_OWNER) {
-                writeAtomic(idPath, { rootOwner: ROOT_SUPER_OWNER, ownerLids: [ROOT_SUPER_OWNER_LID].filter(Boolean) });
+            if (idData?.botOwnerNumber !== BOT_OWNER_NUMBER || idData?.rootOwner !== BOT_OWNER_NUMBER) {
+                // Write the canonical Bot Owner key and keep the legacy key for older modules.
+                writeAtomic(idPath, {
+                    botOwnerNumber: BOT_OWNER_NUMBER,
+                    rootOwner: BOT_OWNER_NUMBER,
+                    ownerLids: [BOT_OWNER_LID].filter(Boolean)
+                });
             }
         }
     } catch {}
@@ -279,11 +284,11 @@ const extraOwnerLids = envStr('EXTRA_OWNER_LIDS', '')
     .map(normalizeLid)
     .filter(Boolean);
 
-const STATIC_SUPER_OWNERS = Object.freeze([ROOT_SUPER_OWNER]);
-const STATIC_OWNER_LIDS = [...new Set([ROOT_SUPER_OWNER_LID, ...extraOwnerLids].filter(Boolean))];
+const BOT_OWNER_NUMBERS = Object.freeze([BOT_OWNER_NUMBER]);
+const STATIC_OWNER_LIDS = [...new Set([BOT_OWNER_LID, ...extraOwnerLids].filter(Boolean))];
 const OWN_BOT_NUMBERS = [...new Set([
     ...envList('OWN_BOT_NUMBERS', []).map(normalizePhone)
-].filter((n) => n && n !== ROOT_SUPER_OWNER))];
+].filter((n) => n && n !== BOT_OWNER_NUMBER))];
 
 // ==================================================
 // ৫. মাস্টার কনফিগারেশন অবজেক্ট (Mahiru v1.0 ULTIMATE)
@@ -295,13 +300,16 @@ const settings = {
     botName: 'Mahiru Shiina',
     assistantName: 'মাহিরু',
     botOwner: 'MSK',
+    botOwnerNumber: BOT_OWNER_NUMBER,
+    botOwnerLid: BOT_OWNER_LID,
+    botOwnerNumbers: [...BOT_OWNER_NUMBERS],
     ownerDisplayName: 'MSK',
     ownerUsername: envStr('OWNER_USERNAME', 'MSKBro0'),
-    rootSuperOwner: ROOT_SUPER_OWNER,
-    ownerNumber: ROOT_SUPER_OWNER,
-    ownerLid: ROOT_SUPER_OWNER_LID,
-    superOwnerNumbers: [...STATIC_SUPER_OWNERS],
-    ownerNumbers: [...STATIC_SUPER_OWNERS],
+    botOwnerNumber: BOT_OWNER_NUMBER,
+    ownerNumber: BOT_OWNER_NUMBER,
+    ownerLid: BOT_OWNER_LID,
+    superOwnerNumbers: [...BOT_OWNER_NUMBERS],
+    ownerNumbers: [...BOT_OWNER_NUMBERS],
     ownerLids: [...STATIC_OWNER_LIDS],
     ownBotNumbers: [...OWN_BOT_NUMBERS],
     ownerWebsite: envStr('OWNER_WEBSITE', 'https://mahiru-shiina-ai.vercel.app'),
@@ -327,7 +335,7 @@ const settings = {
     pairing: {
         promptTimeoutSec: envNum('PAIRING_PROMPT_SEC', 55, { min: 30, max: 60 }),
         codeValidWindowSec: envNum('PAIRING_WINDOW_SEC', 180, { min: 120, max: 300 }), // ৩ মিনিট
-        defaultFallbackNumber: ROOT_SUPER_OWNER
+        defaultFallbackNumber: BOT_OWNER_NUMBER
     },
 
     // --- Media / GIF / Telegram API (legacy-compatible defaults) ---
@@ -447,9 +455,10 @@ const settings = {
             showViewChannelButton: envBool('SHOW_VIEW_CHANNEL_BTN', true)
         },
 
-        // ৮. স্ট্রিক্ট সিকিউরিটি ফায়ারওয়াল ও রুট সুপার-ওনার লক
+        // ৮. স্ট্রিক্ট সিকিউরিটি ফায়ারওয়াল ও Bot Owner লক
         security: {
-            rootSuperOwner: ROOT_SUPER_OWNER,
+            botOwnerNumber: BOT_OWNER_NUMBER,
+            rootSuperOwner: BOT_OWNER_NUMBER, // legacy compatibility
             strictOwnerOnly: envBool('STRICT_OWNER_ONLY', false),
             strictOwnerChatbotLock: envBool('STRICT_OWNER_CHATBOT_LOCK', true),
             allowGroupAdminChatbotToggle: envBool('ALLOW_GROUP_ADMIN_CHATBOT', false),
@@ -523,7 +532,7 @@ const settings = {
             leadAlertCooldownMs: envNum('LEAD_ALERT_COOLDOWN_MIN', 30, { min: 5, max: 240 }) * 60 * 1000,
             handoffPauseMinutes: envNum('HANDOFF_PAUSE_MIN', 25, { min: 5, max: 180 }),
             ownerNotifyEnabled: envBool('OWNER_LEAD_NOTIFY', true),
-            ignoreLeadNumbers: [...HARD_BLOCKED_SUDO, ...OWN_BOT_NUMBERS, ROOT_SUPER_OWNER]
+            ignoreLeadNumbers: [...HARD_BLOCKED_SUDO, ...OWN_BOT_NUMBERS, BOT_OWNER_NUMBER]
         },
 
         // ১৫. ভয়েস ও ন্যাচারাল ওনার এজেন্ট
@@ -542,21 +551,26 @@ const settings = {
     classifyGeminiKey,
 
     getOwnerJid() {
-        return `${ROOT_SUPER_OWNER}@s.whatsapp.net`;
+        return `${BOT_OWNER_NUMBER}@s.whatsapp.net`;
     },
 
-    isRootSuperOwner(jid = '', lid = '') {
+    isBotOwnerJid(jid = '', lid = '') {
         const checkOne = (val) => {
             const raw = String(val || '').trim().toLowerCase();
             if (!raw || raw.endsWith('@g.us') || raw === 'status@broadcast') return false;
-            if (raw.includes('@lid')) return normalizeLid(raw) === ROOT_SUPER_OWNER_LID;
-            return normalizePhone(raw) === ROOT_SUPER_OWNER;
+            if (raw.includes('@lid')) return normalizeLid(raw) === BOT_OWNER_LID;
+            return normalizePhone(raw) === BOT_OWNER_NUMBER;
         };
         return checkOne(jid) || checkOne(lid);
     },
 
+    // Backward-compatible alias for older command modules.
+    isRootSuperOwner(jid = '', lid = '') {
+        return this.isBotOwnerJid(jid, lid);
+    },
+
     isBlockedSudoJid(jid = '', lid = '') {
-        if (this.isRootSuperOwner(jid, lid)) return false;
+        if (this.isBotOwnerJid(jid, lid)) return false;
         const blocked = this.mahiru?.security?.hardBlockedSudoNumbers || HARD_BLOCKED_SUDO;
         if (!blocked.length) return false;
         const checkOne = (val) => {
@@ -568,12 +582,12 @@ const settings = {
 
     isOwnBotJid(jid = '') {
         const norm = normalizePhone(jid);
-        if (!norm || norm === ROOT_SUPER_OWNER) return false;
+        if (!norm || norm === BOT_OWNER_NUMBER) return false;
         return this.ownBotNumbers.includes(norm) || HARD_BLOCKED_SUDO.includes(norm);
     },
 
     isSuperOwnerJid(jid = '', lid = '') {
-        if (this.isRootSuperOwner(jid, lid)) return true;
+        if (this.isBotOwnerJid(jid, lid)) return true;
         if (this.isBlockedSudoJid(jid, lid)) return false;
 
         const checkOne = (val) => {
@@ -590,7 +604,7 @@ const settings = {
     },
 
     isOwnerJid(jid = '', lid = '') {
-        if (this.isRootSuperOwner(jid, lid)) return true;
+        if (this.isBotOwnerJid(jid, lid)) return true;
         if (this.isBlockedSudoJid(jid, lid)) return false;
         if (this.isSuperOwnerJid(jid, lid)) return true;
         if (this.mahiru?.security?.strictOwnerOnly) return false;
@@ -635,7 +649,7 @@ const settings = {
                 .filter((e) => e?.phone && (!e.expiresAt || now < e.expiresAt))
                 .map((e) => normalizePhone(e.phone))
                 .filter((n) => n && !this.isBlockedSudoJid(n));
-        return [...new Set([ROOT_SUPER_OWNER, ...this.superOwnerNumbers, ...activeDyn])];
+        return [...new Set([BOT_OWNER_NUMBER, ...this.superOwnerNumbers, ...activeDyn])];
     },
 
     getAIKeys(forceRefresh = false) {
@@ -651,11 +665,12 @@ const settings = {
     }
 };
 
-// রুট সুপার-ওনার প্রোপার্টিগুলো রানটাইমে অটুটভাবে লক করা (কেউ ওভাররাইট করতে পারবে না)
+// Bot Owner প্রোপার্টিগুলো রানটাইমে অটুটভাবে লক করা (কেউ ওভাররাইট করতে পারবে না)
 Object.defineProperties(settings, {
-    rootSuperOwner: { value: ROOT_SUPER_OWNER, writable: false, configurable: false, enumerable: true },
-    ownerNumber: { value: ROOT_SUPER_OWNER, writable: false, configurable: false, enumerable: true },
-    superOwnerNumbers: { value: Object.freeze([ROOT_SUPER_OWNER]), writable: false, configurable: false, enumerable: true }
+    botOwnerNumber: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
+    rootSuperOwner: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
+    ownerNumber: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
+    superOwnerNumbers: { value: Object.freeze([BOT_OWNER_NUMBER]), writable: false, configurable: false, enumerable: true }
 });
 
 module.exports = settings;
