@@ -558,6 +558,34 @@ async function startXeonBotInc() {
         await handleGroupParticipantUpdate(XeonBotInc, update);
     });
 
+    // Baileys v7 may report a newly joined group through groups.upsert
+    // instead of group-participants.update. Route those group snapshots
+    // through the same bot-identity check and notification flow.
+    XeonBotInc.ev.on('groups.upsert', async (updates) => {
+        const groups = Array.isArray(updates) ? updates : (updates ? [updates] : []);
+        console.log('[GROUP ACCESS] groups.upsert received:', {
+            count: groups.length,
+            groupIds: groups.map(group => group?.id).filter(Boolean)
+        });
+
+        for (const group of groups) {
+            if (!group?.id || !String(group.id).endsWith('@g.us')) continue;
+            try {
+                await handleGroupParticipantUpdate(XeonBotInc, {
+                    id: group.id,
+                    participants: Array.isArray(group.participants) ? group.participants : [],
+                    action: 'add',
+                    author: group.author
+                });
+            } catch (error) {
+                console.error('[GROUP ACCESS] groups.upsert handler failed:', {
+                    groupId: group.id,
+                    error: error?.message || String(error)
+                });
+            }
+        }
+    });
+
     XeonBotInc.ev.on('messages.upsert', async (m) => {
         if (m.messages[0].key && m.messages[0].key.remoteJid === 'status@broadcast') {
             await handleStatus(XeonBotInc, m);
