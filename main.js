@@ -530,7 +530,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                                     text: [
                                         '🔔 *Inactive Group Activation Reminder*',
                                         '',
-                                        `📛 Group: ${groupName}`,
+                                        `📛 *Group Name:* ${groupName}`,
                                         `🆔 Group ID: ${chatId}`,
                                         `👤 Triggered by: ${senderName}`,
                                         `⚡ কারণ: ${triggerLabel}`,
@@ -2401,7 +2401,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
 async function handleGroupParticipantUpdate(sock, update) {
     try {
-        const { id, participants, action, author } = update || {};
+        const { id, participants, action, author, source, subject: eventGroupName } = update || {};
         const actionName = String(action || '').trim().toLowerCase();
         const groupId = typeof id === 'string' ? id.trim() : '';
 
@@ -2436,13 +2436,14 @@ async function handleGroupParticipantUpdate(sock, update) {
             });
 
             if (botWasAdded) {
-                let groupName = 'Unknown group';
+                let groupName = String(eventGroupName || '').trim();
                 try {
                     const metadata = await sock.groupMetadata(id);
-                    groupName = metadata?.subject || groupName;
+                    groupName = String(metadata?.subject || groupName || '').trim();
                 } catch (metadataError) {
                     console.error('[GROUP ACCESS] Could not read new group name:', metadataError?.message || metadataError);
                 }
+                if (!groupName) groupName = 'নাম পাওয়া যায়নি';
 
                 // The group notice and owner notice are independent: one failure must not block the other.
                 if (!groupAccess.hasGroupNoticeSent(id) && !groupPublicNoticeInFlight.has(id)) {
@@ -2452,12 +2453,12 @@ async function handleGroupParticipantUpdate(sock, update) {
                             text: [
                                 '⏸️ *MAHIRU BOT নতুন GROUP-এ ADD হয়েছে*',
                                 '',
-                                `📛 Group: ${groupName}`,
-                                `🆔 Group ID: ${id}`,
-                                `👤 যিনি Add করেছেন: ${author || 'Unknown'}`,
-                                `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
-                                OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
-                                `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
+                                `📛 *Group Name:* ${groupName}`,
+                                `🆔 *Group ID:* ${id}`,
+                                `👤 *যিনি Add করেছেন:* ${author || 'Unknown'}`,
+                                `📌 *Status:* ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                OWNER_CONTACT_LINK ? `👑 *Bot Owner:* ${OWNER_CONTACT_LINK}` : '',
+                                `⏰ *সময়:* ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                 '',
                                 '🔒 গ্রুপটি Active করতে হলে Bot Owner-এর সাথে যোগাযোগ করুন।'
                             ].filter(Boolean).join('\n'),
@@ -2487,12 +2488,12 @@ async function handleGroupParticipantUpdate(sock, update) {
                                         text: [
                                             '🟢 *MAHIRU BOT নতুন GROUP-এ ADD হয়েছে*',
                                             '',
-                                            `📛 Group: ${groupName}`,
-                                            `🆔 Group ID: ${id}`,
-                                            `👤 যিনি Add করেছেন: ${author || 'Unknown'}`,
-                                            `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
-                                            OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
-                                            `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
+                                            `📛 *Group Name:* ${groupName}`,
+                                            `🆔 *Group ID:* ${id}`,
+                                            `👤 *যিনি Add করেছেন:* ${author || 'Unknown'}`,
+                                            `📌 *Status:* ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                            OWNER_CONTACT_LINK ? `👑 *Bot Owner:* ${OWNER_CONTACT_LINK}` : '',
+                                            `⏰ *সময়:* ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                             '',
                                             '🔒 গ্রুপটি Active করতে হলে Bot Owner-এর সাথে যোগাযোগ করুন।'
                                         ].filter(Boolean).join('\n'),
@@ -2549,19 +2550,20 @@ async function handleGroupParticipantUpdate(sock, update) {
                     console.error('[GROUP ACCESS] Could not reset add-notice markers:', resetError?.message || resetError);
                 }
 
-                let groupName = 'Unknown group';
+                let groupName = String(eventGroupName || '').trim();
                 try {
                     const metadata = await sock.groupMetadata(id);
-                    groupName = metadata?.subject || groupName;
+                    groupName = String(metadata?.subject || groupName || '').trim();
                 } catch (metadataError) {
                     console.error('[GROUP ACCESS] Could not read removed group name:', metadataError?.message || metadataError);
                 }
+                if (!groupName) groupName = 'নাম পাওয়া যায়নি';
                 await notifyOwner(sock,
                     '🚪 *MAHIRU BOT GROUP থেকে REMOVE হয়েছে*\n\n' +
-                    '📛 Group: ' + groupName + '\n' +
-                    '🆔 Group ID: ' + id + '\n' +
-                    '👤 যিনি Remove করেছেন: ' + (author || 'Unknown') + '\n' +
-                    '⏰ সময়: ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
+                    '📛 *Group Name:* ' + groupName + '\n' +
+                    '🆔 *Group ID:* ' + id + '\n' +
+                    '👤 *যিনি Remove করেছেন:* ' + (author || 'Unknown') + '\n' +
+                    '⏰ *সময়:* ' + new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })
                 );
             }
         }
@@ -2582,7 +2584,9 @@ async function handleGroupParticipantUpdate(sock, update) {
             return;
         }
 
-        if (actionName === 'add' || actionName === 'invite') {
+        if ((actionName === 'add' || actionName === 'invite') && source !== 'groups.upsert') {
+            // groups.upsert contains the full existing member snapshot, not a list of new joiners.
+            // Welcome messages must only run for real participant-join events.
             await handleJoinEvent(sock, id, participants);
         }
 
