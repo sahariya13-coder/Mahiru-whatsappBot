@@ -9,21 +9,7 @@ process.env.TMPDIR = customTemp;
 process.env.TEMP = customTemp;
 process.env.TMP = customTemp;
 
-// Auto-cleaner every 3 hours
-setInterval(() => {
-    fs.readdir(customTemp, (err, files) => {
-        if (err) return;
-        for (const file of files) {
-            const filePath = path.join(customTemp, file);
-            fs.stat(filePath, (err, stats) => {
-                if (!err && Date.now() - stats.mtimeMs > 3 * 60 * 60 * 1000) {
-                    fs.unlink(filePath, () => { });
-                }
-            });
-        }
-    });
-    console.log('🧹 Temp folder auto-cleaned');
-}, 3 * 60 * 60 * 1000);
+// Safe recursive cleanup is started once from index.js after startup restoration.
 
 const settings = require('./settings');
 const { notifyOwner, sendToBotInboxAndOwner, getOwnerInbox } = require('./lib/ownerNotify');
