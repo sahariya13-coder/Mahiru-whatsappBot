@@ -2459,7 +2459,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                                 OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
                                 `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                 '',
-                                '🔒 গ্রুপটি Active করতে হলে Bot Admin-এর সাথে যোগাযোগ করুন।'
+                                '🔒 গ্রুপটি Active করতে হলে Bot Owner-এর সাথে যোগাযোগ করুন।'
                             ].filter(Boolean).join('\n'),
                             linkPreview: null
                         });
@@ -2494,7 +2494,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                                             OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
                                             `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                             '',
-                                            '🔒 গ্রুপটি Active করতে হলে Bot Admin-এর সাথে যোগাযোগ করুন।'
+                                            '🔒 গ্রুপটি Active করতে হলে Bot Owner-এর সাথে যোগাযোগ করুন।'
                                         ].filter(Boolean).join('\n'),
                                         linkPreview: null
                                     });
