@@ -30,7 +30,7 @@ async function isPrivilegedMenuRequest(sock, chatId, message) {
 
     for (const senderId of candidates) {
         try {
-            if (await ownerAccess.isConfiguredOwner(senderId, sock, chatId, message)) return true;
+            if (await ownerAccess.isBotOwner(senderId, sock, chatId, message)) return true;
         } catch (error) {
             console.error('[MENU] Role check failed:', error?.message || error);
         }
