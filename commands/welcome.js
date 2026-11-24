@@ -45,6 +45,11 @@ async function handleJoinEvent(sock, id, participants) {
             if (!jid) continue;
 
             const mentionJid = normalizeJid(jid);
+            // Never send a Welcome Message to the bot itself when Mahiru is added.
+            const botJids = [sock?.user?.id, sock?.user?.lid]
+                .filter(Boolean)
+                .map(normalizeJid);
+            if (botJids.includes(mentionJid)) continue;
             const mentionToken = `@${mentionJid.split('@')[0].split(':')[0]}`;
 
             let finalMessage = String(customMessage || '');
