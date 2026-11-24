@@ -2412,7 +2412,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                                 OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
                                 '',
                                 `🛠️ Owner চাইলে .gact ${id} কমান্ড দিয়েও Active করতে পারবেন।`
-                            ].filter(Boolean).join('\\n'),
+                            ].filter(Boolean).join('\n'),
                             linkPreview: null
                         });
                         if (sent) {
@@ -2449,7 +2449,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                                             '',
                                             `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
                                             `🗑️ বটকে সরাতে: .gdelete ${id}`
-                                        ].filter(Boolean).join('\\n'),
+                                        ].filter(Boolean).join('\n'),
                                         linkPreview: null
                                     });
                                     break;
