@@ -176,8 +176,16 @@ const MAX_COMMAND_TELEMETRY = 100;
 
 
 function normalizeGroupParticipantJid(value) {
-    if (typeof value !== 'string') return '';
-    return value.trim().toLowerCase().replace(/:\d+@/, '@');
+    if (value === null || value === undefined) return '';
+    let raw = String(value).trim().toLowerCase();
+    if (!raw) return '';
+    raw = raw.replace(/:\d+@/, '@');
+    // Some Baileys/LID mapping payloads expose a bare phone number.
+    if (!raw.includes('@')) {
+        const digits = raw.replace(/\\D/g, '');
+        if (digits.length >= 8) raw = digits + '@s.whatsapp.net';
+    }
+    return raw;
 }
 
 // Baileys v7 uses LIDMapping objects ({ lid, pn }) for group participant updates.
@@ -229,10 +237,20 @@ async function getBotIdentityJids(sock) {
 
 async function isBotInParticipantUpdate(sock, participants = []) {
     const botJids = await getBotIdentityJids(sock);
-    if (!botJids.size) return false;
+    if (!botJids.size) {
+        console.error('[GROUP ACCESS] Cannot identify bot account during participant update.');
+        return false;
+    }
+
+    const botPhoneNumbers = new Set(
+        [...botJids]
+            .filter(jid => jid.endsWith('@s.whatsapp.net'))
+            .map(jid => jid.split('@')[0].replace(/\\D/g, ''))
+            .filter(Boolean)
+    );
 
     return (Array.isArray(participants) ? participants : []).some(participant => {
-        const ids = typeof participant === 'string'
+        const ids = typeof participant === 'string' || typeof participant === 'number'
             ? [participant]
             : [
                 participant?.id,
@@ -244,7 +262,19 @@ async function isBotInParticipantUpdate(sock, participants = []) {
                 participant?.participantPn,
                 participant?.participantLid
             ];
-        return ids.some(value => botJids.has(normalizeGroupParticipantJid(value)));
+
+        return ids.some(value => {
+            const normalized = normalizeGroupParticipantJid(value);
+            if (normalized && botJids.has(normalized)) return true;
+
+            // Baileys v7 may expose a PN and LID in different fields. Compare
+            // phone-number identities as a fallback when LID mapping is delayed.
+            if (normalized.endsWith('@s.whatsapp.net')) {
+                const digits = normalized.split('@')[0].replace(/\\D/g, '');
+                return digits && botPhoneNumbers.has(digits);
+            }
+            return false;
+        });
     });
 }
 
@@ -2377,6 +2407,12 @@ async function handleGroupParticipantUpdate(sock, update) {
 
         // Notify the group and owner when Mahiru itself is added.
         if (action === 'add') {
+            console.log('[GROUP ACCESS] Participant add event received:', {
+                groupId: id,
+                participantCount: Array.isArray(participants) ? participants.length : 0,
+                botId: normalizeGroupParticipantJid(sock?.user?.id || sock?.authState?.creds?.me?.id),
+                botLid: normalizeGroupParticipantJid(sock?.user?.lid || sock?.authState?.creds?.me?.lid)
+            });
             const botWasAdded = await isBotCurrentlyInGroup(sock, id, participants);
             console.log('[GROUP ACCESS] Add event identity check:', {
                 groupId: id,
