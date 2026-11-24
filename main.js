@@ -182,7 +182,7 @@ function normalizeGroupParticipantJid(value) {
     raw = raw.replace(/:\d+@/, '@');
     // Some Baileys/LID mapping payloads expose a bare phone number.
     if (!raw.includes('@')) {
-        const digits = raw.replace(/\\D/g, '');
+        const digits = raw.replace(/\D/g, '');
         if (digits.length >= 8) raw = digits + '@s.whatsapp.net';
     }
     return raw;
@@ -245,7 +245,7 @@ async function isBotInParticipantUpdate(sock, participants = []) {
     const botPhoneNumbers = new Set(
         [...botJids]
             .filter(jid => jid.endsWith('@s.whatsapp.net'))
-            .map(jid => jid.split('@')[0].replace(/\\D/g, ''))
+            .map(jid => jid.split('@')[0].replace(/\D/g, ''))
             .filter(Boolean)
     );
 
@@ -270,7 +270,7 @@ async function isBotInParticipantUpdate(sock, participants = []) {
             // Baileys v7 may expose a PN and LID in different fields. Compare
             // phone-number identities as a fallback when LID mapping is delayed.
             if (normalized.endsWith('@s.whatsapp.net')) {
-                const digits = normalized.split('@')[0].replace(/\\D/g, '');
+                const digits = normalized.split('@')[0].replace(/\D/g, '');
                 return digits && botPhoneNumbers.has(digits);
             }
             return false;
