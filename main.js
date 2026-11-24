@@ -2401,12 +2401,20 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
 async function handleGroupParticipantUpdate(sock, update) {
     try {
-        const { id, participants, action, author } = update;
+        const { id, participants, action, author } = update || {};
+        const actionName = String(action || '').trim().toLowerCase();
+        const groupId = typeof id === 'string' ? id.trim() : '';
 
-        if (!id.endsWith('@g.us')) return;
+        console.log('[GROUP ACCESS] Participant update received:', {
+            groupId: groupId || 'missing',
+            action: actionName || 'missing',
+            participantCount: Array.isArray(participants) ? participants.length : 0
+        });
+
+        if (!groupId.endsWith('@g.us')) return;
 
         // Notify the group and owner when Mahiru itself is added.
-        if (action === 'add') {
+        if (actionName === 'add' || actionName === 'invite') {
             console.log('[GROUP ACCESS] Participant add event received:', {
                 groupId: id,
                 participantCount: Array.isArray(participants) ? participants.length : 0,
@@ -2523,7 +2531,7 @@ async function handleGroupParticipantUpdate(sock, update) {
         }
 
         // Notify the owner if the bot itself is removed from a group.
-        if (action === 'remove') {
+        if (actionName === 'remove' || actionName === 'leave') {
             const botWasRemoved = await isBotInParticipantUpdate(sock, participants);
             console.log('[GROUP ACCESS] Remove event identity check:', {
                 groupId: id,
@@ -2532,6 +2540,14 @@ async function handleGroupParticipantUpdate(sock, update) {
             });
 
             if (botWasRemoved) {
+                // Clear one-time add notices so a later re-add sends fresh notices.
+                try {
+                    groupAccess.resetGroupNotices(id);
+                    console.log('[GROUP ACCESS] Cleared old add-notice markers after bot removal:', id);
+                } catch (resetError) {
+                    console.error('[GROUP ACCESS] Could not reset add-notice markers:', resetError?.message || resetError);
+                }
+
                 let groupName = 'Unknown group';
                 try {
                     const metadata = await sock.groupMetadata(id);
@@ -2554,22 +2570,22 @@ async function handleGroupParticipantUpdate(sock, update) {
             if (typeof modeData.isPublic === 'boolean') isPublic = modeData.isPublic;
         } catch (e) { }
 
-        if (action === 'promote') {
+        if (actionName === 'promote') {
             if (!isPublic) return;
             await handlePromotionEvent(sock, id, participants, author);
             return;        }
 
-        if (action === 'demote') {
+        if (actionName === 'demote') {
             if (!isPublic) return;
             await handleDemotionEvent(sock, id, participants, author);
             return;
         }
 
-        if (action === 'add') {
+        if (actionName === 'add' || actionName === 'invite') {
             await handleJoinEvent(sock, id, participants);
         }
 
-        if (action === 'remove') {
+        if (actionName === 'remove' || actionName === 'leave') {
             await handleLeaveEvent(sock, id, participants);
         }
 
