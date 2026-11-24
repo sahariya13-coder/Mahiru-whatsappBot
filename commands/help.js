@@ -110,7 +110,7 @@ const MENU_CATEGORIES = Object.freeze({
             { cmd: 'role <নম্বর> gf|friend|family|client', desc: 'চ্যাটের AI রোল সেট' },
             { cmd: 'style tui|tumi|apni|auto', desc: 'AI সম্বোধনের ধরন সেট' },
             { cmd: 'cmd list / off / on', desc: 'কমান্ড চালু বা বন্ধ' },
-            { cmd: 'summary', desc: 'সিস্টেম ও AI রিপোর্ট' },
+            { cmd: 'summary', desc: 'ইনবক্স ও গ্রুপের অ্যাক্টিভিটি রিপোর্ট' },
             { cmd: 'rule <নিয়ম> / rule clear', desc: 'এই চ্যাটের AI custom rule' },
             { cmd: 'orule add / del / list', desc: 'স্থায়ী Owner নিয়ম' },
             { cmd: 'guard on / off', desc: 'Anti-abuse সুরক্ষা' },
@@ -385,7 +385,7 @@ async function helpCommand(sock, chatId, message) {
             '│ • ' + p + 'alive — বটের লাইভ স্ট্যাটাস',
             ...(isPrivileged ? [
                 '│ • ' + p + 'adm list — Owner/Sudo তালিকা',
-                '│ • ' + p + 'summary — সিস্টেম রিপোর্ট'
+                '│ • ' + p + 'summary — ইনবক্স ও গ্রুপ অ্যাক্টিভিটি রিপোর্ট'
             ] : []),
             '╰────────────────────╯',
             '',
