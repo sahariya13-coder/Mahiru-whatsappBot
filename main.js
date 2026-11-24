@@ -248,6 +248,54 @@ async function isBotInParticipantUpdate(sock, participants = []) {
     });
 }
 
+function waitForGroupUpdate(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Some Baileys v7 builds emit the add event before the participant list is fully
+// refreshed. Verify the event payload first, then re-check actual group membership.
+async function isBotCurrentlyInGroup(sock, groupId, eventParticipants = []) {
+    if (await isBotInParticipantUpdate(sock, eventParticipants)) return true;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            await waitForGroupUpdate(700);
+            const metadata = await sock.groupMetadata(groupId);
+            const members = Array.isArray(metadata?.participants) ? metadata.participants : [];
+            if (members.length && await isBotInParticipantUpdate(sock, members)) {
+                console.log('[GROUP ACCESS] Bot membership confirmed from group metadata:', groupId);
+                return true;
+            }
+        } catch (error) {
+            console.error('[GROUP ACCESS] Membership re-check failed:', attempt, error?.message || error);
+        }
+    }
+
+    return false;
+}
+
+async function sendGroupNoticeWithRetry(sock, groupId, content, attempts = 3) {
+    let lastError;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            // Give WhatsApp time to finish adding the bot before sending the welcome notice.
+            if (attempt === 1) await waitForGroupUpdate(900);
+            await sock.sendMessage(groupId, content);
+            return true;
+        } catch (error) {
+            lastError = error;
+            console.error('[GROUP ACCESS] Group activation notice attempt failed:', {
+                groupId,
+                attempt,
+                error: error?.message || String(error)
+            });
+            if (attempt < attempts) await waitForGroupUpdate(1200);
+        }
+    }
+    console.error('[GROUP ACCESS] Group activation notice failed after retries:', groupId, lastError?.message || lastError);
+    return false;
+}
+
 async function handleMessages(sock, messageUpdate, printLog) {
     let chatId = null;
 
@@ -2327,9 +2375,9 @@ async function handleGroupParticipantUpdate(sock, update) {
 
         if (!id.endsWith('@g.us')) return;
 
-        // Notify the configured owner when the bot account itself is added to a group.
+        // Notify the group and owner when Mahiru itself is added.
         if (action === 'add') {
-            const botWasAdded = await isBotInParticipantUpdate(sock, participants);
+            const botWasAdded = await isBotCurrentlyInGroup(sock, id, participants);
             console.log('[GROUP ACCESS] Add event identity check:', {
                 groupId: id,
                 botWasAdded,
@@ -2348,67 +2396,93 @@ async function handleGroupParticipantUpdate(sock, update) {
                     console.error('[GROUP ACCESS] Could not read new group name:', metadataError?.message || metadataError);
                 }
 
-                // Send the activation notice in the group only once.
+                // The group notice and owner notice are independent: one failure must not block the other.
                 if (!groupAccess.hasGroupNoticeSent(id) && !groupPublicNoticeInFlight.has(id)) {
                     groupPublicNoticeInFlight.add(id);
                     try {
-                        await sock.sendMessage(id, {
+                        const sent = await sendGroupNoticeWithRetry(sock, id, {
                             text: [
                                 '⏸️ *Mahiru এখনো এই গ্রুপে Active নয়*',
                                 '',
-                                'বট ব্যবহার করতে হলে Owner-কে এই গ্রুপটি Active করতে হবে।',
-                                'কেউ বটকে Mention করলে বা কোনো Command দিলে Activation নির্দেশনা আবার দেখানো হবে।',
+                                'বট ব্যবহার করতে হলে Bot Owner-কে এই গ্রুপটি Active করতে হবে।',
+                                'কেউ Command দিলে বা Mahiru-কে Mention করলে Owner-কে Activation Reminder পাঠানো হবে।',
                                 '',
                                 `📛 Group: ${groupName}`,
                                 `🆔 Group ID: ${id}`,
-                                OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : ''
-                            ].filter(Boolean).join('\n'),
+                                OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
+                                '',
+                                `🛠️ Owner চাইলে .gact ${id} কমান্ড দিয়েও Active করতে পারবেন।`
+                            ].filter(Boolean).join('\\n'),
                             linkPreview: null
                         });
-                        groupAccess.markGroupNoticeSent(id);
-                        console.log('[GROUP ACCESS] Initial activation notice sent in group:', id);
-                    } catch (groupNoticeError) {
-                        console.error('[GROUP ACCESS] Could not send initial group notice:', groupNoticeError?.message || groupNoticeError);
+                        if (sent) {
+                            groupAccess.markGroupNoticeSent(id);
+                            console.log('[GROUP ACCESS] Initial activation notice sent in group:', id);
+                        }
                     } finally {
                         groupPublicNoticeInFlight.delete(id);
                     }
+                } else {
+                    console.log('[GROUP ACCESS] Initial group notice already sent or in progress:', id);
                 }
 
-                // Notify the configured owner only once, separately from the group notice.
                 if (!groupAccess.hasNoticeSent(id) && !groupOwnerNoticeInFlight.has(id)) {
                     const ownerJid = getOwnerInbox(sock);
                     if (ownerJid) {
                         groupOwnerNoticeInFlight.add(id);
                         try {
-                            const notice = await sock.sendMessage(ownerJid, {
-                                text: [
-                                    '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
-                                    '',
-                                    `📛 Group: ${groupName}`,
-                                    `🆔 Group ID: ${id}`,
-                                    `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
-                                    OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
-                                    '',
-                                    '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
-                                    '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
-                                    '',
-                                    `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
-                                    `🗑️ বটকে সরাতে: .gdelete ${id}`
-                                ].filter(Boolean).join('\n'),
-                                linkPreview: null
-                            });
-                            if (notice?.key?.id) groupAccess.setPendingReply(notice.key.id, id);
-                            groupAccess.markNoticeSent(id);
-                            console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
-                        } catch (notifyError) {
-                            console.error('[GROUP ACCESS] Could not notify owner:', notifyError?.message || notifyError);
+                            let notice;
+                            let lastError;
+                            for (let attempt = 1; attempt <= 3; attempt++) {
+                                try {
+                                    notice = await sock.sendMessage(ownerJid, {
+                                        text: [
+                                            '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
+                                            '',
+                                            `📛 Group: ${groupName}`,
+                                            `🆔 Group ID: ${id}`,
+                                            `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                            OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
+                                            '',
+                                            '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
+                                            '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
+                                            '',
+                                            `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
+                                            `🗑️ বটকে সরাতে: .gdelete ${id}`
+                                        ].filter(Boolean).join('\\n'),
+                                        linkPreview: null
+                                    });
+                                    break;
+                                } catch (error) {
+                                    lastError = error;
+                                    console.error('[GROUP ACCESS] Owner activation notice attempt failed:', {
+                                        groupId: id,
+                                        attempt,
+                                        ownerJid,
+                                        error: error?.message || String(error)
+                                    });
+                                    if (attempt < 3) await waitForGroupUpdate(1200);
+                                }
+                            }
+
+                            if (notice?.key?.id) {
+                                groupAccess.setPendingReply(notice.key.id, id);
+                                groupAccess.markNoticeSent(id);
+                                console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
+                            } else if (lastError) {
+                                console.error('[GROUP ACCESS] Owner notification failed after retries:', lastError?.message || lastError);
+                            }
                         } finally {
                             groupOwnerNoticeInFlight.delete(id);
                         }
                     } else {
-                        console.error('[GROUP ACCESS] Owner phone inbox is not configured; cannot send new-group notification.');
+                        console.error('[GROUP ACCESS] Owner inbox could not be resolved; new-group owner notice skipped:', id);
                     }
+                } else {
+                    console.log('[GROUP ACCESS] Owner notice already sent or in progress:', id);
                 }
+            } else {
+                console.log('[GROUP ACCESS] Add event received, but bot membership is not confirmed yet:', id);
             }
         }
 
