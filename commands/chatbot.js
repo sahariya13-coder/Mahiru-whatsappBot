@@ -1383,8 +1383,8 @@ async function runChatProcessing(sock, chatId, batch) {
         // participant fields, configured LID and Baileys PN<->LID mapping are all checked.
         // This remains Bot Owner-only; dynamic owners and ordinary Sudo users do not pass.
         const isBotOwner = Boolean(
-            typeof isOwnerOrSudo?.isConfiguredOwner === 'function' &&
-            await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message)
+            typeof isOwnerOrSudo?.isBotOwner === 'function' &&
+            await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message)
         );
         const isAuthOwner = isSuper || await isAuthorizedOwner(sock, chatId, message);
 
