@@ -585,6 +585,8 @@ async function startXeonBotInc() {
 persistentDataReady.then(() => {
     // Load handlers and data-backed state only after Redis/local restoration.
     ({ handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main'));
+    // Clean only dedicated temp folders; session, database and backups are excluded.
+    require('./lib/safeAutoCleanup').start();
     store.readFromFile();
     owner = JSON.parse(fs.readFileSync('./data/owner.json'));
     setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000);
