@@ -2421,10 +2421,14 @@ async function handleGroupParticipantUpdate(sock, update) {
                 botId: normalizeGroupParticipantJid(sock?.user?.id || sock?.authState?.creds?.me?.id),
                 botLid: normalizeGroupParticipantJid(sock?.user?.lid || sock?.authState?.creds?.me?.lid)
             });
-            const botWasAdded = await isBotCurrentlyInGroup(sock, id, participants);
+            // Use the same participant-identity matcher as the remove handler first.
+            // Only fall back to a metadata membership check when the event payload is incomplete.
+            const botParticipantMatched = await isBotInParticipantUpdate(sock, participants);
+            const botWasAdded = botParticipantMatched || await isBotCurrentlyInGroup(sock, id, participants);
             console.log('[GROUP ACCESS] Add event identity check:', {
                 groupId: id,
                 botWasAdded,
+                botParticipantMatched,
                 participantCount: Array.isArray(participants) ? participants.length : 0,
                 participantFormats: (Array.isArray(participants) ? participants : []).map(p =>
                     typeof p === 'string' ? p.split('@').pop() : Object.keys(p || {}).join(',')
@@ -2481,12 +2485,14 @@ async function handleGroupParticipantUpdate(sock, update) {
                                 try {
                                     notice = await sock.sendMessage(ownerJid, {
                                         text: [
-                                            '🆕 *Mahiru নতুন একটি গ্রুপে Add হয়েছে*',
+                                            '🟢 *MAHIRU BOT নতুন GROUP-এ ADD হয়েছে*',
                                             '',
                                             `📛 Group: ${groupName}`,
                                             `🆔 Group ID: ${id}`,
+                                            `👤 যিনি Add করেছেন: ${author || 'Unknown'}`,
                                             `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
                                             OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
+                                            `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                             '',
                                             '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
                                             '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
