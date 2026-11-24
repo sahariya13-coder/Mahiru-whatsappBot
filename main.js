@@ -2450,16 +2450,16 @@ async function handleGroupParticipantUpdate(sock, update) {
                     try {
                         const sent = await sendGroupNoticeWithRetry(sock, id, {
                             text: [
-                                '⏸️ *Mahiru এখনো এই গ্রুপে Active নয়*',
-                                '',
-                                'বট ব্যবহার করতে হলে Bot Owner-কে এই গ্রুপটি Active করতে হবে।',
-                                'কেউ Command দিলে বা Mahiru-কে Mention করলে Owner-কে Activation Reminder পাঠানো হবে।',
+                                '⏸️ *MAHIRU BOT নতুন GROUP-এ ADD হয়েছে*',
                                 '',
                                 `📛 Group: ${groupName}`,
                                 `🆔 Group ID: ${id}`,
+                                `👤 যিনি Add করেছেন: ${author || 'Unknown'}`,
+                                `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
                                 OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
+                                `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                 '',
-                                `🛠️ Owner চাইলে .gact ${id} কমান্ড দিয়েও Active করতে পারবেন।`
+                                '🔒 গ্রুপটি Active করতে হলে Bot Admin-এর সাথে যোগাযোগ করুন।'
                             ].filter(Boolean).join('\n'),
                             linkPreview: null
                         });
@@ -2494,11 +2494,7 @@ async function handleGroupParticipantUpdate(sock, update) {
                                             OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
                                             `⏰ সময়: ${new Date().toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
                                             '',
-                                            '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
-                                            '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
-                                            '',
-                                            `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
-                                            `🗑️ বটকে সরাতে: .gdelete ${id}`
+                                            '🔒 গ্রুপটি Active করতে হলে Bot Admin-এর সাথে যোগাযোগ করুন।'
                                         ].filter(Boolean).join('\n'),
                                         linkPreview: null
                                     });
@@ -2516,7 +2512,6 @@ async function handleGroupParticipantUpdate(sock, update) {
                             }
 
                             if (notice?.key?.id) {
-                                groupAccess.setPendingReply(notice.key.id, id);
                                 groupAccess.markNoticeSent(id);
                                 console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
                             } else if (lastError) {
