@@ -270,8 +270,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                     groupAccess.clearPendingReply(quotedNoticeId);
                     await sock.sendMessage(chatId, {
                         text: action === 'activate'
-                            ? '✅ *Group Active করা হয়েছে!*\n\n🆔 Group ID: ' + pendingGroupId
-                            : '⏸️ *Group Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + pendingGroupId
+                            ? '✅ *Group Active করা হয়েছে!*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
+                            : '⏸️ *Group Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
                     }, { quoted: message });
                     return;
                 }
@@ -360,7 +360,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             if (isCommand || isBotMentioned) {
                 await sock.sendMessage(chatId, {
-                    text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}`,
+                    text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}\n👤 Bot Owner: ${OWNER_CONTACT_LINK || 'Bot Owner'}`,
                     linkPreview: null
                 }, { quoted: message });
             }
