@@ -402,7 +402,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             const quotedNoticeId = replyContext.stanzaId || '';
             const action = /^(deactivate|inactive|ডিঅ্যাক্টিভ)$/i.test(rawText.trim()) ? 'deactivate' : 'activate';
             const configuredOwner = message.key.fromMe ||
-                await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
 
             if (isGroup && configuredOwner) {
                 groupAccess.setActive(chatId, action === 'activate');
@@ -614,7 +614,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             if (!isGroup) {
                 try {
                     const configuredOwner = message.key.fromMe ||
-                        await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                        await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                     if (configuredOwner) {
                         const ownerResult = await handleOwnerCommand({
                             sock,
@@ -733,7 +733,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         switch (true) {
             case /^(?:\.takeover|\.tk)(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 await takeoverControl.handleTakeoverCommand(
                     sock, chatId, message,
                     rawText.trim().split(/\s+/).slice(1).join(' '),
@@ -743,7 +743,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^(?:\.fx|\.fix|\.recover)(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!botOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 এই recovery command শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                 } else {
@@ -753,7 +753,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^\.maint(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!botOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 Maintenance panel শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                 } else {
@@ -763,7 +763,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^\.reload(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!botOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 Reload command শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                 } else {
@@ -785,7 +785,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case userMessage === '.clean' || userMessage.startsWith('.clean ') || userMessage === '.deepclean' || userMessage.startsWith('.deepclean '): {
-                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!configuredOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                     commandExecuted = true;
@@ -798,7 +798,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case userMessage === '.block' || userMessage.startsWith('.block ') || userMessage === '.unblock' || userMessage.startsWith('.unblock '): {
-                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const configuredOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!configuredOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                     commandExecuted = true;
@@ -820,7 +820,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^(?:\.addowner|\.grant|\.giveaccess|\.delowner|\.rmowner|\.revokeaccess|\.takeaccess|\.ownerlist|\.owners|\.lockdown|\.unlockdown|\.owneralert)(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!botOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 এই Dynamic Owner কন্ট্রোল শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                     commandExecuted = true;
@@ -878,7 +878,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             }
             case /^(?:\.setpin|\.pin|\.lockpin|\.brand|\.dcmd|\.trigger|\.firewall|\.fw|\.styleinfo|\.stylereset|\.orule|\.guard|\.resetapi)(?:\s|$)/i.test(rawText.trim()): {
-                const botOwner = message.key.fromMe || await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                const botOwner = message.key.fromMe || await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!botOwner) {
                     await sock.sendMessage(chatId, { text: '🔒 এই কমান্ডটি শুধু মূল Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
                     commandExecuted = true;
@@ -1087,7 +1087,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
             case !isGroup && /^\.(?:chatbot|gai|iai|antilink|antitag|antibadword|welcome|goodbye|gset)\s+/i.test(rawText || ''): {
                 const configuredOwner = message.key.fromMe ||
-                    await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                    await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!configuredOwner) {
                     await sock.sendMessage(chatId, { text: '❌ শুধু Bot Owner Inbox থেকে অন্য গ্রুপের সেটিংস পরিবর্তন করতে পারবেন।' }, { quoted: message });
                     break;
@@ -1164,7 +1164,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
             case userMessage.startsWith('.gact') || userMessage.startsWith('.gdeact') || userMessage.startsWith('.gdelete'): {
                 const configuredOwner = message.key.fromMe ||
-                    await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                    await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                 if (!configuredOwner) {
                     await sock.sendMessage(chatId, { text: '❌ শুধু Bot Owner এই কমান্ড ব্যবহার করতে পারবেন।' }, { quoted: message });
                     break;
@@ -2331,7 +2331,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 if (!isGroup && userMessage.startsWith('.')) {
                     try {
                         const configuredOwner = message.key.fromMe ||
-                            await isOwnerOrSudo.isConfiguredOwner(senderId, sock, chatId, message);
+                            await isOwnerOrSudo.isBotOwner(senderId, sock, chatId, message);
                         if (configuredOwner) {
                             const parts = rawText.trim().split(/\s+/);
                             const handled = await handleOwnerDotCommand(
