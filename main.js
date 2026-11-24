@@ -41,6 +41,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const { isSudo } = require('./lib/index');
 const isOwnerOrSudo = require('./lib/isOwner');
 const groupAccess = require('./lib/groupAccess');
+const OWNER_CONTACT_LINK = settings.ownerUsername
+    ? 'https://wa.me//' + String(settings.ownerUsername).replace(/^@/, '')
+    : '';
+const groupOwnerNoticeInFlight = new Set();
+const groupPublicNoticeInFlight = new Set();
 const { extractInteractiveCommand } = require('./lib/buttonEngine');
 const { setGroupFeature, FEATURES: REMOTE_GROUP_FEATURES } = require('./lib/groupFeatureControl');
 const { autotypingCommand, isAutotypingEnabled, handleAutotypingForMessage, handleAutotypingForCommand, showTypingAfterCommand } = require('./commands/autotyping');
@@ -961,7 +966,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 if (!isGroup) {
                     await sock.sendMessage(chatId, { text: 'এই কমান্ডটি গ্রুপে ব্যবহার করুন।' }, { quoted: message });
                 } else {
-                    await sock.sendMessage(chatId, { text: `Group ID: ${chatId}\nStatus: ${groupAccess.isActive(chatId) ? 'Active' : 'Not Active'}\nOwner: ${settings.ownerUsername ? 'https://wa.me//' + settings.ownerUsername.replace(/^@/, '') : (settings.botOwner || 'Bot Owner')}` }, { quoted: message });
+                    await sock.sendMessage(chatId, { text: `Group ID: ${chatId}\nStatus: ${groupAccess.isActive(chatId) ? 'Active' : 'Not Active'}\nOwner: ${OWNER_CONTACT_LINK || 'Bot Owner'}` }, { quoted: message });
                 }
                 commandExecuted = true;
                 break;
@@ -2221,9 +2226,12 @@ async function handleGroupParticipantUpdate(sock, update) {
                 sock.decodeJid?.(sock.user?.id),
                 sock.decodeJid?.(sock.user?.lid)
             ].map(normalizeJid).filter(Boolean));
-            const botWasAdded = (participants || []).some(participant =>
-                botJids.has(normalizeJid(participant))
-            );
+            const botWasAdded = (participants || []).some(participant => {
+                const ids = typeof participant === 'string'
+                    ? [participant]
+                    : [participant?.id, participant?.jid, participant?.lid, participant?.phoneNumber, participant?.phone_number];
+                return ids.some(value => botJids.has(normalizeJid(value)));
+            });
 
             if (botWasAdded) {
                 let groupName = 'Unknown group';
@@ -2235,7 +2243,8 @@ async function handleGroupParticipantUpdate(sock, update) {
                 }
 
                 // Send the activation notice in the group only once.
-                if (!groupAccess.hasGroupNoticeSent(id)) {
+                if (!groupAccess.hasGroupNoticeSent(id) && !groupPublicNoticeInFlight.has(id)) {
+                    groupPublicNoticeInFlight.add(id);
                     try {
                         await sock.sendMessage(id, {
                             text: [
@@ -2245,21 +2254,25 @@ async function handleGroupParticipantUpdate(sock, update) {
                                 'কেউ বটকে Mention করলে বা কোনো Command দিলে Activation নির্দেশনা আবার দেখানো হবে।',
                                 '',
                                 `📛 Group: ${groupName}`,
-                                `🆔 Group ID: ${id}`
-                            ].join('\n'),
+                                `🆔 Group ID: ${id}`,
+                                OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : ''
+                            ].filter(Boolean).join('\n'),
                             linkPreview: null
                         });
                         groupAccess.markGroupNoticeSent(id);
                         console.log('[GROUP ACCESS] Initial activation notice sent in group:', id);
                     } catch (groupNoticeError) {
                         console.error('[GROUP ACCESS] Could not send initial group notice:', groupNoticeError?.message || groupNoticeError);
+                    } finally {
+                        groupPublicNoticeInFlight.delete(id);
                     }
                 }
 
                 // Notify the configured owner only once, separately from the group notice.
-                if (!groupAccess.hasNoticeSent(id)) {
+                if (!groupAccess.hasNoticeSent(id) && !groupOwnerNoticeInFlight.has(id)) {
                     const ownerJid = getOwnerInbox(sock);
                     if (ownerJid) {
+                        groupOwnerNoticeInFlight.add(id);
                         try {
                             const notice = await sock.sendMessage(ownerJid, {
                                 text: [
@@ -2268,23 +2281,26 @@ async function handleGroupParticipantUpdate(sock, update) {
                                     `📛 Group: ${groupName}`,
                                     `🆔 Group ID: ${id}`,
                                     `📌 Status: ${groupAccess.isActive(id) ? 'আগে থেকেই Active' : 'Pending — এখনো Active নয়'}`,
+                                    OWNER_CONTACT_LINK ? `👤 Bot Owner: ${OWNER_CONTACT_LINK}` : '',
                                     '',
                                     '↩️ এই নোটিশে Reply করে *Active* লিখলে গ্রুপ চালু হবে।',
                                     '⏸️ Reply করে *Deactivate* লিখলে গ্রুপ বন্ধ হবে।',
                                     '',
                                     `🛠️ বিকল্প কমান্ড: .gact ${id} / .gdeact ${id}`,
                                     `🗑️ বটকে সরাতে: .gdelete ${id}`
-                                ].join('\n'),
+                                ].filter(Boolean).join('\n'),
                                 linkPreview: null
                             });
                             if (notice?.key?.id) groupAccess.setPendingReply(notice.key.id, id);
                             groupAccess.markNoticeSent(id);
                             console.log('[GROUP ACCESS] Owner notified about bot being added:', id);
                         } catch (notifyError) {
-                            console.error('[GROUP ACCESS] Could not notify owner:', ownerJid, notifyError?.message || notifyError);
+                            console.error('[GROUP ACCESS] Could not notify owner:', notifyError?.message || notifyError);
+                        } finally {
+                            groupOwnerNoticeInFlight.delete(id);
                         }
                     } else {
-                        console.error('[GROUP ACCESS] Owner number/LID is not configured; cannot send new-group notification.');
+                        console.error('[GROUP ACCESS] Owner phone inbox is not configured; cannot send new-group notification.');
                     }
                 }
             }
