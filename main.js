@@ -2424,7 +2424,12 @@ async function handleGroupParticipantUpdate(sock, update) {
             // Use the same participant-identity matcher as the remove handler first.
             // Only fall back to a metadata membership check when the event payload is incomplete.
             const botParticipantMatched = await isBotInParticipantUpdate(sock, participants);
-            const botWasAdded = botParticipantMatched || await isBotCurrentlyInGroup(sock, id, participants);
+            // Only groups.upsert carries a full member snapshot, so only that source
+            // may use metadata membership as a fallback. A normal member-join event
+            // must never be mistaken for Mahiru being added to the group.
+            const botWasAdded = source === 'groups.upsert'
+                ? (botParticipantMatched || await isBotCurrentlyInGroup(sock, id, participants))
+                : botParticipantMatched;
             console.log('[GROUP ACCESS] Add event identity check:', {
                 groupId: id,
                 botWasAdded,
