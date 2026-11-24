@@ -575,7 +575,9 @@ async function startXeonBotInc() {
                     id: group.id,
                     participants: Array.isArray(group.participants) ? group.participants : [],
                     action: 'add',
-                    author: group.author
+                    author: group.author,
+                    subject: group.subject || group.name || '',
+                    source: 'groups.upsert'
                 });
             } catch (error) {
                 console.error('[GROUP ACCESS] groups.upsert handler failed:', {
