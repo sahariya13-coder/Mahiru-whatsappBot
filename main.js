@@ -362,7 +362,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             if (!isGroupActivationCommand) {
                 if (isCommand || isBotMentioned) {
                     await sock.sendMessage(chatId, {
-                        text: \`⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: \${chatId}\n👤 Bot Owner: \${OWNER_CONTACT_LINK || 'Bot Owner'}\`,
+                        text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}\n👤 Bot Owner: ${OWNER_CONTACT_LINK || 'Bot Owner'}`,
                         linkPreview: null
                     }, { quoted: message });
                 }
