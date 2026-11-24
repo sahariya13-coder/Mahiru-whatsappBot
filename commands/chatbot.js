@@ -1805,8 +1805,28 @@ async function handleChatbotResponse(sock, chatId, message, userMessage = '', se
         }
 
         if (isGroup) {
-            if (!botConfig.enabledGroups?.[chatId]) return;
-            if (!isGroupTriggered(sock, message, textRaw)) return;
+            // Keep the legacy group feature switch (.g chat on / .chatbot on)
+            // and the newer chatbot config in sync at read time. The group
+            // feature controller stores a boolean or { enabled: true } in
+            // userGroupData.json, while botConfig.enabledGroups is separate.
+            let groupChatbotEnabled = Boolean(botConfig.enabledGroups?.[chatId]);
+            if (!groupChatbotEnabled && typeof userGroupLib?.getChatbot === 'function') {
+                try {
+                    const groupChatbotState = await userGroupLib.getChatbot(chatId);
+                    groupChatbotEnabled = groupChatbotState === true || groupChatbotState?.enabled === true;
+                } catch (groupStateError) {
+                    console.error('[MAHIRU GROUP AI] Could not read group chatbot state:', groupStateError?.message || groupStateError);
+                }
+            }
+            if (!groupChatbotEnabled) {
+                console.log('[MAHIRU GROUP AI] Skipped: chatbot is OFF for group', chatId);
+                return;
+            }
+            if (!isGroupTriggered(sock, message, textRaw)) {
+                console.log('[MAHIRU GROUP AI] Skipped: no wake word, mention, reply, or group-reply-all for', chatId);
+                return;
+            }
+            console.log('[MAHIRU GROUP AI] Trigger accepted:', chatId, '| sender:', senderId || 'unknown');
         } else if (isChatDisabled(chatId, chatKey)) {
             if (textRaw) saveMemory(chatId, 'user', textRaw, message, 'text');
             return;
