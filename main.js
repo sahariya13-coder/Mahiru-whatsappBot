@@ -356,14 +356,18 @@ async function handleMessages(sock, messageUpdate, printLog) {
             ].map(normalizeMentionJid).filter(Boolean);
             const isBotMentioned = mentionedJids.some(jid => botMentionIds.includes(normalizeMentionJid(jid)));
             const isCommand = /^\./.test(userMessage);
+            // Allow activation-management commands through to their owner-only handlers.
+            const isGroupActivationCommand = /^\.(?:gact|gdeact|gdelete)(?:\s|$)/i.test(userMessage);
 
-            if (isCommand || isBotMentioned) {
-                await sock.sendMessage(chatId, {
-                    text: `⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: ${chatId}\n👤 Bot Owner: ${OWNER_CONTACT_LINK || 'Bot Owner'}`,
-                    linkPreview: null
-                }, { quoted: message });
+            if (!isGroupActivationCommand) {
+                if (isCommand || isBotMentioned) {
+                    await sock.sendMessage(chatId, {
+                        text: \`⏸️ *এই গ্রুপে Mahiru এখনো Active নয়।*\n\nBot Owner-কে নতুন গ্রুপের নোটিশে Reply করে *Active* লিখতে বলুন।\n\n🆔 Group ID: \${chatId}\n👤 Bot Owner: \${OWNER_CONTACT_LINK || 'Bot Owner'}\`,
+                        linkPreview: null
+                    }, { quoted: message });
+                }
+                return;
             }
-            return;
         }
 
 
