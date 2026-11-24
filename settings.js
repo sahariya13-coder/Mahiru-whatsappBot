@@ -305,7 +305,6 @@ const settings = {
     botOwnerNumbers: [...BOT_OWNER_NUMBERS],
     ownerDisplayName: 'MSK',
     ownerUsername: envStr('OWNER_USERNAME', 'MSKBro0'),
-    botOwnerNumber: BOT_OWNER_NUMBER,
     ownerNumber: BOT_OWNER_NUMBER,
     ownerLid: BOT_OWNER_LID,
     superOwnerNumbers: [...BOT_OWNER_NUMBERS],
@@ -668,8 +667,11 @@ const settings = {
 // Bot Owner প্রোপার্টিগুলো রানটাইমে অটুটভাবে লক করা (কেউ ওভাররাইট করতে পারবে না)
 Object.defineProperties(settings, {
     botOwnerNumber: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
+    botOwnerLid: { value: BOT_OWNER_LID, writable: false, configurable: false, enumerable: true },
+    botOwnerNumbers: { value: Object.freeze([BOT_OWNER_NUMBER]), writable: false, configurable: false, enumerable: true },
     rootSuperOwner: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
     ownerNumber: { value: BOT_OWNER_NUMBER, writable: false, configurable: false, enumerable: true },
+    ownerLid: { value: BOT_OWNER_LID, writable: false, configurable: false, enumerable: true },
     superOwnerNumbers: { value: Object.freeze([BOT_OWNER_NUMBER]), writable: false, configurable: false, enumerable: true }
 });
 
