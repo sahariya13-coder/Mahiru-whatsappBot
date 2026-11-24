@@ -1805,21 +1805,28 @@ async function handleChatbotResponse(sock, chatId, message, userMessage = '', se
         }
 
         if (isGroup) {
-            // Keep the legacy group feature switch (.g chat on / .chatbot on)
-            // and the newer chatbot config in sync at read time. The group
-            // feature controller stores a boolean or { enabled: true } in
-            // userGroupData.json, while botConfig.enabledGroups is separate.
-            let groupChatbotEnabled = Boolean(botConfig.enabledGroups?.[chatId]);
-            if (!groupChatbotEnabled && typeof userGroupLib?.getChatbot === 'function') {
-                try {
-                    const groupChatbotState = await userGroupLib.getChatbot(chatId);
-                    groupChatbotEnabled = groupChatbotState === true || groupChatbotState?.enabled === true;
-                } catch (groupStateError) {
-                    console.error('[MAHIRU GROUP AI] Could not read group chatbot state:', groupStateError?.message || groupStateError);
+            // Chatbot is ON by default in every active group.
+            // An explicit OFF in userGroupData.json or botConfig.enabledGroups
+            // always wins and remains OFF until an admin/owner turns it back ON.
+            let groupChatbotEnabled = true;
+            try {
+                const groupChatbotState = typeof userGroupLib?.getChatbot === 'function'
+                    ? await userGroupLib.getChatbot(chatId)
+                    : null;
+
+                if (groupChatbotState === false || groupChatbotState?.enabled === false) {
+                    groupChatbotEnabled = false;
+                } else if (groupChatbotState === true || groupChatbotState?.enabled === true) {
+                    groupChatbotEnabled = true;
+                } else if (Object.prototype.hasOwnProperty.call(botConfig.enabledGroups || {}, chatId)) {
+                    groupChatbotEnabled = botConfig.enabledGroups[chatId] === true;
                 }
+            } catch (groupStateError) {
+                console.error('[MAHIRU GROUP AI] Could not read group chatbot state; using default ON:', groupStateError?.message || groupStateError);
             }
+
             if (!groupChatbotEnabled) {
-                console.log('[MAHIRU GROUP AI] Skipped: chatbot is OFF for group', chatId);
+                console.log('[MAHIRU GROUP AI] Skipped: chatbot explicitly OFF for group', chatId);
                 return;
             }
             if (!isGroupTriggered(sock, message, textRaw)) {
