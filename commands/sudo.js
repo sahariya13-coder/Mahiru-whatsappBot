@@ -56,7 +56,7 @@ function extractTarget(message, chatId, args) {
 function isProtectedTarget(jid) {
     if (!jid) return true;
     return Boolean(
-        settings.isRootSuperOwner?.(jid, jid) ||
+        settings.isBotOwnerJid?.(jid, jid) ||
         settings.isBlockedSudoJid?.(jid, jid)
     );
 }
@@ -76,7 +76,7 @@ async function sudoCommand(sock, chatId, message) {
         // Only the configured owner/root identity can change the Sudo list.
         const isConfiguredOwner = await require('../lib/isOwner').isConfiguredOwner(senderJid, sock, chatId, message);
         if (!isConfiguredOwner) {
-            await reply(sock, chatId, message, '🔒 এই কমান্ড শুধু যাচাইকৃত Owner ব্যবহার করতে পারবেন।');
+            await reply(sock, chatId, message, '🔒 এই কমান্ড শুধু যাচাইকৃত Bot Owner ব্যবহার করতে পারবেন।');
             return;
         }
 
@@ -98,7 +98,7 @@ async function sudoCommand(sock, chatId, message) {
 
         if (sub === 'list' || sub === 'ls') {
             const list = (await getSudoList()).filter(jid => !isProtectedTarget(jid));
-            const owner = settings.ownerNumber || settings.rootSuperOwner || 'Configured Owner';
+            const owner = settings.botOwnerNumber || settings.ownerNumber || 'Bot Owner';
             const lines = list.map((jid, i) => (i + 1) + '. ' + (jid.includes('@lid') ? jid : '+' + jid.split('@')[0]));
             await reply(sock, chatId, message,
                 '👑 Owner: ' + owner + '\n\n' +
