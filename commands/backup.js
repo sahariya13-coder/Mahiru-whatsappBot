@@ -136,12 +136,29 @@ async function downloadDocument(document) {
 }
 
 function writeRestoreFiles(payload) {
-    if (!payload || payload.app !== 'Mahiru WhatsApp Bot' || payload.format !== 1 ||
-        !payload.files || typeof payload.files !== 'object' || Array.isArray(payload.files)) {
+    if (!payload || !payload.files || typeof payload.files !== 'object' || Array.isArray(payload.files)) {
         throw new Error('Invalid Mahiru backup file');
     }
 
-    const entries = Object.entries(payload.files);
+    let entries;
+    // Current native format: { app, format, files: { "data/name.json": "<base64>" } }
+    if (payload.app === 'Mahiru WhatsApp Bot' && payload.format === 1) {
+        entries = Object.entries(payload.files);
+    // Legacy Mahiru export format: { meta: { bot, version, createdAt }, files: { "name.json": <JSON value> } }
+    } else if (payload.meta && typeof payload.meta === 'object' &&
+        typeof payload.meta.bot === 'string' && payload.meta.bot.toLowerCase().includes('মাহিরু')) {
+        entries = Object.entries(payload.files).map(([name, value]) => {
+            if (typeof name !== 'string' || path.basename(name) !== name ||
+                !shouldBackupDataFile(name) || name.startsWith('.')) {
+                throw new Error('Backup contains an unsupported data filename');
+            }
+            return ['data/' + name, Buffer.from(JSON.stringify(value), 'utf8').toString('base64')];
+        });
+        payload.createdAt = payload.createdAt || payload.meta.createdAt;
+    } else {
+        throw new Error('Invalid Mahiru backup file format');
+    }
+
     if (!entries.length) throw new Error('Backup is empty');
 
     const decoded = [];
@@ -154,7 +171,9 @@ function writeRestoreFiles(payload) {
             throw new Error('Backup contains an unsafe file path');
         }
         const bytes = Buffer.from(encoded, 'base64');
-        if (relative.endsWith('.json')) JSON.parse(bytes.toString('utf8'));
+        if (relative.endsWith('.json') || relative.endsWith('.json5') || relative.endsWith('.jsonl')) {
+            JSON.parse(bytes.toString('utf8'));
+        }
         decoded.push({ relative, bytes });
     }
 
@@ -162,7 +181,6 @@ function writeRestoreFiles(payload) {
     const safetyName = 'pre-restore-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json.gz';
     fs.writeFileSync(path.join(BACKUP_DIR, safetyName), createBackupBuffer());
 
-    // Build the restored data directory separately, then swap it into place.
     const stageRoot = path.join(BACKUP_DIR, 'restore-stage-' + process.pid);
     const stageData = path.join(stageRoot, 'data');
     fs.rmSync(stageRoot, { recursive: true, force: true });
@@ -193,79 +211,12 @@ function writeRestoreFiles(payload) {
     fs.rmSync(stageRoot, { recursive: true, force: true });
 
     try {
-        // Remove stale runtime-snapshot entries first; otherwise deleted files
-        // from an older snapshot could be copied back on the next startup.
         fs.rmSync(path.join(BACKUP_DIR, 'data'), { recursive: true, force: true });
         fs.rmSync(path.join(BACKUP_DIR, 'baileys_store.json'), { force: true });
         require('../lib/persistent_data').backup();
     } catch (error) {
         console.warn('[BACKUP] Runtime snapshot refresh warning:', error.message);
     }
-}
-
-async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
-    const text = String(rawText || '').trim();
-    const owner = await isOwnerMessage(senderId, message, sock, chatId);
-    const requestKey = String(senderId || chatId);
-    const document = readDocument(message);
-
-    if (/^\.backup(?:\s|$)/i.test(text)) {
-        if (String(chatId || '').endsWith('@g.us')) {
-            await sock.sendMessage(chatId, { text: '🔒 নিরাপত্তার জন্য Backup/Restore শুধু Bot Owner-এর ব্যক্তিগত ইনবক্সে ব্যবহার করুন।' }, { quoted: message });
-            return true;
-        }
-        if (!owner) {
-            await sock.sendMessage(chatId, { text: 'এই কমান্ডটি শুধু Bot Owner ব্যবহার করতে পারবেন।' }, { quoted: message });
-            return true;
-        }
-        const action = text.split(/\s+/)[1]?.toLowerCase();
-        if (action === 'restore') {
-            REQUESTS.set(requestKey, { chatId, requestedAt: Date.now() });
-            await sock.sendMessage(chatId, {
-                text: 'রিস্টোর করতে এখন Mahiru Backup ফাইলটি Document হিসেবে পাঠান অথবা এই মেসেজে রিপ্লাই দিয়ে ফাইলটি পাঠান।\n\nশুধু Mahiru-র .json.gz ব্যাকআপ ফাইল গ্রহণ করা হবে।'
-            }, { quoted: message });
-            return true;
-        }
-        if (action && action !== 'now') {
-            await sock.sendMessage(chatId, { text: 'ব্যবহার:\n.backup — এখনই ব্যাকআপ পাঠাবে\n.backup restore — ব্যাকআপ ফাইল চাইবে' }, { quoted: message });
-            return true;
-        }
-        try {
-            await sock.sendMessage(chatId, { text: 'ব্যাকআপ তৈরি হচ্ছে...' }, { quoted: message });
-            const result = await sendBackup(sock, null, 'ম্যানুয়াল');
-            await sock.sendMessage(chatId, {
-                text: 'Backup Owner-এর WhatsApp-এ পাঠানো হয়েছে।\nFile: ' + result.fileName +
-                    '\nSize: ' + (result.size / 1024 / 1024).toFixed(2) + ' MB'
-            }, { quoted: message });
-        } catch (error) {
-            console.error('[BACKUP] Manual backup failed:', error);
-            await sock.sendMessage(chatId, { text: 'ব্যাকআপ তৈরি বা পাঠানো যায়নি: ' + error.message }, { quoted: message });
-        }
-        return true;
-    }
-
-    const pending = REQUESTS.get(requestKey);
-    if (!pending || pending.chatId !== chatId || !document || !owner) return false;
-
-    REQUESTS.delete(requestKey);
-    try {
-        await sock.sendMessage(chatId, { text: 'ব্যাকআপ ফাইল যাচাই করে রিস্টোর করা হচ্ছে...' }, { quoted: message });
-        const compressed = await downloadDocument(document);
-        const jsonBuffer = zlib.gunzipSync(compressed);
-        const payload = JSON.parse(jsonBuffer.toString('utf8'));
-        writeRestoreFiles(payload);
-        await sock.sendMessage(chatId, {
-            text: '✅ রিস্টোর সফল হয়েছে।\nব্যাকআপের তারিখ: ' + (payload.createdAt || 'Unknown') +
-                '\nনিরাপদে Restore সম্পন্ন করতে বট Restart হচ্ছে।'
-        }, { quoted: message });
-        setTimeout(() => process.exit(1), 1500);
-    } catch (error) {
-        console.error('[BACKUP] Restore failed:', error);
-        await sock.sendMessage(chatId, {
-            text: '❌ রিস্টোর ব্যর্থ হয়েছে: ' + error.message + '\nসঠিক Mahiru Backup ফাইল পাঠান।'
-        }, { quoted: message });
-    }
-    return true;
 }
 
 function startDailyBackup(sock) {
