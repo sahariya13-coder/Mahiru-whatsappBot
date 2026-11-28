@@ -38,6 +38,14 @@ async function resolveVideoInfo(query) {
   return video;
 }
 
+function formatDuration(x) {
+  if(typeof x==='string'&&x.trim()&&x!=='[object Object]') return x.trim();
+  if(typeof x==='number'&&Number.isFinite(x)&&x>=0) return fmtSeconds(x);
+  if(x&&typeof x==='object') { const t=x.timestamp||x.text||x.simpleText||x.formatted; if(typeof t==='string'&&t.trim()) return t.trim(); const n=Number(x.seconds??x.totalSeconds??x.lengthSeconds??x.durationSeconds); if(Number.isFinite(n)&&n>=0) return fmtSeconds(n); }
+  return 'Unavailable';
+}
+function fmtSeconds(n) { n=Math.floor(n); const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60; return h?h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'):m+':'+String(s).padStart(2,'0'); }
+
 async function samplecutSongDownload(videoUrl) {
   const response = await fetch('https://api.samplecut.app/v1/downloads', {
     method: 'POST',
@@ -135,13 +143,7 @@ async function songCommand(sock, chatId, message, commandText = '') {
     const thumbnail =
       video.thumbnail ||
       (videoId ? 'https://i.ytimg.com/vi/' + videoId + '/hqdefault.jpg' : null);
-    const duration =
-      video.timestamp ||
-      video.duration?.timestamp ||
-      (Number.isFinite(video.duration?.seconds)
-        ? Math.floor(video.duration.seconds / 60) + ':' +
-          String(video.duration.seconds % 60).padStart(2, '0')
-        : 'Unknown');
+    const duration = formatDuration(video.timestamp || video.duration || video.lengthSeconds);
 
     const songCaption =
       '🎵 Downloading: *' + (video.title || 'YouTube Audio') + '*\n' +
