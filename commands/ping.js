@@ -98,7 +98,7 @@ async function pingCommand(sock, chatId, message) {
             { icon: '⏱️', label: 'UPTIME', value: formatUptime() },
             { icon: '🐏', label: 'RAM', value: memInfo.ramMain },
             { icon: '📦', label: 'HEAP', value: memInfo.heapDetail },
-            { icon: '💾', label: 'DISK', value: (() => { const d = getResourceSnapshot().disk; return `${d.used} used / ${d.total} filesystem | ${d.free} free (project ${d.project}); quota: not exposed`; })() },
+            { icon: '💾', label: 'DISK', value: (() => { const d = getResourceSnapshot().disk; return `${d.used} project estimate / ${d.total} allocated | ${d.free} estimated free`; })() },
             { icon: '☁️', label: 'HOST', value: getRuntimeLabel() },
             { icon: '⚙️', label: 'CPU', value: getCpuLoadText() },
             { icon: '🕒', label: 'TIME', value: `${timeInfo.time} (${timeInfo.date})` },
