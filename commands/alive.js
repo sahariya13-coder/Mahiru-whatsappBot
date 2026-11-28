@@ -33,12 +33,15 @@ function getRamHealthBadge() {
     const resources = getResourceSnapshot();
     const rssMb = resources.ram.usedBytes / 1024 / 1024;
     const heapMb = (mem.heapUsed / 1024 / 1024).toFixed(1);
-    const limitMb = resources.memoryLimitBytes / 1024 / 1024;
-    const soft = limitMb * 0.70;
-    const crit = limitMb * 0.85;
+    const limitMb = Number.isFinite(resources.memoryLimitBytes) && resources.memoryLimitBytes > 0
+        ? resources.memoryLimitBytes / 1024 / 1024
+        : null;
+    const soft = limitMb ? limitMb * 0.70 : null;
+    const crit = limitMb ? limitMb * 0.85 : null;
 
     let indicator = '🟢 OPTIMAL';
-    if (rssMb >= crit) indicator = '🔴 CRITICAL';
+    if (limitMb === null) indicator = '⚪ LIMIT UNKNOWN';
+    else if (rssMb >= crit) indicator = '🔴 CRITICAL';
     else if (rssMb >= soft) indicator = '🟡 MODERATE';
 
     return {
