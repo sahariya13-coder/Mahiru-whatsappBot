@@ -22,7 +22,10 @@ const {
 function measureEventLoopLagMs() {
     return new Promise((resolve) => {
         const startNs = process.hrtime.bigint();
-        setImmediate(() => resolve(Number(((process.hrtime.bigint() - startNs) / 1000000n).toFixed(2))));
+        setImmediate(() => {
+            const elapsedMs = Number(process.hrtime.bigint() - startNs) / 1e6;
+            resolve(Number(elapsedMs.toFixed(2)));
+        });
     });
 }
 
