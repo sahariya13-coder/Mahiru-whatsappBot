@@ -431,8 +431,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                         }
 
                         const groupStatusText = action === 'activate'
-                            ? '✅ *MAHIRU BOT এই গ্রুপে Active করা হয়েছে!*\\n\\n🤖 এখন থেকে গ্রুপে Mahiru ব্যবহার করতে পারবেন।\\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\\n🆔 Group ID: ' + pendingGroupId
-                            : '⏸️ *MAHIRU BOT এই গ্রুপে Deactivate করা হয়েছে।*\\n\\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\\n🆔 Group ID: ' + pendingGroupId;
+                            ? '✅ *MAHIRU BOT এই গ্রুপে Active করা হয়েছে!*\n\n🤖 এখন থেকে গ্রুপে Mahiru ব্যবহার করতে পারবেন।\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\n🆔 Group ID: ' + pendingGroupId
+                            : '⏸️ *MAHIRU BOT এই গ্রুপে Deactivate করা হয়েছে।*\n\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\n🆔 Group ID: ' + pendingGroupId;
 
                         await sock.sendMessage(pendingGroupId, { text: groupStatusText });
                         console.log('[GROUP ACCESS] Activation status notice sent to group:', pendingGroupId, action);
@@ -442,8 +442,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
                     await sock.sendMessage(chatId, {
                         text: action === 'activate'
-                            ? '✅ *Group Active করা হয়েছে!*\\n\\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
-                            : '⏸️ *Group Deactivate করা হয়েছে।*\\n\\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
+                            ? '✅ *Group Active করা হয়েছে!*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
+                            : '⏸️ *Group Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
                     }, { quoted: message });
                     return;
                 }
