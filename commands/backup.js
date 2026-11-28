@@ -146,7 +146,7 @@ function writeRestoreFiles(payload) {
         entries = Object.entries(payload.files);
     // Legacy Mahiru export format: { meta: { bot, version, createdAt }, files: { "name.json": <JSON value> } }
     } else if (payload.meta && typeof payload.meta === 'object' &&
-        typeof payload.meta.bot === 'string' && payload.meta.bot.toLowerCase().includes('মাহিরু')) {
+        typeof payload.meta.bot === 'string' && /mahiru|মাহিরু/i.test(payload.meta.bot)) {
         entries = Object.entries(payload.files).map(([name, value]) => {
             if (typeof name !== 'string' || path.basename(name) !== name ||
                 !shouldBackupDataFile(name) || name.startsWith('.')) {
