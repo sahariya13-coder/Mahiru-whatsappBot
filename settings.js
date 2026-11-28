@@ -1,6 +1,6 @@
 /**
- * Mahiru Shiina • Mahiru v1.0 ULTIMATE — Immutable Bot Owner Security, 256MB-Strict Auto-Scaling & Dual-Gemini Core
- * Fixes: True 256MB OOM-Safe RAM Thresholds (185/222MB) + Strict AIza/AQ. Filter + banner.png Default
+ * Mahiru Shiina • Mahiru v1.0 ULTIMATE — 4GB Hosting RAM Profile & Dual-Gemini Core
+ * Fixes: 4GB RAM profile (70% warn / 85% critical) + Strict AIza/AQ. Filter + banner.png Default
  *        + ownerIdentity.json Boot Scrubber + Master Group Control Config + Crystal Voice v1.0 Sync
  * Immutable Bot Owner: 8801624235915 | 100% Backward-Compatible
  */
@@ -80,8 +80,8 @@ function normalizeLid(raw = '') {
     return base ? `${base}@lid` : '';
 }
 
-// ২৫৬MB বনাম ৩৫৬MB/৫১২MB অটো-স্কেলিং র‍্যাম থ্রেশহোল্ড (OOM-কিল প্রতিরোধী)
-const RAM_PROFILE_RAW = envStr('RAM_PROFILE', '256mb').toLowerCase();
+// Hosting RAM profile; defaults to the user's 4GB container.
+const RAM_PROFILE_RAW = envStr('RAM_PROFILE', '4096mb').toLowerCase();
 const RAM_LIMIT_MB = Math.max(128, parseInt(RAM_PROFILE_RAW.replace(/\D/g, ''), 10) || 256);
 const DEFAULT_RAM_SOFT_MB = RAM_LIMIT_MB <= 256 ? 185 : Math.round(RAM_LIMIT_MB * 0.70);
 const DEFAULT_RAM_CRIT_MB = RAM_LIMIT_MB <= 256 ? 222 : Math.round(RAM_LIMIT_MB * 0.85);
@@ -360,8 +360,8 @@ const settings = {
             keepSenderKeys: envNum('KEEP_SENDER_KEYS', 40, { min: 20, max: 120 }),
             maxSessionFiles: envNum('MAX_SESSION_FILES', 280, { min: 100, max: 1000 }),
             autoCleanIntervalMs: envNum('AUTO_CLEAN_MIN', 40, { min: 15, max: 360 }) * 60 * 1000,
-            ramSoftLimitMb: envNum('RAM_SOFT_LIMIT_MB', DEFAULT_RAM_SOFT_MB, { min: 140, max: 512 }),
-            ramCriticalLimitMb: envNum('RAM_CRITICAL_LIMIT_MB', DEFAULT_RAM_CRIT_MB, { min: 180, max: 768 }),
+            ramSoftLimitMb: envNum('RAM_SOFT_LIMIT_MB', DEFAULT_RAM_SOFT_MB, { min: 140, max: 3072 }),
+            ramCriticalLimitMb: envNum('RAM_CRITICAL_LIMIT_MB', DEFAULT_RAM_CRIT_MB, { min: 180, max: 3584 }),
             ramWatchdogCooldownMs: envNum('RAM_WATCHDOG_COOLDOWN_SEC', 300, { min: 60, max: 1800 }) * 1000
         },
 
