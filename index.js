@@ -167,6 +167,79 @@ let phoneNumber = settings.ownerNumber || ''
 let owner
 let reconnectTimer = null
 let startPromise = null
+
+// Cross-process lock: only one Mahiru process may use this WhatsApp session
+// from a shared hosting volume at a time.
+let mahiruInstanceLockFd = null;
+const mahiruInstanceLockPath = path.resolve('./.mahiru-instance.lock');
+let mahiruInstanceLockToken = null;
+let mahiruInstanceLockHeartbeat = null;
+
+function acquireMahiruInstanceLock() {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const token = String(process.pid) + '-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        const payload = { pid: process.pid, token, startedAt: new Date().toISOString(), heartbeatAt: Date.now() };
+        try {
+            const fd = fs.openSync(mahiruInstanceLockPath, 'wx', 0o600);
+            fs.writeFileSync(fd, JSON.stringify(payload));
+            mahiruInstanceLockFd = fd;
+            mahiruInstanceLockToken = token;
+            console.log('[INSTANCE LOCK] Acquired. PID=' + process.pid);
+            mahiruInstanceLockHeartbeat = setInterval(() => {
+                try {
+                    payload.heartbeatAt = Date.now();
+                    fs.ftruncateSync(fd, 0);
+                    fs.writeSync(fd, JSON.stringify(payload), 0, 'utf8');
+                    fs.fsyncSync(fd);
+                } catch (error) {
+                    originalConsoleError('[INSTANCE LOCK] Heartbeat failed:', error?.message || error);
+                }
+            }, 15000);
+            if (typeof mahiruInstanceLockHeartbeat.unref === 'function') mahiruInstanceLockHeartbeat.unref();
+            return true;
+        } catch (error) {
+            if (error.code !== 'EEXIST') throw error;
+            let existing;
+            let ageMs;
+            try {
+                ageMs = Date.now() - fs.statSync(mahiruInstanceLockPath).mtimeMs;
+                existing = JSON.parse(fs.readFileSync(mahiruInstanceLockPath, 'utf8'));
+            } catch {
+                continue;
+            }
+            if (ageMs < 45000) {
+                throw new Error('Another Mahiru process is already using this session (PID ' +
+                    (existing?.pid || 'unknown') + '). Stop the duplicate server/process before starting this instance.');
+            }
+            try {
+                fs.unlinkSync(mahiruInstanceLockPath);
+                console.log('[INSTANCE LOCK] Removed stale lock and retrying acquisition.');
+            } catch (unlinkError) {
+                if (unlinkError.code !== 'ENOENT') throw unlinkError;
+            }
+        }
+    }
+    throw new Error('Could not acquire Mahiru instance lock after concurrent lock updates.');
+}
+
+function releaseMahiruInstanceLock() {
+    if (mahiruInstanceLockHeartbeat) clearInterval(mahiruInstanceLockHeartbeat);
+    mahiruInstanceLockHeartbeat = null;
+    if (mahiruInstanceLockFd !== null) {
+        try { fs.closeSync(mahiruInstanceLockFd); } catch {}
+        mahiruInstanceLockFd = null;
+    }
+    try {
+        const current = JSON.parse(fs.readFileSync(mahiruInstanceLockPath, 'utf8'));
+        if (current?.token === mahiruInstanceLockToken) fs.unlinkSync(mahiruInstanceLockPath);
+    } catch (error) {
+        if (error.code !== 'ENOENT') originalConsoleError('[INSTANCE LOCK] Release warning:', error?.message || error);
+    }
+    mahiruInstanceLockToken = null;
+}
+process.once('exit', releaseMahiruInstanceLock);
+process.once('SIGINT', () => { releaseMahiruInstanceLock(); process.exit(0); });
+process.once('SIGTERM', () => { releaseMahiruInstanceLock(); process.exit(0); });
 let conflictRetryDelay = 30000
 let hasConnectedOnce = false
 function scheduleReconnect(reason = 'connection closed', delayMs = 5000) {
@@ -675,6 +748,8 @@ function startXeonBotInc() {
 
 // Start the bot with error handling
 persistentDataReady.then(() => {
+    // Acquire before loading handlers or opening the WhatsApp socket.
+    acquireMahiruInstanceLock();
     // Load handlers and data-backed state only after Redis/local restoration.
     ({ handleMessages, handleGroupParticipantUpdate, handleStatus } = require('./main'));
     // Clean only dedicated temp folders; session, database and backups are excluded.
