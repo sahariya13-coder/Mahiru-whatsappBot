@@ -166,21 +166,23 @@ setInterval(() => {
 let phoneNumber = settings.ownerNumber || ''
 let owner
 let reconnectTimer = null
+let startPromise = null
+let conflictRetryDelay = 30000
 let hasConnectedOnce = false
-function scheduleReconnect(reason = 'connection closed') {
+function scheduleReconnect(reason = 'connection closed', delayMs = 5000) {
     if (reconnectTimer) {
         console.log(chalk.yellow('[CONNECTION] Reconnect already scheduled; ignoring duplicate request.'))
         return
     }
 
-    console.log(chalk.yellow('[CONNECTION] ' + reason + '; reconnecting in 5 seconds.'))
+    console.log(chalk.yellow('[CONNECTION] ' + reason + '; reconnecting in ' + Math.ceil(delayMs / 1000) + ' seconds.'))
     reconnectTimer = setTimeout(() => {
         reconnectTimer = null
         startXeonBotInc().catch(error => {
             console.error('[CONNECTION] Reconnect attempt failed:', error?.message || error)
             scheduleReconnect('reconnect attempt failed')
         })
-    }, 5000)
+    }, delayMs)
 
     if (typeof reconnectTimer.unref === 'function') reconnectTimer.unref()
 }
@@ -217,7 +219,7 @@ const question = (text) => {
 }
 
 
-async function startXeonBotInc() {
+async function createXeonBotInc() {
     try {
         let { version, isLatest } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(`./session`)
@@ -377,6 +379,7 @@ async function startXeonBotInc() {
         }
         
         if (connection == "open") {
+            conflictRetryDelay = 30000
             startDailyBackup(XeonBotInc);
             try {
                 require('./lib/selfHealer').initSelfHealer(() => activeSocket);
@@ -437,8 +440,16 @@ async function startXeonBotInc() {
         }
         
         if (connection === 'close') {
+            // Ignore close events emitted by sockets that have already been superseded.
+            if (activeSocket !== XeonBotInc) {
+                console.log(chalk.gray('[CONNECTION] Ignoring close event from an inactive socket.'))
+                return
+            }
+            activeSocket = null
+
             const disconnectError = lastDisconnect?.error
             const statusCode = disconnectError?.output?.statusCode ?? disconnectError?.data?.statusCode
+            const isConflict = Number(statusCode) === 440
             const isLoggedOut = statusCode === DisconnectReason.loggedOut
             const shouldReconnect = !isLoggedOut
 
@@ -463,7 +474,7 @@ async function startXeonBotInc() {
                 console.log(chalk.red('[SESSION] WhatsApp logged this device out. The old session was archived; pair again on the next start.'))
             }
 
-            await notifyOwner(XeonBotInc,
+            if (!isConflict) await notifyOwner(XeonBotInc,
                 '⚠️ *MAHIRU BOT DISCONNECTED*\n\n' +
                 '📌 কারণ: ' + (disconnectError?.message || 'Unknown') + '\n' +
                 '🔢 Status Code: ' + (statusCode ?? 'unknown') + '\n' +
@@ -473,7 +484,13 @@ async function startXeonBotInc() {
             ).catch(error => console.error('[OWNER NOTICE] Disconnect notice failed:', error?.message || error));
 
             if (shouldReconnect) {
-                scheduleReconnect('WhatsApp connection closed')
+                if (isConflict) {
+                    const waitMs = conflictRetryDelay
+                    conflictRetryDelay = Math.min(conflictRetryDelay * 2, 5 * 60 * 1000)
+                    scheduleReconnect('WhatsApp 440 conflict (another connection may be active)', waitMs)
+                } else {
+                    scheduleReconnect('WhatsApp connection closed', 5000)
+                }
             }
         }
     })
@@ -615,6 +632,17 @@ async function startXeonBotInc() {
     }
 }
 
+// Prevent overlapping startup attempts from creating multiple sockets in one process.
+function startXeonBotInc() {
+    if (startPromise) {
+        console.log(chalk.yellow('[CONNECTION] Startup already in progress; reusing the existing attempt.'))
+        return startPromise
+    }
+    startPromise = createXeonBotInc().finally(() => {
+        startPromise = null
+    })
+    return startPromise
+}
 
 // Start the bot with error handling
 persistentDataReady.then(() => {
@@ -640,10 +668,5 @@ process.on('unhandledRejection', (err) => {
     notifyOwnerError([err], 'Unhandled Promise Rejection');
 })
 
-let file = require.resolve(__filename)
-fs.watchFile(file, () => {
-    fs.unwatchFile(file)
-    console.log(chalk.redBright(`Update ${__filename}`))
-    delete require.cache[file]
-    require(file)
-})
+// Do not hot-require the entrypoint: that creates a second WhatsApp socket
+// with the same session and causes repeated 440 "type=replaced" disconnects.
