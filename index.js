@@ -3,7 +3,7 @@
  * Credits: MSK
  */
 const settings = require('./settings');
-const { notifyOwner } = require('./lib/ownerNotify');
+const { notifyOwner, sendToBotInboxAndOwner } = require('./lib/ownerNotify');
 
 let activeSocket = null;
 const ownerErrorNoticeTimes = new Map();
@@ -413,7 +413,15 @@ async function startXeonBotInc() {
                     '✅ *Status:* Online and Ready!',
                     '━━━━━━━━━━━━━━━━━━━'
                 ].join('\n');
-                await notifyOwner(XeonBotInc, bootNotice);
+                const noticeDelivery = await sendToBotInboxAndOwner(XeonBotInc, { text: bootNotice });
+                const attempted = noticeDelivery.sent.length + noticeDelivery.failed.length;
+                console.log(`[CONNECTION NOTICE] Delivered to ${noticeDelivery.sent.length}/${attempted || 0} inbox(es).`);
+                if (noticeDelivery.failed.length) {
+                    console.error('[CONNECTION NOTICE] Delivery failures:', JSON.stringify(noticeDelivery.failed));
+                }
+                if (!noticeDelivery.sent.length) {
+                    console.error('[CONNECTION NOTICE] No inbox received the connection notice. Check OWNER_INBOX_NUMBER and WhatsApp logs.');
+                }
             } catch (error) {
                 console.error('Error sending connection message:', error.message)
             }
