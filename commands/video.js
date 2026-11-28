@@ -25,7 +25,7 @@ async function resolveVideo(videoUrl) {
     ['Mahiru YouTube API', async () => {
       const result = await youtubeApi.getFormats(videoUrl);
       if (!result.video?.url) throw new Error('No video format available');
-      return { title: result.title, download: result.video.url, sourceUrl: videoUrl };
+      return { title: result.title, download: result.video.url };
     }],
     ['Mahiru legacy', () => APIs.knightVideoDownload(videoUrl)],
     ['Prince', () => APIs.princeVideoDownload(videoUrl)],
@@ -35,20 +35,36 @@ async function resolveVideo(videoUrl) {
     ['Okatsu', () => APIs.getOkatsuVideoByUrl(videoUrl)]
   ];
 
-  let lastError;
+  const failures = [];
   for (const [name, run] of steps) {
     try {
       const result = await run();
-      const download = result.download || result.dl_url || result.dl || result.url;
-      if (!download || !/^https?:\/\//i.test(download)) throw new Error('No download URL');
-      console.log('[video] OK via ' + name);
-      return { title: result.title || 'Video', download, sourceUrl: result.sourceUrl || videoUrl };
-    } catch (err) {
-      lastError = err;
-      console.log('[video] ' + name + ' failed:', err?.message || err);
+      const download = result?.download || result?.dl_url || result?.dl || result?.url;
+      if (!download || !/^https?:\/\//i.test(download)) {
+        throw new Error('Provider returned no valid download URL');
+      }
+
+      // Retry a closed CDN connection once, then continue to the next provider.
+      let lastError;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const buffer = await fetchWhatsAppVideo(download);
+          console.log('[video] Downloaded via ' + name + (attempt > 1 ? ' (retry)' : ''));
+          return { title: result.title || 'Video', buffer, provider: name };
+        } catch (error) {
+          lastError = error;
+          console.log('[video] ' + name + ' transfer attempt ' + attempt + ' failed:', error?.message || error);
+          if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+      }
+      throw lastError || new Error('Video transfer failed');
+    } catch (error) {
+      failures.push(name + ': ' + String(error?.message || error).slice(0, 180));
+      console.log('[video] ' + name + ' failed:', error?.message || error);
     }
   }
-  throw lastError || new Error('All download sources failed');
+
+  throw new Error('সব Video source ব্যর্থ হয়েছে। ' + failures.slice(-3).join(' | '));
 }
 
 async function resolveSearch(query) {
@@ -116,7 +132,7 @@ async function videoCommand(sock, chatId, message) {
     }
 
     const dl = await resolveVideo(videoUrl);
-    const videoBuffer = await fetchWhatsAppVideo(dl.download);
+    const videoBuffer = dl.buffer;
     const botName = settings.botName || 'Mahiru Shiina';
     const title = dl.title || preview.title || 'Video';
     const fileName = (title.replace(/[^\w\s-]/g, '').trim() || 'video') + '.mp4';
