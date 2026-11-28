@@ -6,6 +6,7 @@
  */
 const settings = require('../settings');
 const buttonEngine = require('../lib/buttonEngine');
+const { getResourceSnapshot } = require('../lib/hostingResources');
 
 const {
     toSmallCaps,
@@ -31,8 +32,9 @@ function getRamHealthBadge() {
     const mem = process.memoryUsage();
     const rssMb = mem.rss / 1024 / 1024;
     const heapMb = (mem.heapUsed / 1024 / 1024).toFixed(1);
-    const soft = settings.mahiru?.optimizer?.ramSoftLimitMb || 235;
-    const crit = settings.mahiru?.optimizer?.ramCriticalLimitMb || 295;
+    const limitMb = getResourceSnapshot().memoryLimitBytes / 1024 / 1024;
+    const soft = limitMb * 0.70;
+    const crit = limitMb * 0.85;
 
     let indicator = '🟢 OPTIMAL';
     if (rssMb >= crit) indicator = '🔴 CRITICAL';
@@ -63,6 +65,7 @@ async function aliveCommand(sock, chatId, message) {
     const timeInfo = getDhakaTimeInfo();
     const { ramText, healthText } = getRamHealthBadge();
     const loopLagMs = await measureRealLoopLagMs();
+    const resources = getResourceSnapshot();
 
     const userName = String(message?.pushName || 'Friend').trim();
     const botName = settings.botName || 'Mahiru Shiina';
@@ -84,6 +87,8 @@ async function aliveCommand(sock, chatId, message) {
         { icon: '⏱️', label: 'UPTIME', value: formatUptime() },
         { icon: '⚙️', label: 'LOOP LAG', value: `${loopLagMs} ms` },
         { icon: '🐏', label: 'RAM', value: ramText },
+        { icon: '⚙️', label: 'CPU', value: `${resources.cpu.label} vCPU allocated` },
+        { icon: '💾', label: 'DISK', value: `${resources.disk.used} used / ${resources.disk.total} filesystem | ${resources.disk.free} free; quota not exposed` },
         { icon: '🧠', label: 'AI CORES', value: getAiSummaryText() },
         { icon: '🤝', label: 'TAKEOVER', value: `Presence Smart (${takeoverMin}m)` },
         { icon: '🔓', label: 'MODE', value: `${modeText} | Prefix: \`${prefix}\`` },
