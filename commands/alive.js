@@ -30,9 +30,10 @@ function measureRealLoopLagMs() {
 
 function getRamHealthBadge() {
     const mem = process.memoryUsage();
-    const rssMb = mem.rss / 1024 / 1024;
+    const resources = getResourceSnapshot();
+    const rssMb = resources.ram.usedBytes / 1024 / 1024;
     const heapMb = (mem.heapUsed / 1024 / 1024).toFixed(1);
-    const limitMb = getResourceSnapshot().memoryLimitBytes / 1024 / 1024;
+    const limitMb = resources.memoryLimitBytes / 1024 / 1024;
     const soft = limitMb * 0.70;
     const crit = limitMb * 0.85;
 
