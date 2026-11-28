@@ -220,6 +220,7 @@ const question = (text) => {
 
 
 async function createXeonBotInc() {
+    let authSessionInvalidated = false;
     try {
         let { version, isLatest } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(`./session`)
@@ -274,13 +275,29 @@ async function createXeonBotInc() {
             } else if (update.connection === 'close') {
                 clearTimeout(pairingReadyTimer);
                 XeonBotInc.ev.off('connection.update', pairingReadyHandler);
-                rejectPairingReady?.(update.lastDisconnect?.error || new Error('WhatsApp connection closed before pairing.'));
+                const closeError = update.lastDisconnect?.error;
+                const closeStatus = closeError?.output?.statusCode ?? closeError?.data?.statusCode;
+                if (Number(closeStatus) === Number(DisconnectReason.loggedOut)) {
+                    authSessionInvalidated = true;
+                }
+                rejectPairingReady?.(closeError || new Error('WhatsApp connection closed before pairing.'));
             }
         };
         if (shouldRequestPairingCode) XeonBotInc.ev.on('connection.update', pairingReadyHandler);
 
-        // Save credentials when they update
-        XeonBotInc.ev.on('creds.update', saveCreds)
+        // Save credentials safely. A logged-out session may be archived while
+        // Baileys is emitting a final creds.update event.
+        XeonBotInc.ev.on('creds.update', async () => {
+            if (authSessionInvalidated) return;
+            try {
+                await saveCreds();
+            } catch (error) {
+                if (authSessionInvalidated || error?.code === 'ENOENT') {
+                    if (authSessionInvalidated) return;
+                }
+                console.error('[SESSION] Could not save WhatsApp credentials:', error?.message || error);
+            }
+        })
 
     store.bind(XeonBotInc.ev)
 
@@ -461,6 +478,8 @@ async function createXeonBotInc() {
             // A device_removed session is no longer valid, but keeping an archive
             // helps diagnose the issue without leaving invalid credentials active.
             if (isLoggedOut) {
+                // Stop any pending credential writes before moving the invalid auth folder.
+                authSessionInvalidated = true;
                 try {
                     const archivedSession = backupLoggedOutSession()
                     if (archivedSession) {
@@ -520,8 +539,11 @@ async function createXeonBotInc() {
 
         try {
             await pairingReady;
+            // Do not request a code from a socket that has already logged out or closed.
+            if (authSessionInvalidated || activeSocket !== XeonBotInc) return null;
             // Allow the WhatsApp WebSocket handshake to settle before requesting the code.
             await delay(3000);
+            if (authSessionInvalidated || activeSocket !== XeonBotInc) return null;
             let code = await XeonBotInc.requestPairingCode(phoneNumber);
             code = code?.match(/.{1,4}/g)?.join("-") || code;
             console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)));
@@ -628,7 +650,14 @@ async function createXeonBotInc() {
     } catch (error) {
         console.error('Error in startXeonBotInc:', error)
         await notifyOwnerError([error], 'Startup / Reconnect Error');
-        scheduleReconnect('bot startup failed')
+        const errorStatus = error?.output?.statusCode ?? error?.data?.statusCode;
+        const isLoggedOutFailure = authSessionInvalidated ||
+            Number(errorStatus) === Number(DisconnectReason.loggedOut);
+        if (!isLoggedOutFailure) {
+            scheduleReconnect('bot startup failed');
+        } else {
+            console.log(chalk.yellow('[SESSION] Logged-out startup attempt stopped; waiting for a manual fresh pairing.'));
+        }
     }
 }
 
