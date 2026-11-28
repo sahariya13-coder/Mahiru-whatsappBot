@@ -419,12 +419,32 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 if (pendingGroupId) {
                     groupAccess.setActive(pendingGroupId, action === 'activate');
                     groupAccess.clearPendingReply(quotedNoticeId);
+
+                    // Notify the target group after the owner changes its activation state from the inbox.
+                    try {
+                        let targetGroupName = '';
+                        try {
+                            const metadata = await sock.groupMetadata(pendingGroupId);
+                            targetGroupName = String(metadata?.subject || '').trim();
+                        } catch (metadataError) {
+                            console.error('[GROUP ACCESS] Could not read group name for activation notice:', metadataError?.message || metadataError);
+                        }
+
+                        const groupStatusText = action === 'activate'
+                            ? '✅ *MAHIRU BOT এই গ্রুপে Active করা হয়েছে!*\\n\\n🤖 এখন থেকে গ্রুপে Mahiru ব্যবহার করতে পারবেন।\\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\\n🆔 Group ID: ' + pendingGroupId
+                            : '⏸️ *MAHIRU BOT এই গ্রুপে Deactivate করা হয়েছে।*\\n\\n📛 Group: ' + (targetGroupName || 'নাম পাওয়া যায়নি') + '\\n🆔 Group ID: ' + pendingGroupId;
+
+                        await sock.sendMessage(pendingGroupId, { text: groupStatusText });
+                        console.log('[GROUP ACCESS] Activation status notice sent to group:', pendingGroupId, action);
+                    } catch (groupNoticeError) {
+                        console.error('[GROUP ACCESS] Could not send activation status notice to group:', pendingGroupId, groupNoticeError?.message || groupNoticeError);
+                    }
+
                     await sock.sendMessage(chatId, {
                         text: action === 'activate'
-                            ? '✅ *Group Active করা হয়েছে!*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
-                            : '⏸️ *Group Deactivate করা হয়েছে।*\n\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
-                    }, { quoted: message });
-                    return;
+                            ? '✅ *Group Active করা হয়েছে!*\\n\\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
+                            : '⏸️ *Group Deactivate করা হয়েছে।*\\n\\n🆔 Group ID: ' + pendingGroupId + (OWNER_CONTACT_LINK ? '\\n👤 Bot Owner: ' + OWNER_CONTACT_LINK : '')
+                    }, { quoted: message });                    return;
                 }
             }
         }
