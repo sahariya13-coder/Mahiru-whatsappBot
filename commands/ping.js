@@ -19,6 +19,44 @@ const {
 } = buttonEngine;
 
 // CPU/RAM/ডিস্ক সীমা কন্টেইনারের cgroup ও filesystem থেকে শনাক্ত করা হয়।
+function measureEventLoopLagMs() {
+    return new Promise((resolve) => {
+        const startNs = process.hrtime.bigint();
+        setImmediate(() => resolve(Number(((process.hrtime.bigint() - startNs) / 1000000n).toFixed(2))));
+    });
+}
+
+async function measureWhatsAppRttMs(sock, chatId, message) {
+    const startNs = process.hrtime.bigint();
+    let timer = null;
+    try {
+        if (sock && message?.key) {
+            const timeoutPromise = new Promise((_, reject) => {
+                timer = setTimeout(() => reject(new Error('rtt_timeout')), 4000);
+                timer.unref?.();
+            });
+            await Promise.race([
+                sock.sendMessage(chatId, { react: { text: '⚡', key: message.key } }),
+                timeoutPromise
+            ]);
+            return { rttMs: Math.max(1, Math.round(Number(process.hrtime.bigint() - startNs) / 1e6)), liveProbe: true };
+        }
+    } catch {} finally { if (timer) clearTimeout(timer); }
+    return { rttMs: Math.max(1, Math.round(Number(process.hrtime.bigint() - startNs) / 1e6)), liveProbe: false };
+}
+
+function getSpeedGrade(rttMs) {
+    if (rttMs <= 250) return '🟢 ULTRA FAST';
+    if (rttMs <= 650) return '🟡 GOOD';
+    return '🟠 MODERATE';
+}
+
+function getCpuLoadText() {
+    const resources = getResourceSnapshot();
+    const load = Number(require('os').loadavg()?.[0] || 0).toFixed(2);
+    return `${resources.cpu.label} vCPU allocated | host load ${load}`;
+}
+
 function getMemoryTelemetry() {
     const mem = process.memoryUsage();
     const heapUsed = (mem.heapUsed / 1024 / 1024).toFixed(1);
