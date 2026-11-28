@@ -80,7 +80,7 @@ function normalizeLid(raw = '') {
     return base ? `${base}@lid` : '';
 }
 
-// Hosting RAM profile; defaults to the user's 4GB container.
+// Hosting RAM profile; auto-detect panel/cgroup limits when available.
 const RAM_PROFILE_RAW = envStr('RAM_PROFILE', 'auto').toLowerCase();
 const RAM_LIMIT_MB = Math.max(128, parseInt(RAM_PROFILE_RAW.replace(/\D/g, ''), 10) || 256);
 const DEFAULT_RAM_SOFT_MB = RAM_LIMIT_MB <= 256 ? 185 : Math.round(RAM_LIMIT_MB * 0.70);
