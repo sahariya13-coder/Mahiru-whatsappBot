@@ -207,13 +207,31 @@ function acquireMahiruInstanceLock() {
             } catch {
                 continue;
             }
-            if (ageMs < 45000) {
-                throw new Error('Another Mahiru process is already using this session (PID ' +
-                    (existing?.pid || 'unknown') + '). Stop the duplicate server/process before starting this instance.');
+            const existingPid = Number(existing?.pid);
+            let processIsAlive = false;
+            if (Number.isInteger(existingPid) && existingPid > 0) {
+                try {
+                    process.kill(existingPid, 0);
+                    processIsAlive = true;
+                } catch (pidError) {
+                    processIsAlive = pidError.code === 'EPERM';
+                }
             }
+
+            // A recent lock OR a live PID belongs to a running process.
+            // An old lock whose PID no longer exists is stale and can be recovered.
+            if (processIsAlive && ageMs < 45000) {
+                throw new Error('Another Mahiru process is already using this session (PID ' +
+                    existingPid + '). Stop the duplicate server/process before starting this instance.');
+            }
+            if (processIsAlive) {
+                throw new Error('Mahiru instance lock is old, but PID ' + existingPid +
+                    ' is still running. Check the hosting process list before removing the lock.');
+            }
+
             try {
                 fs.unlinkSync(mahiruInstanceLockPath);
-                console.log('[INSTANCE LOCK] Removed stale lock and retrying acquisition.');
+                console.log('[INSTANCE LOCK] Removed stale lock (owner process is not running) and retrying acquisition.');
             } catch (unlinkError) {
                 if (unlinkError.code !== 'ENOENT') throw unlinkError;
             }
