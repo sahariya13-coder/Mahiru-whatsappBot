@@ -326,7 +326,7 @@ const settings = {
     storeWriteInterval: envNum('STORE_WRITE_INTERVAL', 10000, { min: 10000, max: 120000 }),
     description: 'Mahiru Shiina • Mahiru v1.0 ULTIMATE — Autonomous WhatsApp AI Assistant, Interactive UI & Security Engine.',
     version: '3.0.8',
-    ownerInboxNumber: '',
+    ownerInboxNumber: envStr('OWNER_INBOX_NUMBER', ''),
     legacyVersion: '1.0.0',
     ramProfile: RAM_PROFILE_RAW,
 
