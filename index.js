@@ -207,7 +207,7 @@ function backupLoggedOutSession() {
 global.botname = "Mahiru"
 global.themeemoji = "•"
 // Pairing-code login: ask for the number in the console.
-const pairingCode = process.argv.includes("--pairing-code") || !!settings.ownerNumber
+const pairingCode = process.argv.includes("--pairing-code")
 const useMobile = process.argv.includes("--mobile")
 
 // Only create readline interface if we're in an interactive environment
@@ -226,6 +226,8 @@ async function startXeonBotInc() {
     try {
         let { version, isLatest } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(`./session`)
+        // Never request a second pairing code from an already-linked device session.
+        const shouldRequestPairingCode = !state.creds.registered && (pairingCode || !!settings.ownerNumber)
         const msgRetryCounterCache = new NodeCache()
 
         const XeonBotInc = makeWASocket({
@@ -259,7 +261,7 @@ async function startXeonBotInc() {
         let resolvePairingReady;
         let rejectPairingReady;
         let pairingReadyTimer;
-        const pairingReady = pairingCode ? new Promise((resolve, reject) => {
+        const pairingReady = shouldRequestPairingCode ? new Promise((resolve, reject) => {
             resolvePairingReady = resolve;
             rejectPairingReady = reject;
             pairingReadyTimer = setTimeout(() => {
@@ -278,7 +280,7 @@ async function startXeonBotInc() {
                 rejectPairingReady?.(update.lastDisconnect?.error || new Error('WhatsApp connection closed before pairing.'));
             }
         };
-        if (pairingCode) XeonBotInc.ev.on('connection.update', pairingReadyHandler);
+        if (shouldRequestPairingCode) XeonBotInc.ev.on('connection.update', pairingReadyHandler);
 
         // Save credentials when they update
         XeonBotInc.ev.on('creds.update', saveCreds)
@@ -444,7 +446,7 @@ async function startXeonBotInc() {
             // Only archive credentials when WhatsApp explicitly reports logout.
             // A device_removed session is no longer valid, but keeping an archive
             // helps diagnose the issue without leaving invalid credentials active.
-            if (isLoggedOut && state.creds.registered) {
+            if (isLoggedOut) {
                 try {
                     const archivedSession = backupLoggedOutSession()
                     if (archivedSession) {
@@ -475,7 +477,7 @@ async function startXeonBotInc() {
 
 
     // Handle pairing code
-    if (pairingCode && !XeonBotInc.authState.creds.registered) {
+    if (shouldRequestPairingCode && !XeonBotInc.authState.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
         let phoneNumber
