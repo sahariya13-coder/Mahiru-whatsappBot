@@ -159,14 +159,9 @@ setInterval(() => {
     }
 }, 60_000) // every 1 minute
 
-// Memory monitoring - Restart if RAM gets too high
-setInterval(() => {
-    const used = process.memoryUsage().rss / 1024 / 1024
-    if (used > 400) {
-        console.log('⚠️ RAM too high (>400MB), restarting bot...')
-        process.exit(1) // Panel will auto-restart
-    }
-}, 30_000) // check every 30 seconds
+// RAM monitoring/recovery is handled by lib/selfHealer.js.
+// Avoid a second hard 400MB exit loop here: it bypasses cleanup,
+// can race the self-healer, and causes unnecessary exit-code-1 restarts.
 
 let phoneNumber = settings.ownerNumber || ''
 let owner
