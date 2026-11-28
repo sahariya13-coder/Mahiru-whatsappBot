@@ -17,7 +17,7 @@ loadDotEnv(false);
 // ==================================================
 // ১. অটুট Bot Owner ভল্ট (কোনো ENV বা এডিটে রিমুভ হবে না)
 // ==================================================
-const BOT_OWNER_NUMBER = Object.freeze('8801624235915'); // Mahiru bot owner
+const BOT_OWNER_NUMBER = Object.freeze('8801954233197'); // Mahiru bot owner
 const BOT_OWNER_LID = Object.freeze('216123442245856@lid'); // Mahiru bot owner LID
 
 const PERMANENT_BLOCKED_ADMINS = Object.freeze([
