@@ -14,10 +14,22 @@ function extractUrl(text) {
 }
 
 function formatInfo(video) {
-  const views = Number(video.views || 0).toLocaleString('en-US');
   return '🎬 *' + (video.title || 'YouTube Video') +
-    '*\n⏱ Duration: ' + (video.timestamp || '—') +
-    '\n👀 Views: ' + views;
+    '*\\n⏱ Duration: ' + fmtDuration(video.timestamp || video.duration) +
+    '\\n👀 Views: ' + fmtViews(video.views ?? video.viewCount ?? video.view_count);
+}
+function fmtDuration(x) {
+  if(typeof x==='string'&&x.trim()&&x!=='[object Object]') return x.trim();
+  if(typeof x==='number'&&Number.isFinite(x)) return fmtSeconds(x);
+  if(x&&typeof x==='object') { const t=x.timestamp||x.text||x.simpleText||x.formatted; if(typeof t==='string'&&t.trim()) return t.trim(); const n=Number(x.seconds??x.totalSeconds??x.lengthSeconds); if(Number.isFinite(n)&&n>=0) return fmtSeconds(n); }
+  return '—';
+}
+function fmtSeconds(n) { n=Math.floor(n); const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60; return h?h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'):m+':'+String(s).padStart(2,'0'); }
+function fmtViews(x) {
+  if(x&&typeof x==='object') x=x.text||x.simpleText||x.display||x.value||x.count;
+  if(typeof x==='number'&&Number.isFinite(x)) return x.toLocaleString('en-US');
+  if(typeof x==='string'&&x.trim()) { const t=x.trim(); if(/\bviews?\b/i.test(t)||/[KMB]\b/i.test(t)) return t; const n=Number(t.replace(/,/g,'')); if(Number.isFinite(n)) return n.toLocaleString('en-US'); }
+  return 'Unavailable';
 }
 
 async function resolveVideo(videoUrl) {
