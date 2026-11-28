@@ -275,7 +275,7 @@ async function handleBackupMessage(sock, message, chatId, senderId, rawText) {
             text: '✅ রিস্টোর সফল হয়েছে।\nব্যাকআপের তারিখ: ' + (payload.createdAt || 'Unknown') +
                 '\nনিরাপদে Restore সম্পন্ন করতে বট Restart হচ্ছে।'
         }, { quoted: message });
-        setTimeout(() => process.exit(1), 1500);
+        setTimeout(() => process.exit(0), 1500);
     } catch (error) {
         console.error('[BACKUP] Restore failed:', error);
         await sock.sendMessage(chatId, {
