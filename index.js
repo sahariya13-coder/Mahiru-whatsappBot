@@ -204,7 +204,7 @@ function backupLoggedOutSession() {
 global.botname = "Mahiru"
 global.themeemoji = "•"
 // Pairing-code login: ask for the number in the console.
-const pairingCode = process.argv.includes("--pairing-code")
+const pairingCode = process.argv.includes("--pairing-code") || !!settings.ownerNumber
 const useMobile = process.argv.includes("--mobile")
 
 // Only create readline interface if we're in an interactive environment
@@ -516,7 +516,7 @@ async function createXeonBotInc() {
 
 
     // Handle pairing code
-    if (shouldRequestPairingCode && !XeonBotInc.authState.creds.registered) {
+    if (shouldRequestPairingCode && !state.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
         let phoneNumber
