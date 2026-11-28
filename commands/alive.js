@@ -89,7 +89,7 @@ async function aliveCommand(sock, chatId, message) {
         { icon: '⚙️', label: 'LOOP LAG', value: `${loopLagMs} ms` },
         { icon: '🐏', label: 'RAM', value: ramText },
         { icon: '⚙️', label: 'CPU', value: `${resources.cpu.label} vCPU allocated` },
-        { icon: '💾', label: 'DISK', value: `${resources.disk.used} used / ${resources.disk.total} filesystem | ${resources.disk.free} free; quota not exposed` },
+        { icon: '💾', label: 'DISK', value: `${resources.disk.used} project estimate / ${resources.disk.total} allocated | ${resources.disk.free} estimated free` },
         { icon: '🧠', label: 'AI CORES', value: getAiSummaryText() },
         { icon: '🤝', label: 'TAKEOVER', value: `Presence Smart (${takeoverMin}m)` },
         { icon: '🔓', label: 'MODE', value: `${modeText} | Prefix: \`${prefix}\`` },
